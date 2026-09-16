@@ -671,15 +671,16 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 
 /* ---------- pin card ---------- */
 /* Высота обложки — пропорция, а не число: раньше стояло 132px без всякого правила, и на
-   широком экране обложка выглядела полоской. Фотография показывается целиком и по центру
-   (contain, а не cover): кадрировать чужой снимок мы не вправе, а по краям и так лежит
-   подложка в цвет категории. Отступ нужен, чтобы снимок не доходил до краёв — шапка
-   карточки лежит поверх обложки, и без него кнопки оказывались на фотографии */
+   широком экране обложка выглядела полоской. Кнопки шапки лежат прямо на снимке и читаются
+   благодаря своим плашкам и градиенту сверху, поэтому поле по краям больше не нужно */
 .cover{
   aspect-ratio:16/9;max-height:340px;position:relative;display:grid;place-items:center;
-  overflow:hidden;flex:none;padding:10px;
+  overflow:hidden;flex:none;
 }
-.cover img{width:100%;height:100%;object-fit:contain;object-position:center}
+/* Снимок заполняет обложку целиком. Прежде он показывался «целиком» с полем по краям —
+   довод был «кадрировать чужой снимок мы не вправе». Обложки теперь свои и все 16:9,
+   ровно пропорция самой обложки: резать нечего, а поле читалось как рамка вокруг фотографии */
+.cover img{width:100%;height:100%;object-fit:cover;object-position:center}
 /* затемнение под шапкой: кнопки обязаны читаться на любом снимке */
 .cover::before{
   content:'';position:absolute;left:0;right:0;top:0;height:76px;pointer-events:none;
@@ -882,7 +883,21 @@ button.person:hover{background:var(--surface-2)}
 .textarea{resize:vertical;min-height:92px;font-family:inherit}
 /* ползунок радиуса: своя дорожка и бегунок — системные в разных браузерах разного роста
    и ломают ритм формы */
+/* Строка ползунка: значение чипом слева, дорожка занимает остальное. Чип лежит в разметке
+   после ползунка и возвращается влево порядком — так его достают состояния ползунка */
+.rangerow{display:flex;align-items:center;gap:12px}
+.rangerow .input[type=range]{flex:1;min-width:0}
+/* ширина по самому широкому значению («1,5 км»), цифры табличные: иначе чип дёргается,
+   пока тащат бегунок */
+.rangeval{order:-1;flex:none;min-width:62px;justify-content:center;font-variant-numeric:tabular-nums;
+  transition:background .12s,color .12s}
+.rangerow:hover .rangeval{background:var(--ink)}
+.rangerow .input[type=range]:active~.rangeval{background:var(--brand);color:#fff}
+/* кольцо фокуса снимаем с дорожки и отдаём бегунку: обводить надо то, чем управляют */
 input[type=range].input{padding:0;height:36px;background:transparent;border:none;appearance:none}
+input[type=range].input:focus{box-shadow:none;border-color:transparent}
+input[type=range].input:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(--ring)}
+input[type=range].input:focus-visible::-moz-range-thumb{box-shadow:0 0 0 3px var(--ring)}
 input[type=range].input::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:var(--surface-3)}
 input[type=range].input::-webkit-slider-thumb{appearance:none;width:22px;height:22px;margin-top:-9px;border-radius:50%;background:var(--surface);border:1px solid var(--line-2);box-shadow:var(--shadow-2)}
 input[type=range].input::-moz-range-track{height:4px;border-radius:2px;background:var(--surface-3)}
@@ -1036,6 +1051,10 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .tabswrap::after{right:0;background:linear-gradient(to right,color-mix(in srgb,var(--surface) 0%,transparent),var(--surface))}
 .tabswrap.is-start::before{opacity:1}
 .tabswrap.is-end::after{opacity:1}
+/* Перебор в считанные пиксели не прокручиваем, а убираем: ряд поджимается зазором и правым
+   полем и встаёт целиком. Иначе вкладки ездят на два-три пикселя, и на двух снимках подряд
+   «Все» стоит в разных местах */
+.tabswrap.is-tight .tabs{gap:8px;padding-right:8px;overflow-x:hidden}
 .tabs button:hover{color:var(--ink)}
 .tabs button.is-on{color:var(--ink);font-weight:600}
 /* Число на вкладке появляется только когда есть непрочитанное — значит само его наличие
@@ -1117,10 +1136,18 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .listrow__top{display:flex;align-items:baseline;gap:8px;min-width:0}
 .listrow__top .listrow__t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .listrow__top .listrow__time{flex:none}
-.listrow__top .unread{flex:none;align-self:center}
 .listrow__r svg{width:16px;height:16px;color:var(--ink-3)}
 .listrow__time{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap}
-.unread{width:8px;height:8px;border-radius:50%;background:var(--brand)}
+/* Знак непрочитанного: пилюля того же вида, что счётчик на таббаре и на колоколе — один знак
+   на всё приложение. Пустая (без числа) остаётся кружком: так живёт системный канал */
+.listrow__last{display:flex;align-items:center;gap:8px;min-width:0;margin-top:4px}
+.listrow__last .listrow__msg{flex:1;min-width:0;margin-top:0}
+.unread{
+  flex:none;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--brand);
+  color:#fff;font-size:var(--f-xs10);line-height:18px;font-weight:600;text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+.unread:empty{min-width:8px;width:8px;height:8px;padding:0;border-radius:50%}
 /* Системный канал даёт точку, а не число: цифра на разделе должна значить ровно одно —
    «вам написал живой человек», иначе ей перестают верить, как «99+» в маркетплейсах */
 .navbtn__badge--dot{min-width:9px;width:9px;height:9px;padding:0;border-radius:50%;font-size:0}
@@ -1287,6 +1314,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
    наезжал на плавающую кнопку в фильтрах, сверху ему никто не мешает */
 .toast{
   position:fixed;left:50%;top:16px;transform:translateX(-50%) translateY(-160%) scale(.92);
+  overflow:hidden;
   opacity:0;pointer-events:none;
   background:var(--ink);color:var(--ground);padding:12px 16px;border-radius:var(--r-m);
   font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;box-shadow:var(--shadow-2);z-index:60;
@@ -1295,7 +1323,24 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   display:flex;align-items:center;gap:12px;
 }
 .toast.is-on{opacity:1;transform:translateX(-50%) translateY(0) scale(1);pointer-events:auto}
-.toast__a{color:var(--brand);font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+/* Цвет действия — тот же, которым набран текст тоста, а не брендовый: синий на тёмной плашке
+   контрастен слабо. Жёстко белым писать нельзя: тост построен на паре --ink/--ground
+   и в тёмной теме переворачивается в светлую плашку с тёмным текстом */
+/* Правило стоит после .toast: у них одинаковая специфичность, и раньше по порядку
+   побеждало базовое — тост получал и top, и bottom разом и растягивался во всю высоту.
+   На телефоне тост выезжает сверху тост выезжает сверху: там у него общий слот с плашкой расстояния и кнопкой
+   охвата, и уходят они одним движением. На десктопе верх занят шапками панелей, и тост
+   падал на них — поэтому он живёт внизу и уходит к нижней границе тем же движением */
+@media (min-width:821px){
+  .toast{top:auto;bottom:16px;transform:translateX(-50%) translateY(160%) scale(.92)}
+  .toast.is-on{transform:translateX(-50%) translateY(0) scale(1)}
+}
+.toast__a{color:var(--ground);font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+/* Полоска времени по нижнему краю: видно, сколько тосту осталось. Длительность приходит
+   из того же числа, что и таймер, — иначе полоска и таймер разойдутся */
+.toast__time{position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:0 0 var(--r-m) var(--r-m);overflow:hidden}
+.toast__time i{display:block;height:100%;width:100%;background:var(--ground);opacity:.45;
+  transform:scaleX(0);transform-origin:left;transition:transform linear}
 .toast__a svg{width:15px;height:15px}
 /* тост без сообщения: остаётся одно действие, и поля ему нужны кнопочные, а не абзацные */
 .toast--bare{padding:8px 14px}
@@ -1906,10 +1951,20 @@ var toastAct=null;
 function toast(text,label,fn,ic){
   var el=$('#toast');
   toastAct=fn||null;
+  var life=label?6000:2800;
   el.innerHTML=(text?'<span>'+H(noHang(text))+'</span>':'')+
-    (label?'<button class="toast__a" data-act="toast-act">'+H(label)+(ic?icon(ic):'')+'</button>':'');
+    (label?'<button class="toast__a" data-act="toast-act">'+H(label)+(ic?icon(ic):'')+'</button>':'')+
+    '<span class="toast__time"><i></i></span>';
   el.classList.toggle('toast--bare',!text);
   el.classList.add('is-on');
+  /* полоска отмеряет ровно ту жизнь, что задана ниже: сброс с принудительным пересчётом,
+     иначе второй тост подряд продолжил бы заполнять её с середины */
+  var bar=el.querySelector('.toast__time i');
+  if(bar){
+    bar.style.transitionDuration='0s'; bar.style.transform='scaleX(0)';
+    void bar.offsetWidth;
+    bar.style.transitionDuration=life+'ms'; bar.style.transform='scaleX(1)';
+  }
   /* Слот у тоста и у плашки с расстоянием один. Совпасть они могут в одном случае:
      ответ соседа приходит по таймеру и не знает, на каком вы экране. Поэтому на время
      тоста плашка уезжает тем же движением, которым уезжает всегда */
@@ -1919,7 +1974,7 @@ function toast(text,label,fn,ic){
     el.classList.remove('is-on');
     var p2=$('#pickInfo');
     if(p2&&!isDesktopPanel()&&ui.picking&&$('.stage')&&$('.stage').classList.contains('is-peek'))p2.classList.remove('is-away');
-  },label?6000:2800);
+  },life);
 }
 
 /* ============ 1. справочники ============ */
@@ -2066,7 +2121,10 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.11';
+var VERSION='3.12';
+/* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
+   никогда — через месяц они врут, но выглядят достоверно */
+var UPDATED='16 сентября 2026';
 var KEY='raion.v1';
 var db=null;
 
@@ -3364,20 +3422,24 @@ var ui={
 /* Ряд вкладок шире панели, и выбранная легко оказывается за краем — особенно после
    перерисовки, которая сбрасывает горизонтальную прокрутку в начало. Двигаем только
    scrollLeft самого ряда: scrollIntoView потащил бы за собой и вертикаль панели */
+/* Края ряда вкладок: слева растворение, пока начало уехало, справа — пока остался хвост.
+   Считается и при отрисовке, и на каждой прокрутке ряда — слушатель один на всё приложение
+   и висит на документе с перехватом (ниже): событие `scroll` не всплывает, и слушатель,
+   повешенный на сам ряд, умирал вместе с узлом при первой же перерисовке панели.
+   Перебор в считанные пиксели не прокручиваем, а убираем: ряд поджимается зазором и правым
+   полем, иначе он ездит на два-три пикселя и вкладки не стоят на месте */
+function tabEdges(t){
+  if(!t)return;
+  var wrap=t.closest('.tabswrap'); if(!wrap)return;
+  wrap.classList.remove('is-tight');
+  if(t.scrollWidth-t.clientWidth<=24)wrap.classList.add('is-tight');
+  var over=t.scrollWidth-t.clientWidth>1;
+  wrap.classList.toggle('is-start',over&&t.scrollLeft>1);
+  wrap.classList.toggle('is-end',over&&t.scrollLeft+t.clientWidth<t.scrollWidth-1);
+}
 function scrollTabIntoView(root){
   var t=(root||document).querySelector('.tabs'); if(!t)return;
-  var wrap=t.closest('.tabswrap');
-  if(wrap){
-    /* растворение следит за прокруткой, а не за фактом «ряд шире экрана»: иначе правый
-       край оставался размытым и тогда, когда долистали до конца, а левый не появлялся вовсе */
-    var edges=function(){
-      wrap.classList.toggle('is-start',t.scrollLeft>1);
-      wrap.classList.toggle('is-end',t.scrollLeft+t.clientWidth<t.scrollWidth-1);
-    };
-    edges();
-    /* узел подменяется при каждой перерисовке, поэтому слушатель вешаем на свежий */
-    t.addEventListener('scroll',edges);
-  }
+  tabEdges(t);
   var on=t.querySelector('.is-on'); if(!on)return;
   var l=on.offsetLeft, r=l+on.offsetWidth;
   if(l-12<t.scrollLeft)t.scrollLeft=Math.max(0,l-12);
@@ -3535,9 +3597,21 @@ function messagesOf(threadId){
 }
 function lastMessage(threadId){var m=messagesOf(threadId);return m.length?m[m.length-1]:null}
 function threadUnread(t){
-  var all=messagesOf(t.id), m=null;
-  for(var i=all.length-1;i>=0;i--)if(!all[i].sys){m=all[i];break}
-  return !!(m&&m.author_id!==db.currentUserId&&m.created_at>(t.seen_at||0));
+  return threadUnreadCount(t)>0;
+}
+/* Сколько реплик собеседника пришло после вашего захода. Раньше считался только факт —
+   проверялась последняя реплика, — а строке списка нужно число: знак непрочитанного стоит
+   у самой реплики и показывает, сколько их накопилось */
+function threadUnreadCount(t){
+  var all=messagesOf(t.id), seen=t.seen_at||0, n=0;
+  for(var i=all.length-1;i>=0;i--){
+    var m=all[i];
+    if(m.sys)continue;
+    if(m.created_at<=seen)break;
+    if(m.author_id===db.currentUserId)break;
+    n++;
+  }
+  return n;
 }
 function unreadTotal(){
   return db.threads.filter(function(t){
@@ -3722,14 +3796,16 @@ function feedCard(p,withDist){
      факт осмысленный */
   var distPart=(withDist&&!closed&&p._d!=null)?distChipHTML(p,p._d,false):'';
   var stPart=(showStation&&!geoOn())?stationTag(p.district_id):'';
-  /* «Участники · 8/10» — одна форма на все места и один разделитель: точка уже принята
+  /* «Участники 8/10» — одна форма на все места. Точка здесь не нужна: рядом с дробью
+     два разделителя подряд, и непонятно, какой главный. В остальных местах («Откликнулись · 2»)
+     она остаётся — там после неё голое число, и точка спасает от склонения
      в заголовках разделов и снимает склонение. Согласовать число с существительным здесь
      нельзя: слово должно следовать за пределом, а стоит после текущего числа.
      В архиве предел уже ничего не значит — влезать некуда, остаётся факт, сколько было */
   var sub=act
     ? (function(){var n=joinedOf(p.id).length;
-        if(closed)return n?'Участники · '+n:'';
-        return 'Участники · '+n+(p.participant_limit?'/'+p.participant_limit:'')})()
+        if(closed)return n?'Участники '+n:'';
+        return 'Участники '+n+(p.participant_limit?'/'+p.participant_limit:'')})()
     : subLabel(p,closed);
   var role=myRole(p);
   /* открытая карточка помечается в списке: во второй колонке она видна одновременно со списком.
@@ -4474,7 +4550,7 @@ function viewPin(id){
     partBtn='<'+pt+' class="author'+(seeList?'':' author--flat')+'"'+
       (seeList?' data-act="people" data-id="'+p.id+'"':'')+'>'+
       '<div class="author__body"><div class="author__n">'+
-        (closed?'Участники · '+n:'Участники · '+n+(lim?'/'+lim:''))+'</div>'+
+        (closed?'Участники '+n:'Участники '+n+(lim?'/'+lim:''))+'</div>'+
         /* в архиве предел уже ничего не значит: влезать некуда, дорожка и подпись про места
            говорили бы о несуществующем выборе */
         (closed?''
@@ -4791,8 +4867,15 @@ function fldLF(d){
        выронил. Ползунок, а не щипок по карте: щипок занят зумом */
     (d.lfsub==='lost'
       ? '<div class="field"><label for="f-rad">Где примерно потеряли</label>'+
-          '<input class="input" type="range" id="f-rad" min="100" max="2000" step="100" data-field="radius" value="'+H(d.radius)+'">'+
-          '<span class="hint" id="radHint">Круг радиусом '+H(niceUp(+d.radius))+'. Если шли маршрутом, ставьте по самому дальнему месту — круг покажет всю зону поиска</span></div>'
+          /* Значение стоит чипом слева от дорожки: в подсказке оно терялось, а это главное
+             число этого экрана. Чип идёт в разметке после ползунка и возвращается влево
+             порядком — соседних селекторов «назад» в CSS нет, а так состояния ползунка
+             (наведение, перетаскивание) достают до чипа обычным соседним селектором */
+          '<div class="rangerow">'+
+            '<input class="input" type="range" id="f-rad" min="100" max="2000" step="100" data-field="radius" value="'+H(d.radius)+'">'+
+            '<span class="tag tag--solid rangeval" id="radVal">'+H(niceUp(+d.radius))+'</span>'+
+          '</div>'+
+          '<span class="hint">Если шли маршрутом, ставьте по самому дальнему месту — круг покажет всю зону поиска</span></div>'
       : '');
 }
 function viewCreate(){
@@ -5106,7 +5189,9 @@ function viewProfile(){
 
   /* старое значение вкладки переживает обновление: «resp» больше не существует */
   if(ui.profileTab!=='archive')ui.profileTab='active';
-  var body=head+tabs+'<div class="swrap"><div id="swArea">'+
+  /* тот же блок фактов, что в профиле соседа: полоса состава дел, круг знакомств, свежесть */
+  var body=head+profileFacts(m.id,true,my.length>0)+'<div class="divider divider--lg"></div>'+
+    tabs+'<div class="swrap"><div id="swArea">'+
     rowsFor(ui.profileTab==='archive'?archive:active,ui.profileTab==='archive')+'</div></div>';
 
   return {title:'Профиль',body:body,section:true,
@@ -5189,6 +5274,53 @@ function typeBar(parts){
 function statBar(st){
   return typeBar([['act',st.met+st.joined,'Встречи'],['offer',st.given+st.got,'Вещи'],['find',st.returned,'Находки']]);
 }
+/* Блок фактов общий для обоих профилей: человеку полезно видеть себя тем же взглядом,
+   каким его видят соседи, а нам — не держать два разных профиля вместо одного.
+   hasPins говорит, есть ли ниже хоть что-то: от этого зависит, объяснять ли устройство
+   счётчиков или промолчать и отдать экран одному пустому состоянию */
+function profileFacts(id,self,hasPins){
+  var st=userStats(id), lines=statLine(st);
+  var met=metPeople(id);
+  /* свой круг считается один раз, а не заново на каждого проверяемого соседа */
+  var mine2=self?null:metPeople(db.currentUserId);
+  var mutual=self?[]:met.filter(function(u){return mine2.indexOf(u)>=0});
+  var bar=statBar(st);
+  var facts='<div class="pad stack">';
+  if(bar)facts+='<div><div class="eyebrow" style="margin-bottom:8px">Законченные дела</div>'+bar+'</div>';
+  if(met.length){
+    /* Настоящее время вместо «пересёкся»: рода у него нет, а угадывать род по имени
+       мы не станем — то же правило, что в statLine.
+       Имена вперёд, число в хвост, тем же приёмом, что у станций: «50 общих с вами»
+       и три имени расходились между собой, стоило кругу стать больше трёх. Если в хвосте
+       остался ровно один, называем его — «и ещё 1» не экономит ничего, а имя полезнее */
+    var mn=mutual.map(function(u){var uu=user(u);return uu?uu.name:'сосед'});
+    var shown=mn.length>4?mn.slice(0,3):mn, restN=mn.length-shown.length;
+    facts+='<div class="factrow">'+icon('people')+'<div><b>'+
+      (self?'Вы пересекаетесь с ':'Пересекается с ')+met.length+' '+plural(met.length,'соседом','соседями','соседями')+'</b>'+
+      (mn.length?'<span>Общие соседи: '+H(shown.join(', '))+(restN?' и ещё '+restN:'')+'</span>':'')+
+    '</div></div>';
+  }
+  /* Числа говорит полоса, и только она. Прежде они стояли дважды — в легенде полосы
+     и строкой счётчиков, — причём считали разное: полоса складывает роли (провёл сам плюс
+     пришёл к другим), строка их разделяла. Отсюда «Встречи 3» против «Проведено встреч: 2»,
+     и человек искал, где ошибка. В строке остаётся то, чего полоса сказать не может: когда
+     это было в последний раз и сколько народу собирается */
+  if(lines.length&&st.last){
+    var fresh='Последнее — '+lowerFirst(agoText(st.last));
+    facts+='<div class="factrow">'+icon('check')+'<div><b>'+H(fresh)+'</b>'+
+      (st.crowd>1?'<span>Собирается по '+st.crowd+' '+plural(st.crowd,'соседу','соседа','соседей')+'</span>':'')+
+    '</div></div>';
+  }else if(hasPins){
+    /* объяснять устройство счётчиков есть смысл тому, у кого процесс начался. Совсем пустой
+       профиль показывает одно пустое состояние — то, что ниже, и оно называет суть */
+    facts+='<div class="factrow">'+icon('clock')+'<div><b>Пока без истории</b>'+
+      '<span>Счётчики появятся, когда закроется первое событие</span></div></div>';
+  }
+  facts+='</div>';
+
+
+  return facts;
+}
 function viewUser(id,pinctx){
   var u=user(id);
   if(!u)return {title:'Сосед',back:true,body:'<div class="empty">'+icon('user')+'<b>Профиль не найден</b></div>'};
@@ -5215,42 +5347,7 @@ function viewUser(id,pinctx){
 
   /* Полоса состава отвечает на «чем именно человек занят» за полсекунды — организатор
      встреч перед вами или раздающий вещи. Текстовые строки ниже говорят про роль */
-  var met=metPeople(id);
-  /* свой круг считается один раз, а не заново на каждого проверяемого соседа */
-  var mine2=self?null:metPeople(db.currentUserId);
-  var mutual=self?[]:met.filter(function(u){return mine2.indexOf(u)>=0});
-  var bar=statBar(st);
-  var facts='<div class="pad stack">';
-  if(bar)facts+='<div><div class="eyebrow" style="margin-bottom:8px">Чем занимается в районе</div>'+bar+'</div>';
-  if(met.length){
-    /* Настоящее время вместо «пересёкся»: рода у него нет, а угадывать род по имени
-       мы не станем — то же правило, что в statLine.
-       Имена вперёд, число в хвост, тем же приёмом, что у станций: «50 общих с вами»
-       и три имени расходились между собой, стоило кругу стать больше трёх. Если в хвосте
-       остался ровно один, называем его — «и ещё 1» не экономит ничего, а имя полезнее */
-    var mn=mutual.map(function(u){var uu=user(u);return uu?uu.name:'сосед'});
-    var shown=mn.length>4?mn.slice(0,3):mn, restN=mn.length-shown.length;
-    facts+='<div class="factrow">'+icon('people')+'<div><b>'+
-      (self?'Вы пересекаетесь с ':'Пересекается с ')+met.length+' '+plural(met.length,'соседом','соседями','соседями')+'</b>'+
-      (mn.length?'<span>Общие соседи: '+H(shown.join(', '))+(restN?' и ещё '+restN:'')+'</span>':'')+
-    '</div></div>';
-  }
-  if(lines.length){
-    /* Подпись — про свежесть, а не про количество: счётчик уже сказал «сколько»,
-       а «когда» не сказал никто. Формулировка относительная — «восемнадцатое это чего?» */
-    var fresh=st.last?('последнее — '+lowerFirst(agoText(st.last))
-      +(st.crowd>1?', собирается по '+st.crowd+' '+plural(st.crowd,'соседу','соседа','соседей'):'')):'';
-    /* свежесть впереди остальных счётчиков: она отвечает на вопрос, которого у них нет */
-    var subline=[fresh].concat(lines.slice(1)).filter(Boolean).join(' · ');
-    facts+='<div class="factrow">'+icon('check')+'<div><b>'+H(lines[0].charAt(0).toUpperCase()+lines[0].slice(1))+'</b>'+
-      (subline?'<span>'+H(subline.charAt(0).toUpperCase()+subline.slice(1))+'</span>':'')+'</div></div>';
-  }else{
-    facts+='<div class="factrow">'+icon('clock')+'<div><b>Пока без истории</b>'+
-      '<span>Счётчики появятся, когда закроется первое событие</span></div></div>';
-  }
-  facts+='</div>';
-
-  function rows(list){
+  var facts=profileFacts(id,self,!!(act.length||past.length));  function rows(list){
     return list.map(function(p){
       return '<button class="listrow listrow--chat" data-pin="'+p.id+'">'+pinCover(p)+
         '<span class="listrow__body"><span class="listrow__t">'+H(p.title)+'</span>'+
@@ -5455,10 +5552,15 @@ function threadRow(t){
       '<span class="listrow__top">'+
         '<span class="listrow__t">'+H(title)+'</span>'+
         '<span class="listrow__time">'+H(m?listTime(m.created_at):'')+'</span>'+
-        (unread?'<span class="unread"></span>':'')+
       '</span>'+
       (kind==='system'?'':'<span class="listrow__pin">'+H(sub)+'</span>')+
-      '<span class="listrow__msg">'+H(prev)+'</span>'+
+      /* Знак непрочитанного стоит у самой реплики, а не наверху у времени: он про неё.
+         Внутри число — сколько сообщений пришло, пока вас не было. У системного канала
+         число не показываем: цифра в разделе значит «вам написал живой человек»,
+         и разбавлять её уведомлениями сервиса нельзя */
+      '<span class="listrow__last"><span class="listrow__msg">'+H(prev)+'</span>'+
+        (unread?'<span class="unread">'+((kind==='system')?'':threadUnreadCount(t))+'</span>':'')+
+      '</span>'+
     '</span></button>';
 }
 function viewChats(){
@@ -5842,6 +5944,7 @@ function aboutDialog(){
     '<div class="about__meta">'+
       '<span><b>Автор</b>Савиных Сергей</span>'+
       '<span><b>Создан</b>Август 2026 года</span>'+
+      '<span><b>Обновлён</b>'+UPDATED+'</span>'+
       '<span><b>Версия</b>'+VERSION+' — по ТЗ v0.2</span>'+
     '</div>'+
   '</div>';
@@ -6710,8 +6813,9 @@ document.addEventListener('input',function(e){
   /* ползунок радиуса: полная перерисовка убила бы перетаскивание, поэтому обновляем
      только подпись под ним и круг на карте */
   if(f==='radius'){
-    var rh=$('#radHint');
-    if(rh)rh.textContent='Круг радиусом '+niceUp(+e.target.value)+'. Если шли маршрутом, ставьте по самому дальнему месту — круг покажет всю зону поиска';
+    /* меняется только чип со значением: подсказка теперь постоянная и число не повторяет */
+    var rh=$('#radVal');
+    if(rh)rh.textContent=niceUp(+e.target.value);
     renderMarkers();
     return;
   }
@@ -7180,6 +7284,12 @@ function osFlash(el){
 }
 document.addEventListener('scroll',function(e){
   if(e.target&&e.target.nodeType===1)osFlash(e.target);
+},true);
+/* Тот же перехват для краёв ряда вкладок: один слушатель на всё приложение, узлы меняются
+   сколько угодно — он найдёт ряд по цели события */
+document.addEventListener('scroll',function(e){
+  var el=e.target;
+  if(el&&el.nodeType===1&&el.classList&&el.classList.contains('tabs'))tabEdges(el);
 },true);
 /* Шапка списка уходит вместе с содержимым, а не прячется рывком в начале прокрутки:
    пока вы листаете вниз, она поднимается ровно на столько, на сколько уехал список,

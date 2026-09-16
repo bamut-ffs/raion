@@ -671,15 +671,16 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 
 /* ---------- pin card ---------- */
 /* Высота обложки — пропорция, а не число: раньше стояло 132px без всякого правила, и на
-   широком экране обложка выглядела полоской. Фотография показывается целиком и по центру
-   (contain, а не cover): кадрировать чужой снимок мы не вправе, а по краям и так лежит
-   подложка в цвет категории. Отступ нужен, чтобы снимок не доходил до краёв — шапка
-   карточки лежит поверх обложки, и без него кнопки оказывались на фотографии */
+   широком экране обложка выглядела полоской. Кнопки шапки лежат прямо на снимке и читаются
+   благодаря своим плашкам и градиенту сверху, поэтому поле по краям больше не нужно */
 .cover{
   aspect-ratio:16/9;max-height:340px;position:relative;display:grid;place-items:center;
-  overflow:hidden;flex:none;padding:10px;
+  overflow:hidden;flex:none;
 }
-.cover img{width:100%;height:100%;object-fit:contain;object-position:center}
+/* Снимок заполняет обложку целиком. Прежде он показывался «целиком» с полем по краям —
+   довод был «кадрировать чужой снимок мы не вправе». Обложки теперь свои и все 16:9,
+   ровно пропорция самой обложки: резать нечего, а поле читалось как рамка вокруг фотографии */
+.cover img{width:100%;height:100%;object-fit:cover;object-position:center}
 /* затемнение под шапкой: кнопки обязаны читаться на любом снимке */
 .cover::before{
   content:'';position:absolute;left:0;right:0;top:0;height:76px;pointer-events:none;
@@ -882,7 +883,21 @@ button.person:hover{background:var(--surface-2)}
 .textarea{resize:vertical;min-height:92px;font-family:inherit}
 /* ползунок радиуса: своя дорожка и бегунок — системные в разных браузерах разного роста
    и ломают ритм формы */
+/* Строка ползунка: значение чипом слева, дорожка занимает остальное. Чип лежит в разметке
+   после ползунка и возвращается влево порядком — так его достают состояния ползунка */
+.rangerow{display:flex;align-items:center;gap:12px}
+.rangerow .input[type=range]{flex:1;min-width:0}
+/* ширина по самому широкому значению («1,5 км»), цифры табличные: иначе чип дёргается,
+   пока тащат бегунок */
+.rangeval{order:-1;flex:none;min-width:62px;justify-content:center;font-variant-numeric:tabular-nums;
+  transition:background .12s,color .12s}
+.rangerow:hover .rangeval{background:var(--ink)}
+.rangerow .input[type=range]:active~.rangeval{background:var(--brand);color:#fff}
+/* кольцо фокуса снимаем с дорожки и отдаём бегунку: обводить надо то, чем управляют */
 input[type=range].input{padding:0;height:36px;background:transparent;border:none;appearance:none}
+input[type=range].input:focus{box-shadow:none;border-color:transparent}
+input[type=range].input:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(--ring)}
+input[type=range].input:focus-visible::-moz-range-thumb{box-shadow:0 0 0 3px var(--ring)}
 input[type=range].input::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:var(--surface-3)}
 input[type=range].input::-webkit-slider-thumb{appearance:none;width:22px;height:22px;margin-top:-9px;border-radius:50%;background:var(--surface);border:1px solid var(--line-2);box-shadow:var(--shadow-2)}
 input[type=range].input::-moz-range-track{height:4px;border-radius:2px;background:var(--surface-3)}
@@ -1036,6 +1051,10 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .tabswrap::after{right:0;background:linear-gradient(to right,color-mix(in srgb,var(--surface) 0%,transparent),var(--surface))}
 .tabswrap.is-start::before{opacity:1}
 .tabswrap.is-end::after{opacity:1}
+/* Перебор в считанные пиксели не прокручиваем, а убираем: ряд поджимается зазором и правым
+   полем и встаёт целиком. Иначе вкладки ездят на два-три пикселя, и на двух снимках подряд
+   «Все» стоит в разных местах */
+.tabswrap.is-tight .tabs{gap:8px;padding-right:8px;overflow-x:hidden}
 .tabs button:hover{color:var(--ink)}
 .tabs button.is-on{color:var(--ink);font-weight:600}
 /* Число на вкладке появляется только когда есть непрочитанное — значит само его наличие
@@ -1117,10 +1136,18 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .listrow__top{display:flex;align-items:baseline;gap:8px;min-width:0}
 .listrow__top .listrow__t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .listrow__top .listrow__time{flex:none}
-.listrow__top .unread{flex:none;align-self:center}
 .listrow__r svg{width:16px;height:16px;color:var(--ink-3)}
 .listrow__time{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap}
-.unread{width:8px;height:8px;border-radius:50%;background:var(--brand)}
+/* Знак непрочитанного: пилюля того же вида, что счётчик на таббаре и на колоколе — один знак
+   на всё приложение. Пустая (без числа) остаётся кружком: так живёт системный канал */
+.listrow__last{display:flex;align-items:center;gap:8px;min-width:0;margin-top:4px}
+.listrow__last .listrow__msg{flex:1;min-width:0;margin-top:0}
+.unread{
+  flex:none;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--brand);
+  color:#fff;font-size:var(--f-xs10);line-height:18px;font-weight:600;text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+.unread:empty{min-width:8px;width:8px;height:8px;padding:0;border-radius:50%}
 /* Системный канал даёт точку, а не число: цифра на разделе должна значить ровно одно —
    «вам написал живой человек», иначе ей перестают верить, как «99+» в маркетплейсах */
 .navbtn__badge--dot{min-width:9px;width:9px;height:9px;padding:0;border-radius:50%;font-size:0}
@@ -1287,6 +1314,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
    наезжал на плавающую кнопку в фильтрах, сверху ему никто не мешает */
 .toast{
   position:fixed;left:50%;top:16px;transform:translateX(-50%) translateY(-160%) scale(.92);
+  overflow:hidden;
   opacity:0;pointer-events:none;
   background:var(--ink);color:var(--ground);padding:12px 16px;border-radius:var(--r-m);
   font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;box-shadow:var(--shadow-2);z-index:60;
@@ -1295,7 +1323,24 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   display:flex;align-items:center;gap:12px;
 }
 .toast.is-on{opacity:1;transform:translateX(-50%) translateY(0) scale(1);pointer-events:auto}
-.toast__a{color:var(--brand);font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+/* Цвет действия — тот же, которым набран текст тоста, а не брендовый: синий на тёмной плашке
+   контрастен слабо. Жёстко белым писать нельзя: тост построен на паре --ink/--ground
+   и в тёмной теме переворачивается в светлую плашку с тёмным текстом */
+/* Правило стоит после .toast: у них одинаковая специфичность, и раньше по порядку
+   побеждало базовое — тост получал и top, и bottom разом и растягивался во всю высоту.
+   На телефоне тост выезжает сверху тост выезжает сверху: там у него общий слот с плашкой расстояния и кнопкой
+   охвата, и уходят они одним движением. На десктопе верх занят шапками панелей, и тост
+   падал на них — поэтому он живёт внизу и уходит к нижней границе тем же движением */
+@media (min-width:821px){
+  .toast{top:auto;bottom:16px;transform:translateX(-50%) translateY(160%) scale(.92)}
+  .toast.is-on{transform:translateX(-50%) translateY(0) scale(1)}
+}
+.toast__a{color:var(--ground);font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+/* Полоска времени по нижнему краю: видно, сколько тосту осталось. Длительность приходит
+   из того же числа, что и таймер, — иначе полоска и таймер разойдутся */
+.toast__time{position:absolute;left:0;right:0;bottom:0;height:2px;border-radius:0 0 var(--r-m) var(--r-m);overflow:hidden}
+.toast__time i{display:block;height:100%;width:100%;background:var(--ground);opacity:.45;
+  transform:scaleX(0);transform-origin:left;transition:transform linear}
 .toast__a svg{width:15px;height:15px}
 /* тост без сообщения: остаётся одно действие, и поля ему нужны кнопочные, а не абзацные */
 .toast--bare{padding:8px 14px}
@@ -1880,6 +1925,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.11";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.12";</script>
 </body>
 </html>
