@@ -1,0 +1,9 @@
+# По умолчанию на GitHub не уезжает ничего
+/*
+
+# Кроме перечисленного здесь
+!.gitignore
+!README.md
+!index.html
+!raion-ds.html
+!raion-tz-v02.html

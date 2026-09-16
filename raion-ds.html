@@ -1,0 +1,1872 @@
+<title>«Район» — дизайн-система</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  /* Серые — системные Gray Apple. Они не нейтральные, а чуть синие, поэтому холод
+     пришлось увести и на карту: дома и парки рядом с холодными панелями выглядели
+     желтоватыми. Текстовые серые остались своими — systemGray на белом даёт 3,5:1,
+     для подписей этого мало */
+  --ground:#ededf2;
+  --surface:#ffffff;
+  --surface-2:#f2f2f7;
+  --surface-3:#e5e5ea;
+  --ink:#161616;
+  --ink-2:#5c5c5c;
+  --ink-3:#6f6f6f;
+  --line:#e5e5ea;
+  --line-2:#d1d1d6;
+  --road:#ffffff;
+  --road-2:#f5f5fa;
+  --road-edge:#d1d1d6;
+  --build:#dedee4;
+  --build-2:#d2d2d9;
+  --park:#d0d0d7;
+  --park-2:#c4c4cc;
+  --park-ink:#6f6f6f;
+  --water:#c0c0c8;
+  --water-edge:#a6a6af;
+  /* Акценты взяты из системной палитры Apple (HIG → Color), но не из колонки Default:
+     дефолтный оранжевый #FF8D28 под белым текстом даёт 2:1 и не читается. Заливки берут
+     колонку Increased contrast (light) — она для того и существует, и даёт нам 6:1 вместо
+     прежних 3:1. Подложки чипов — дефолтные яркие значения, разведённые белым до 14% */
+  /* Яркий оранжевый вместо жжёной охры: тёмный вариант читался землистым везде, где цвет
+     выходит за карту. Подпись на чипе от этого светлеет — если станет блёклой, текст уйдёт
+     в обычный тёмный, а цвет останется точкой рядом, как у станций */
+  --act:#ff8d28;
+  --act-ink:#ffffff;
+  --act-soft:#ffeade;
+  --danger-solid:#e9152d;
+  --danger-ink:#ffffff;
+  --offer:#008932;
+  --offer-ink:#ffffff;
+  --offer-soft:#e3f7e8;
+  /* индиго, а не purple: у Apple фиолетовый уходит в маджентовый и на находках
+     читался бы розовым, а индиго почти совпадает с тем, что стояло здесь раньше */
+  --find:#564ade;
+  --find-ink:#ffffff;
+  --find-soft:#e9e7fe;
+  --brand:#00aaff;
+  --brand-ink:#0d2130;
+  --brand-icon:#0088c8;
+  --brand-soft:#dff2ff;
+  /* Граница поля ввода — systemGray Apple, 3,5:1 на белом. Отдельный токен, а не --line-2:
+     разделитель и край поля решают разные задачи, и у поля норма жёстче — WCAG 1.4.11
+     требует 3:1. Со старой рамкой было 1,3:1, и поле читалось как выключенное */
+  --field-line:#8e8e93;
+  /* Плотность кольца выбора разная по темам: тёмный ореол на белом читается при 16%,
+     а светлый на почти чёрном при тех же 16% почти не виден — светлое на тёмном требует
+     большей плотности */
+  --ring:rgba(22,22,22,.16);
+  /* Календарик у поля даты и часы у поля времени рисует браузер, а не мы. Их вид задаёт
+     color-scheme: без него в тёмной теме они остаются чёрными на чёрном */
+  color-scheme:light;
+  --focus:#161616;
+  --danger:#5c5c5c;
+  --shadow-1:0 1px 2px rgba(0,0,0,.08);
+  --shadow-2:0 2px 4px rgba(0,0,0,.07),0 10px 28px rgba(0,0,0,.13);
+  --shadow-3:0 4px 8px rgba(0,0,0,.09),0 24px 60px rgba(0,0,0,.22);
+  --r-s:6px; --r-m:10px; --r-l:16px; --panel-w:380px; --panel-b-w:340px; --home-peek:78px;
+  /* высота верхней полосы экрана: одна на шапку с заголовком и на ряд вкладок, иначе
+     в двух колонках рядом стоят две шапки разной высоты и списки под ними разъезжаются */
+  --head-h:56px;
+  /* первая полоса экрана: поле ввода 46 плюс поля по 16. Вторая — --head-h */
+  --band-h:78px;
+  /* сколько видно у свёрнутой карточки пина: ручка плюс две строки корешка */
+  --pin-peek:68px;
+  /* Типографика — шкала Авито (avito.design/article/typography). Кегль и интерлиньяж это
+     одна пара: менять их можно только вместе, поэтому у каждого стиля две переменные.
+     H* — заголовочные стили, M/S/XS — наборные. Правило контраста: над текстом S заголовок
+     не мельче H60, над текстом M — не мельче H50. Размеры одинаковы на телефоне и десктопе. */
+  --f-h20:26px;  --l-h20:30px;   /* заглавие онбординга */
+  --f-h30:21px;  --l-h30:26px;   /* заголовок карточки пина и модальных окон */
+  --f-h40:18px;  --l-h40:22px;   /* имя в шапке профиля */
+  --f-h50:16px;  --l-h50:20px;   /* заголовки карточек и строк списка */
+  --f-h60:14px;  --l-h60:18px;   /* мелкий заголовок над подписью S */
+  --f-m10:15px;  --l-m10:22px;   /* наборный текст по умолчанию */
+  --f-m20:15px;  --l-m20:20px;   /* списки, плотные блоки, контролы */
+  --f-s10:13px;  --l-s10:18px;   /* второстепенный текст */
+  --f-s20:13px;  --l-s20:16px;   /* второстепенный текст в плотных блоках */
+  --f-xs10:11px; --l-xs10:14px;  /* надзаголовки и служебные подписи */
+  /* Отступы: все кратны четырём. Между текстовыми блоками величину задаёт верхний стиль
+     (правило Авито): после H20–H50 и M10 — 12, после M20, H60, S10, S20, XS10 — 8.
+     Внутри плотных блоков — строк списка, карточек, шапок — отступ минимальный (4) или
+     его нет вовсе: там текст разделён контрастом цвета, а не пустотой. Переменных для
+     отступов нет намеренно: это правило, а не набор значений — проверяется делением на 4.
+     Не подчиняются шкале оптические поправки (сдвиг иконки к базовой линии на 1–2px)
+     и опорные величины каркаса: высота таббара 66, --home-peek, потолок шторок 100 */
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#121214;
+    --surface:#1c1c1e;
+    --surface-2:#2c2c2e;
+    --surface-3:#3a3a3c;
+    --ink:#ececec;
+    --ink-2:#a1a1a1;
+    --ink-3:#8f8f8f;
+    /* линии светлее Gray5: разделитель обязан быть виден и на surface, и на surface-2,
+       а они у Apple в тёмной теме стоят вплотную */
+    --line:#38383a;
+    --line-2:#48484a;
+    --road:#333336;
+    --road-2:#2b2b2e;
+    --road-edge:#3d3d40;
+    --build:#1e1e21;
+    --build-2:#232326;
+    --park:#252528;
+    --park-2:#2a2a2d;
+    --park-ink:#9a9a9a;
+    --water:#2e2e31;
+    --water-edge:#18181b;
+    /* тёмная тема берёт колонку Default (dark): там цвета уже осветлены под тёмный фон,
+       а иконки поверх остаются тёмными — на светящейся заливке белое слепит */
+    --act:#ff9230;
+    --act-ink:#1a0d08;
+    --act-soft:#483423;
+    --danger-solid:#ff4245;
+    --danger-ink:#2a0c0e;
+    --offer:#30d158;
+    --offer-ink:#07200f;
+    --offer-soft:#23432b;
+    --find:#6d7cff;
+    --find-ink:#0f1330;
+    --find-soft:#2f324d;
+    --brand:#00aaff;
+    --brand-ink:#0d2130;
+    --brand-icon:#00aaff;
+    --brand-soft:#123244;
+    --field-line:#8e8e93;
+    --ring:rgba(236,236,236,.32);
+    color-scheme:dark;
+    --focus:#ececec;
+    --danger:#a1a1a1;
+    --shadow-1:0 1px 2px rgba(0,0,0,.4);
+    --shadow-2:0 2px 4px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.45);
+    --shadow-3:0 4px 8px rgba(0,0,0,.35),0 24px 60px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#121214;
+  --surface:#1c1c1e;
+  --surface-2:#2c2c2e;
+  --surface-3:#3a3a3c;
+  --ink:#ececec;
+  --ink-2:#a1a1a1;
+  --ink-3:#8f8f8f;
+  /* линии светлее Gray5: разделитель обязан быть виден и на surface, и на surface-2,
+     а они у Apple в тёмной теме стоят вплотную */
+  --line:#38383a;
+  --line-2:#48484a;
+  --road:#333336;
+  --road-2:#2b2b2e;
+  --road-edge:#3d3d40;
+  --build:#1e1e21;
+  --build-2:#232326;
+  --park:#252528;
+  --park-2:#2a2a2d;
+  --park-ink:#9a9a9a;
+  --water:#2e2e31;
+  --water-edge:#18181b;
+  /* тёмная тема берёт колонку Default (dark): там цвета уже осветлены под тёмный фон,
+     а иконки поверх остаются тёмными — на светящейся заливке белое слепит */
+  --act:#ff9230;
+  --act-ink:#1a0d08;
+  --act-soft:#483423;
+  --danger-solid:#ff4245;
+  --danger-ink:#2a0c0e;
+  --offer:#30d158;
+  --offer-ink:#07200f;
+  --offer-soft:#23432b;
+  --find:#6d7cff;
+  --find-ink:#0f1330;
+  --find-soft:#2f324d;
+  --brand:#00aaff;
+  --brand-ink:#0d2130;
+  --brand-icon:#00aaff;
+  --brand-soft:#123244;
+  --field-line:#8e8e93;
+  --ring:rgba(236,236,236,.32);
+  color-scheme:dark;
+  --focus:#ececec;
+  --danger:#a1a1a1;
+  --shadow-1:0 1px 2px rgba(0,0,0,.4);
+  --shadow-2:0 2px 4px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.45);
+  --shadow-3:0 4px 8px rgba(0,0,0,.35),0 24px 60px rgba(0,0,0,.55);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{
+  margin:0;background:var(--ground);color:var(--ink);
+  font-family:'Golos Text',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-size:var(--f-m10);line-height:var(--l-m10);-webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;overflow:hidden;
+}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+::selection{background:var(--brand-soft);color:var(--ink)}
+.mono{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+/* Системные полосы прокрутки скрыты во всём приложении: они забирали ширину у содержимого,
+   и поле поиска прыгало, когда список результатов переставал прокручиваться. Вместо них —
+   плашка .oscroll__thumb поверх содержимого, её ставит скрипт любому прокрученному элементу */
+*{scrollbar-width:none}
+*::-webkit-scrollbar{width:0;height:0}
+.oscroll__thumb{
+  position:absolute;right:3px;top:0;width:6px;border-radius:3px;background:var(--ink-3);
+  opacity:0;transition:opacity .25s;z-index:9;
+}
+.oscroll__thumb.is-on{opacity:.38}
+.oscroll__thumb.is-on:hover,.oscroll__thumb.is-drag{opacity:.62}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ---------- shell ---------- */
+.app{display:flex;height:100dvh;overflow:hidden;position:relative}
+/* компактный рейл: иконка сверху, подпись снизу — единый стиль для десктопа и мобильного таббара */
+/* свой слой выше панели: панель теперь абсолютная и при сворачивании уезжает влево ровно на
+   место рейла — без этого она ложилась бы поверх навигации и прятала её.
+   На мобильном шторка (z-index 20) по-прежнему перекрывает таббар, как и задумано */
+.rail{
+  flex:0 0 84px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:16px 8px;background:var(--surface);border-right:1px solid var(--line);
+  position:relative;z-index:12;
+}
+.brand{display:flex;align-items:center;justify-content:center;padding:4px 0 16px;width:100%;border-radius:var(--r-m)}
+.brand:hover .brand__mark{opacity:.82}
+.brand__mark{
+  width:30px;height:30px;border-radius:8px;background:var(--ink);color:var(--ground);
+  display:grid;place-items:center;flex:none;
+}
+.brand__mark svg{width:16px;height:16px}
+.rail .brand__name{display:none}
+.navbtn{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  padding:12px 4px;border-radius:var(--r-m);width:100%;
+  color:var(--ink-2);font-size:var(--f-xs10);line-height:var(--l-xs10);font-weight:500;text-align:center;
+  transition:background .12s,color .12s;
+}
+.navbtn svg{width:20px;height:20px;flex:none}
+.navbtn span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.navbtn:hover{background:var(--surface-2);color:var(--ink)}
+.navbtn.is-on{background:var(--surface-3);color:var(--ink)}
+/* от центра кнопки, а не от её правого края: иконка центрирована и на фиксированном рейле,
+   и на резиновом таббаре, поэтому значок всегда стоит в одной точке относительно неё */
+.navbtn__badge{
+  position:absolute;top:4px;left:calc(50% + 4px);min-width:18px;height:18px;padding:0 4px;border-radius:10px;
+  /* сигналы брендовые: красный оставлен за типом «активность» и за необратимым действием.
+     Белый прописан явно — на брендовом фоне всегда белое, а --act-ink в тёмной теме тёмный */
+  background:var(--brand);color:#fff;font-size:var(--f-xs10);line-height:var(--l-xs10);font-weight:600;
+  display:grid;place-items:center;font-variant-numeric:tabular-nums;
+}
+.rail__spacer{flex:1}
+.about__meta{display:flex;flex-direction:column;gap:8px;font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-2)}
+.about__meta b{display:inline-block;min-width:78px;color:var(--ink-3);font-weight:500}
+
+/* Вне типографической шкалы и осознанно: инициалы в кружках аватаров, число в кластере,
+   счётчик на плашке станции и знак вопроса в прицеле. Это не текст, который читают строкой,
+   а графика внутри фигуры фиксированного размера — кегль там подбирается под саму фигуру */
+/* внутри лежит сгенерированное лицо: собственного фона и букв аватару больше не нужно */
+.avatar{
+  width:30px;height:30px;border-radius:50%;flex:none;display:block;overflow:hidden;
+  background-repeat:no-repeat;background-color:var(--surface-3);
+}
+.avatar svg{display:block;width:100%;height:100%}
+.avatar--s{width:24px;height:24px;font-size:10px}
+.avatar--l{width:42px;height:42px;font-size:15px}
+
+/* ---------- stage ---------- */
+.work{flex:1;display:flex;min-width:0;position:relative}
+.panel-collapse{
+  position:absolute;left:calc(var(--panel-w) + 4px);top:14px;
+  width:24px;height:42px;border-radius:6px;background:var(--surface);border:1px solid var(--line);
+  display:grid;place-items:center;color:var(--ink-2);z-index:11;transition:left .22s ease;
+}
+.panel-collapse:hover{background:var(--surface-2);color:var(--ink)}
+.panel-collapse svg{width:14px;height:14px}
+.work.is-collapsed .panel-collapse{left:4px}
+.work.is-collapsed .panel-collapse svg{transform:scaleX(-1)}
+@media (max-width:820px){.panel-collapse{display:none}}
+.stage{flex:1;position:relative;min-width:0;overflow:hidden;background:var(--ground)}
+.map{position:absolute;inset:0;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.map.is-drag{cursor:grabbing}
+/* только сам холст карты: слой меток лежит внутри .map, и раньше это правило растягивало
+   и значки в метках — значок метро схлопывался в ноль, а иконки в пинах распирало на всю каплю */
+.map>svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.markers{position:absolute;inset:0;pointer-events:none}
+/* Круги зон лежат своим слоем под метками: внутри метки круг более позднего пина
+   закрашивал более ранние — их пины и подписи уходили в цвет */
+.halos{position:absolute;inset:0;pointer-events:none;z-index:0}
+.marker{position:absolute;left:0;top:0;will-change:transform}
+
+.pin{
+  pointer-events:auto;position:relative;display:grid;place-items:center;
+  width:34px;height:34px;border-radius:50% 50% 50% 6px;transform:translate(-50%,-100%) rotate(-45deg);
+  box-shadow:var(--shadow-2);transition:transform .14s cubic-bezier(.2,.7,.3,1.3);
+  border:1.5px solid rgba(0,0,0,.10);
+}
+.pin>svg{width:16px;height:16px;transform:rotate(45deg)}
+.pin--act{background:var(--act);color:var(--act-ink)}
+.pin--offer{background:var(--offer);color:var(--offer-ink)}
+.pin--find{background:var(--find);color:var(--find-ink)}
+/* свои пины — брендовым цветом поверх категорийного, чтобы сразу бросались в глаза на карте */
+.pin--mine{background:var(--brand);color:#fff}
+.marker:hover .pin,.pin:focus-visible{transform:translate(-50%,-100%) rotate(-45deg) scale(1.12)}
+.marker.is-sel .pin{transform:translate(-50%,-100%) rotate(-45deg) scale(1.28)}
+.marker.is-sel{z-index:5}
+/* пины вне выбранной станции приглушены: карта сшита из нескольких станций, а список —
+   про одну. Кликабельными остаются, чтобы соседний пин можно было открыть */
+.marker.is-dim .pin,.marker.is-dim .halo,.marker.is-dim .pin__label,.marker.is-dim .cluster{opacity:.35}
+/* Пока открыта карточка, остальные булавки гаснут — выбранная и так крупнее, но на плотной
+   карте одного размера мало. Глубина другая, чем у «вне охвата»: два разных смысла не должны
+   выглядеть одинаково */
+.map.is-selpin .pin,.map.is-selpin .cluster,.map.is-selpin .pin__label,.map.is-selpin .halo{opacity:.28}
+.map.is-selpin .marker.is-sel .pin,.map.is-selpin .marker.is-sel .pin__label,
+.map.is-selpin .marker.is-sel .halo{opacity:1}
+.pin,.cluster,.pin__label{transition:opacity .18s ease}
+.pin__label{
+  position:absolute;left:0;top:8px;transform:translate(-50%,0);
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-s);
+  padding:3px 7px;font-size:var(--f-xs10);line-height:var(--l-xs10);font-weight:600;white-space:nowrap;max-width:170px;
+  overflow:hidden;text-overflow:ellipsis;box-shadow:var(--shadow-1);pointer-events:none;
+}
+.halo{
+  position:absolute;left:0;top:0;border-radius:50%;transform:translate(-50%,-50%);
+  background:color-mix(in srgb,var(--offer) 16%,transparent);
+  border:1px dashed color-mix(in srgb,var(--offer) 55%,transparent);pointer-events:none;
+}
+/* у пропажи круг означает не сдвиг точки, а заявленную зону поиска — и цвет у него свой */
+.halo--find{
+  background:color-mix(in srgb,var(--find) 14%,transparent);
+  border-color:color-mix(in srgb,var(--find) 55%,transparent);
+}
+.cluster{
+  pointer-events:auto;position:relative;transform:translate(-50%,-50%);display:grid;place-items:center;
+  width:40px;height:40px;border-radius:50%;background:var(--surface);border:1.5px solid var(--line-2);
+  box-shadow:var(--shadow-2);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums;
+  transition:transform .14s;
+}
+.cluster:hover,.cluster:focus-visible{transform:translate(-50%,-50%) scale(1.08)}
+.cluster__ring{position:absolute;inset:-5px;border-radius:50%;border:1.5px solid var(--line);opacity:.55}
+.cluster__mix{position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);display:flex;gap:2px}
+.cluster__mix i{width:6px;height:6px;border-radius:50%;display:block;box-shadow:0 0 0 1.5px var(--surface)}
+/* метка метро — экранного фиксированного размера (не масштабируется с картой),
+   размер подобран под то, как она выглядела бы на масштабе ~130 м, некликабельна */
+/* кружок, белая обводка и буква приходят из самого значка, поэтому ни фона, ни тени,
+   ни скругления здесь больше не нужно — только размер и цвет линии */
+.metrodot{pointer-events:none;display:block;width:24px;height:24px;transform:translate(-50%,-50%)}
+/* плашка станции на дальнем зуме: подложка в цвет линии, значок сливается с ней и держится
+   белой обводкой, число белое */
+.stationbadge{
+  pointer-events:auto;display:flex;align-items:center;gap:7px;padding:3px 13px 3px 3px;
+  border-radius:999px;color:#fff;box-shadow:var(--shadow-2);transform:translate(-50%,-50%);
+  font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;
+}
+.stationbadge svg{width:26px;height:26px;flex:none}
+.stationbadge:hover{opacity:.9}
+/* прицел выбора точки: неподвижен, карта ездит под ним. .pin внутри позиционирует себя тем же
+   transform, что и обычные маркеры (тычет вниз). По вертикали прицел ставит скрипт — на телефоне
+   он смещён вверх, потому что низ экрана занимает шторка */
+.pick-center{position:absolute;left:50%;top:50%;width:0;height:0;z-index:6;pointer-events:none}
+/* сам прицел брендовый и на пятую часть крупнее обычного пина: тип ещё не выбран, поэтому
+   вместо иконки знак вопроса */
+.pin--pick{width:41px;height:41px;background:var(--brand);color:#fff}
+.pin--pick b{transform:rotate(45deg);font-size:18px;font-weight:700;line-height:1}
+/* во время постановки точки существующие пины приглушаем: контекст рядом остаётся видно,
+   но прицел среди них не теряется */
+.map.is-pick .pin,.map.is-pick .cluster,.map.is-pick .halo,.map.is-pick .pin__label{opacity:.22}
+.map.is-pick .marker.is-draft .pin,.map.is-pick .marker.is-draft .halo{opacity:1}
+
+/* ---------- toolbar ---------- */
+.toolbar{
+  position:absolute;left:16px;right:16px;top:14px;display:flex;gap:12px;align-items:flex-start;
+  justify-content:flex-end;
+  pointer-events:none;flex-wrap:wrap;z-index:6;
+}
+.toolbar>*{pointer-events:auto}
+/* Кнопка охвата уходит не только под развёрнутой шторкой: на экране фильтра она дублирует
+   то, что вы там и меняете, а во время создания нажатие на неё уводит на фильтр — и уход
+   с шага создания обнуляет черновик, то есть кнопка молча выбрасывала недоделанное */
+.app.is-noscope .scopetop{opacity:0;pointer-events:none;transform:translateY(-160%) scale(.92)}
+.card-float{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);box-shadow:var(--shadow-2)}
+/* два кружка внахлёст — индикатор выбранных категорий. Обводка цветом подложки отделяет их
+   друг от друга; выключенная категория остаётся на месте, но становится контурной */
+.catdots{display:flex;align-items:center;flex:none;--btn-bg:var(--surface)}
+.catdots i{width:15px;height:15px;border-radius:50%;display:block;border:2px solid transparent;background:var(--btn-bg);box-shadow:0 0 0 2px var(--btn-bg)}
+.catdots i+i{margin-left:-6px}
+
+
+.zoomctl{transition:opacity .18s;position:absolute;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:12px;z-index:4}
+.zoomctl__group{display:flex;flex-direction:column;border-radius:var(--r-m);overflow:hidden}
+.zoomctl button{width:42px;height:42px;display:grid;place-items:center;color:var(--ink-2)}
+.zoomctl__group button+button{border-top:1px solid var(--line)}
+.zoomctl button:hover{background:var(--surface-2);color:var(--ink)}
+.zoomctl svg{width:16px;height:16px}
+.scalebar{
+  position:absolute;right:16px;bottom:16px;font-size:var(--f-xs10);line-height:var(--l-xs10);color:var(--ink-2);z-index:4;
+  display:flex;flex-direction:column;align-items:flex-end;gap:3px;padding:6px 8px;border-radius:var(--r-s);
+  background:color-mix(in srgb,var(--surface) 82%,transparent);border:1px solid var(--line);
+}
+.scalebar__line{height:5px;border:1px solid var(--ink-3);border-top:none}
+
+
+/* ---------- panel ---------- */
+/* Панель лежит поверх карты, а не занимает место в строке: пока она была колонкой,
+   сворачивание меняло ширину карты, и вся карта с пинами переезжала. Теперь карта всегда
+   во всю ширину, а сворачивание — просто сдвиг слоя за левый край */
+.panel{
+  position:absolute;left:0;top:0;bottom:0;width:var(--panel-w);z-index:10;
+  display:flex;flex-direction:column;min-height:0;min-width:0;order:-1;
+  background:var(--surface);border-right:1px solid var(--line);
+  transition:transform .22s ease;
+}
+.work.is-collapsed .panel{transform:translateX(-100%)}
+/* Вторая колонка для вложенного: карточка пина, переписка, фильтр. Список остаётся слева,
+   поэтому можно щёлкать пины подряд, не теряя места. Включается только с 1440 пикселей —
+   ниже две панели заняли бы больше половины экрана */
+.panel-b{
+  position:absolute;left:var(--panel-w);top:0;bottom:0;width:var(--panel-b-w);z-index:9;
+  display:flex;flex-direction:column;min-height:0;min-width:0;
+  background:var(--surface);border-right:1px solid var(--line);transition:none;
+}
+@media (max-width:1439px){.panel-b{display:none}}
+.work.is-collapsed .panel-b{display:none}
+.work.has-detail .panel-collapse{left:calc(var(--panel-w) + var(--panel-b-w) + 4px)}
+.iconbtn{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--ink-2);flex:none}
+.iconbtn:hover{background:var(--surface-2);color:var(--ink)}
+.iconbtn svg{width:17px;height:17px}
+/* отклонение заявки — иконка без подписи, но по высоте вровень с «Принять» рядом */
+.iconbtn--34{width:34px;height:34px}
+/* шестерня в шапке профиля равняется на иконки таббара, а не на стрелки в шапках */
+.iconbtn--20 svg{width:20px;height:20px}
+/* та же первая полоса, что зона поиска: высота одна на все экраны, содержимое по центру.
+   Раньше высота набиралась содержимым — 16 плюс аватар 42 плюс 16, — и профиль был
+   на четыре пикселя ниже соседних экранов */
+.profhead{display:flex;gap:13px;align-items:center;min-height:var(--band-h);border-bottom:1px solid var(--line)}
+/* Кнопки у правого борта стоят группой. Общий зазор 13px плюс собственные поля значков
+   давал между ними 25px против 22px до края — пара читалась как два отдельных контрола */
+.headacts{display:flex;align-items:center;gap:4px;flex:none}
+/* счётчик на колоколе, а не на строке: он говорит про то, что внутри, и должен быть виден
+   там же, где вход */
+.bellbtn{position:relative}
+.bellbtn__n{
+  position:absolute;top:-2px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:9px;
+  background:var(--brand);color:#fff;font-size:var(--f-xs10);line-height:16px;font-weight:600;
+  text-align:center;font-variant-numeric:tabular-nums;
+}
+/* незакреплённая зона между шапкой и телом: то, что не должно уезжать при прокрутке —
+   сейчас это строка поиска */
+/* Первая полоса экрана: её высоту диктует поле ввода (46 плюс поля по 16), и на неё же
+   равняется шапка профиля. Раньше 16 стояло только у мобильной домашней шторки, а на
+   десктопе оставалось 12 — зона поиска на карте и в сообщениях расходились на девять
+   пикселей ровно там, где их сравнивают при переключении экранов */
+.panel__top{flex:none;padding:16px;border-bottom:1px solid var(--line)}
+/* Вкладки приносят свои отступы и свою линию. Внутри общей зоны они получали вторые
+   и те, и другие: по бокам отступ удваивался, снизу появлялась вторая граница */
+.panel__top--flush{padding:0;border-bottom:none}
+/* поле поиска и полоса шагов приносят свои поля сами: в сообщениях зона поиска такая же,
+   как на карте, а у шагов поле своё, заданное .stepbar */
+.searchzone{padding:16px;border-bottom:1px solid var(--line)}
+/* закреплённая зона заодно ловит жест перетаскивания шторки, поэтому кнопкам шагов
+   нужно отдать их собственные нажатия — иначе тап по пройденному шагу уходит в жест */
+.panel__top .stepbar{touch-action:auto}
+.panel__body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.panel__foot{flex:none;padding:12px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.pad{padding:16px}
+/* Лестница отступов: 4 внутри пары, 8 внутри группы, 16 между группами, 24 внешнее поле.
+   Раньше блок стоял в поле 16, а группы внутри него разъезжались на 24 — внешнее было
+   меньше внутреннего, и группы читались как отдельные блоки. По горизонтали поле остаётся
+   16: оно держит вертикаль текста заодно со строками списка, у которых столько же */
+.pad.stack{padding:24px 16px}
+
+/* ---------- generic bits ---------- */
+.eyebrow{
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:var(--f-xs10);line-height:var(--l-xs10);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);
+}
+.chip{
+  display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:20px 20px 0 20px;
+  font-size:var(--f-s20);line-height:var(--l-s20);font-weight:500;background:var(--surface-3);color:var(--ink-2);white-space:nowrap;
+}
+.chip svg{width:13px;height:13px}
+.chip--act{background:var(--act-soft);color:var(--act)}
+.chip--offer{background:var(--offer-soft);color:var(--offer)}
+.chip--find{background:var(--find-soft);color:var(--find)}
+/* «Ваш пин» — бледная брендовая заливка с тёмным брендовым текстом. Правило «на брендовом
+   фоне только белое» здесь не работает: фон не сам --brand, а его светлый оттенок */
+.chip--brand{background:var(--brand-soft);color:var(--brand-icon)}
+/* Не прозрачный, а белый: когда строка под курсором или выбрана, она заливается серым,
+   и прозрачный тег темнел вместе с ней. Белая плашка остаётся плашкой в любом состоянии */
+.chip--muted{background:var(--surface);border:1px solid var(--line);color:var(--ink-3)}
+/* Тег — не чип. Чип со срезанным углом называет, что это за объект: тип события, станция,
+   «Ваш пин». Тег говорит о состоянии или числе, он мельче и без фирменного угла, иначе
+   в строке списка два чипа спорят за внимание */
+/* Отступы 3/1 вместо 2/2: сумма по вертикали та же, высота не двинулась, а текст сел выше.
+   Фон белый с рамкой, а не заливка: строка списка под курсором красится в surface-2,
+   и залитый тег на ней растворялся бы — как было с дорожкой прогресса */
+.tag{
+  display:inline-flex;align-items:center;gap:4px;padding:0 7px 1px;border-radius:6px;
+  font-size:var(--f-xs10);line-height:var(--l-xs10);font-weight:500;
+  background:var(--surface);border:1px solid var(--line);color:var(--ink-3);white-space:nowrap;
+}
+.tag svg{width:11px;height:11px}
+.tag--line{background:var(--surface);border:1px solid var(--line);color:var(--ink-3)}
+/* Счётчик в шапке залит: белый с рамкой там терялся на сером. Пара переворачивается сама —
+   в светлой теме тёмная заливка со светлыми цифрами, в тёмной наоборот, как у категорийных
+   цветов, где значок на светящейся заливке тоже тёмный */
+.tag--solid{background:var(--ink-2);border-color:transparent;color:var(--surface)}
+/* Обращения сервиса к вам: один блок ниже тела карточки. Белое с рамкой — вокруг серые
+   строки содержимого, и залитая плашка сливалась с ними в ещё одну такую же строку */
+.cardnotes{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+/* Обращение сервиса и карточка уведомления — один объект в двух местах, поэтому метрика
+   и типографика у них общие: поле 16, зазор 8, заголовок 16/20, текст 13/18, пара 8.
+   Разным остаётся только фон, и это осознанно: в карточке вокруг серые строки содержимого,
+   поэтому обращение белое с рамкой; в канале вокруг белая панель, поэтому новое — залитое */
+.cardnote{
+  display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:var(--r-m);
+  border:1px solid var(--field-line);background:var(--surface);
+  font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-2);
+}
+.cardnote b{display:block;font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;color:var(--ink)}
+/* 4 при интерлиньяже 18. Слипалось раньше не из-за четвёрки, а из-за тесных 13/16:
+   просвет между строками абзаца был меньше, чем нужно, и отступ сверху на его фоне
+   читался как ничто. Интерлиньяж вылечил причину — восьмёрка лечила бы уже здоровое */
+.cardnote p{margin:4px 0 0;color:var(--ink-3);font-size:var(--f-s10);line-height:var(--l-s10)}
+.cardnote .row{display:flex;gap:8px}
+.cardnote .row .btn{flex:1}
+/* итог в уведомлении — плашка без обводки: это не действие и не тип, а результат */
+.chip--plate{background:var(--surface);border:none;color:var(--ink-2)}
+/* Сегментед-контрол: одна дорожка, сегменты внутри. Отдельно стоящие чипы не показывали,
+   что варианты составляют один выбор, а общая подложка это говорит без слов — включённые
+   подряд сегменты сливаются в сплошную полосу, и «показано всё» видно с одного взгляда.
+   Поэтому же кнопка «Все» не нужна: сплошная полоса и есть это состояние */
+/* В форме контрол стоит среди полей ввода и обязан быть с ними одного роста: 44 в высоту
+   и кегль 15, иначе рядом с полем он выглядит недомерком */
+.segctl{display:flex;gap:3px;padding:3px;border-radius:var(--r-m);background:var(--surface-2)}
+.segctl button{
+  flex:1;min-width:0;padding:9px 6px;border-radius:7px;text-align:center;
+  font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;color:var(--ink-3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.segctl button:hover{color:var(--ink)}
+.segctl button.is-on{background:var(--surface);color:var(--ink);font-weight:600}
+/* Фильтр категорий — другой случай: не поле формы, а вторичный выбор над списком, поэтому
+   кегль служебный. Состояние говорит кружок — залит, когда категория показывается, — а
+   заливка сегмента убрана: она сказала бы то же самое второй раз */
+/* Строки в столбик, кружок и подпись в строку. Выбранная — белая плашка с тенью на серой
+   дорожке: так сразу видно, что выбрано, и контрол читается как один предмет, а не как
+   продолжение списка станций под ним. Кегль тот же, что у названия станции */
+.segctl--cat{flex-direction:column}
+.segctl--cat button{
+  flex:none;flex-direction:row;gap:6px;padding:10px 12px;white-space:normal;text-align:left;
+  font-size:var(--f-h50);line-height:var(--l-h50);display:flex;align-items:center;justify-content:flex-start;
+}
+.segctl--cat button.is-on{background:var(--surface);box-shadow:var(--shadow-1);font-weight:600}
+.segctl--cat i{width:14px;height:14px;border-radius:50%;flex:none;border:2px solid transparent;display:block}
+/* значок метро в чипе крупнее прочих иконок: на 13px белая обводка тоньше пикселя и мажется */
+.chip-metro{width:15px;height:15px;flex:none}
+.chip .chip-metro{width:15px;height:15px}
+/* точка в цвет линии — для мелких мест, где значок метро превращался в грязь */
+.linedot{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none;vertical-align:1px}
+/* Точка и название — один блок: кружок читается как часть названия, а не как значок
+   между двумя величинами. Внутри зазор маленький, снаружи обычный */
+.stn{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.chip .stn{margin-left:4px}
+.scopebtn__more{margin:0;color:var(--ink-3)}
+.scopebtn__st{gap:4px}
+/* счётчик-кнопка, открывающая список станций: выглядит как дропдаун, а не как заголовок */
+/* кнопка станции занимает строку целиком: рядом с сортировкой она делила ширину и текст
+   ломался на две строки */
+/* та же высота, что у ряда вкладок: переменная заведена ровно для этого — «одна на шапку
+   с заголовком и на ряд вкладок», — а счётчик набирал свою высоту отступами и промахивался
+   на два пикселя. На карте и в сообщениях первые две полосы теперь совпадают до пикселя */
+.scoperow{padding:0 16px;min-height:var(--head-h);display:flex;align-items:center;border-bottom:1px solid var(--line)}
+.scopebtn{display:flex;width:100%;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--r-m);font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-2)}
+.scopebtn b{white-space:nowrap}
+/* станция прижата к шеврону, счётчик остаётся слева: это две разные сущности, и между
+   ними должно быть пусто, а не одинаковые зазоры */
+.scopebtn__st{margin-left:auto;display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scopebtn:hover{background:var(--surface-2)}
+.scopebtn b{font-weight:600;color:var(--ink)}
+.scopebtn>svg:last-child{width:14px;height:14px;color:var(--ink-3);flex:none}
+/* кнопка фильтра над картой — только на мобильном: там панель по умолчанию свёрнута,
+   и иначе фильтр со станцией прятались бы за свайп. Правило стоит после общего,
+   иначе оно проигрывает ему по порядку */
+.scopetop{display:none}
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:var(--r-m);
+  font-size:var(--f-m20);line-height:var(--l-m20);font-weight:600;transition:opacity .12s,background .12s;width:100%;
+}
+.btn svg{width:16px;height:16px}
+/* Основная кнопка везде одна и брендовая. Раньше их было три — чёрная в мастере создания,
+   красная в активностях, синяя в вещах, — и цвет сообщал только раздел, а не важность.
+   Красное осталось за необратимым: удалить, сбросить, пожаловаться */
+.btn--primary,.btn--brand{background:var(--brand);color:#fff}
+/* необратимое действие — единственное место, где остался красный */
+/* белый на красном в обеих темах: заливка цветная, значит подпись задаётся жёстко */
+.btn--danger-solid{background:var(--danger-solid);color:#fff}
+.btn--primary:hover,.btn--brand:hover,.btn--danger-solid:hover{opacity:.9}
+.btn--ghost{background:var(--surface-2);color:var(--ink)}
+.btn--ghost:hover{background:var(--surface-3)}
+.btn--line{border:1px solid var(--line-2);color:var(--ink-2)}
+.btn--line:hover{background:var(--surface-2);color:var(--ink)}
+.btn--danger{color:var(--danger);background:transparent}
+.btn--danger:hover{background:var(--surface-2)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn--sm{padding:8px 12px;font-size:var(--f-s10);line-height:var(--l-s10);width:auto}
+.row{display:flex;gap:8px}
+.row>.btn{flex:1}
+.empty{padding:44px 24px;text-align:center;color:var(--ink-3);display:flex;flex-direction:column;align-items:center;gap:12px}
+/* только прямой потомок: селектор потомков раздувал и значки внутри кнопок под ним */
+.empty>svg{width:26px;height:26px;opacity:.5}
+.empty b{color:var(--ink-2);font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600}
+.empty p{margin:0;font-size:var(--f-s10);line-height:var(--l-s10);max-width:34ch}
+.divider{height:1px;background:var(--line);margin:0}
+/* крупный разделитель между группами: там, где волосок не отделяет, а только царапает */
+.divider--lg{height:8px;background:var(--surface-2)}
+/* выбранные станции чипами: их видно все разом, и снять любую можно одним нажатием */
+.stchips{display:flex;flex-wrap:wrap;gap:8px;padding:16px}
+.stchip{width:auto;border:1px solid var(--line);gap:6px}
+.stchip svg{width:12px;height:12px;color:var(--ink-3)}
+.stchip:hover{background:var(--surface-2)}
+.stclear{padding:0 16px 16px}
+/* текстовая кнопка: читается как действие, а не как ещё одна выбранная станция */
+.linkbtn{font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3);text-decoration:underline;text-underline-offset:2px}
+.linkbtn:hover{color:var(--ink)}
+
+
+/* ---------- switch ---------- */
+/* тумблер вернулся вместе с оповещениями о пропажах: это единственная механика, где сервис
+   пишет тому, кто ни на что не подписывался, и выключатель к ней обязателен */
+/* тумблер прижат к верху: против двух-трёх строк пояснения по центру он смотрелся криво */
+.switchrow{display:flex;align-items:flex-start;gap:16px;padding:4px}
+.switchrow .switch{margin-top:-2px}
+.switchrow__txt{flex:1;min-width:0}
+.switchrow b{display:block;font-size:var(--f-h60);line-height:var(--l-h60);font-weight:600}
+.switchrow span{display:block;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);margin-top:4px}
+.switch{
+  flex:none;width:42px;height:25px;padding:2px;border-radius:999px;
+  background:var(--surface-3);border:1px solid var(--line-2);position:relative;
+  transition:background .15s,border-color .15s;
+}
+.switch i{
+  /* дорожка задана серым или брендовым одинаково в обеих темах — значит и кружок жёстко */
+  display:block;width:19px;height:19px;border-radius:50%;background:#fff;
+  box-shadow:var(--shadow-2);transition:transform .15s;
+}
+.switch.is-on{background:var(--brand);border-color:var(--brand)}
+.switch.is-on i{transform:translateX(17px)}
+
+/* ---------- pin card ---------- */
+/* Высота обложки — пропорция, а не число: раньше стояло 132px без всякого правила, и на
+   широком экране обложка выглядела полоской. Фотография показывается целиком и по центру
+   (contain, а не cover): кадрировать чужой снимок мы не вправе, а по краям и так лежит
+   подложка в цвет категории. Отступ нужен, чтобы снимок не доходил до краёв — шапка
+   карточки лежит поверх обложки, и без него кнопки оказывались на фотографии */
+.cover{
+  aspect-ratio:16/9;max-height:340px;position:relative;display:grid;place-items:center;
+  overflow:hidden;flex:none;padding:10px;
+}
+.cover img{width:100%;height:100%;object-fit:contain;object-position:center}
+/* затемнение под шапкой: кнопки обязаны читаться на любом снимке */
+.cover::before{
+  content:'';position:absolute;left:0;right:0;top:0;height:76px;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(0,0,0,.16),transparent);
+}
+.cover--act{background:var(--act-soft)}
+.cover--offer{background:var(--offer-soft)}
+.cover--find{background:var(--find-soft)}
+.cover__glyph{width:44px;height:44px;opacity:.42}
+.cover--act .cover__glyph{color:var(--act)}
+.cover--offer .cover__glyph{color:var(--offer)}
+.cover--find .cover__glyph{color:var(--find)}
+/* статус переехал вниз: сверху теперь стоят кнопки, вынесенные на саму обложку */
+.cover__status{position:absolute;right:16px;bottom:12px}
+/* Шапка карточки лежит поверх обложки, а не отдельной полосой над ней: кнопки стоят прямо
+   на фотографии, на тех же отступах, что и раньше. Пока карточка не прокручена, шапка
+   прозрачная; на фотографии под кнопки подкладывается градиент — тёмная иконка на светлом
+   снимке иначе теряется. Стоит прокрутить — шапка становится обычной, градиент уходит,
+   проявляется название пина */
+.panelhead--over{position:absolute;top:0;left:0;right:0;z-index:3;pointer-events:none;transition:background .18s,border-color .18s;border-bottom:1px solid transparent}
+.panelhead--over>*{pointer-events:auto}
+.panelhead--over .chathead{background:transparent;border-bottom:none}
+/* Кнопки на обложке стоят на светлой полупрозрачной плашке всегда, а не проявляются под
+   курсором: тёмная иконка на такой плашке читается и на светлой фотографии, и на тёмной.
+   Прежний градиент поверх снимка больше не нужен — он затемнял верх каждой фотографии
+   ради белых иконок, которых теперь нет */
+/* Плашка задана белой в обеих темах, значит и значок на ней задаётся жёстко. Токен
+   здесь ловушка: --ink переворачивается, и в тёмной теме светлый значок оказывался
+   на светлой плашке */
+.panelhead--over .iconbtn{background:rgba(255,255,255,.74);color:#161616;backdrop-filter:blur(6px)}
+.panelhead--over .iconbtn:hover{background:rgba(255,255,255,.92);color:#161616}
+.panelhead--over.is-photo .sheet-grip::before{background:rgba(255,255,255,.75)}
+/* прокрутили — шапка стала обычной полосой, и плашка под кнопками больше не нужна */
+.is-scrolled .panelhead--over{background:var(--surface);border-bottom-color:var(--line)}
+.is-scrolled .panelhead--over .iconbtn{background:none;color:var(--ink-2);backdrop-filter:none}
+.is-scrolled .panelhead--over .iconbtn:hover{background:var(--surface-2);color:var(--ink)}
+.is-scrolled .panelhead--over.is-photo .sheet-grip::before{background:var(--line-2)}
+/* снизу больше остальных сторон: под карточкой сразу кнопки действий, и им нужен воздух */
+.pincard{padding:16px;display:flex;flex-direction:column;gap:12px}
+.pincard h2{font-size:var(--f-h30);line-height:var(--l-h30);font-weight:600;margin:0;text-wrap:balance}
+.pincard p{margin:0;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10);white-space:pre-wrap}
+.metaline{display:flex;flex-wrap:wrap;gap:8px}
+.factrow{display:flex;gap:12px;align-items:flex-start;font-size:var(--f-h60);line-height:var(--l-h60)}
+.factrow svg{width:16px;height:16px;color:var(--ink-3);flex:none;margin-top:2px}
+.factrow b{font-weight:600}
+.factrow span{color:var(--ink-3);font-size:var(--f-s20);line-height:var(--l-s20);display:block;margin-top:4px}
+/* Обе кнопки — автор и участники — одного роста: содержимое внутри держится в 36, поэтому
+   при центрировании верхняя строка встаёт на те же 12 сверху, а полоса заполнения остаётся
+   там же, где была, просто снизу добавляется воздух */
+.author{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r-m);background:var(--surface-2);width:100%;text-align:left;min-height:60px}
+/* без подписи содержимое встаёт по центру: минимальная высота 36 — это место под две
+   строки, и одинокая строка висела в верхней трети. Высота самой строки не меняется */
+.author__body{flex:1;min-width:0;min-height:36px;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.author:hover{background:var(--surface-3)}
+.author--flat,.author--flat:hover{background:var(--surface-2);cursor:default}
+.author>svg:last-child{width:16px;height:16px;color:var(--ink-3);flex:none;margin-left:auto}
+.person{width:100%;text-align:left;border-radius:var(--r-s)}
+button.person:hover{background:var(--surface-2)}
+/* В заявке строка не кнопка: справа стоят «Принять» и крестик, поэтому подсветка всей
+   строки обещала бы переход, которого нет. Ведут в профиль имя с аватаром, а подсказка —
+   шеврон, проявляющийся под курсором. Он стоит сразу за именем: у правого края уже
+   два действия, и третий значок там читался бы как ещё одно */
+.person__who{display:flex;align-items:center;gap:8px;min-width:0;border-radius:var(--r-s)}
+.person__who svg{width:14px;height:14px;color:var(--ink-3);flex:none;opacity:0;transition:opacity .12s}
+.person__who:hover svg{opacity:1}
+.author__n{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600}
+.author__s{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
+
+.people{display:flex;flex-direction:column;gap:4px}
+/* Экран участников: строка кликабельна целиком, поэтому и подсветка должна быть строкой,
+   а не полосой ровно по тексту. Боковое поле переезжает со списка на саму строку — текст
+   остаётся на прежнем отступе, а подсветка уходит под него. В карточке пина тот же .people
+   стоит в блоке «Заявки», где строки не нажимаются, — туда правило не достаёт */
+.peoplelist{padding:8px 8px 16px}
+.peoplelist .person{padding:8px}
+.person{display:flex;align-items:center;gap:8px;padding:8px 0}
+/* Блок заявок внутри карточки: у крайних строк внешние поля снимаем, иначе снизу
+   к зазору карточки прибавлялись собственные 8 строки и выходило 20 против 12 сверху.
+   Строки здесь не кнопки — справа «Принять» и крестик, — запас под палец им не нужен;
+   на экране участников строка кликабельна целиком, там поля остаются */
+.cardpend{margin:4px 0}
+.cardpend .person:first-child{padding-top:0}
+.cardpend .person:last-child{padding-bottom:0}
+.person__n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--f-m20);line-height:var(--l-m20)}
+/* метки прижаты к правому краю: слева читается столбец имён, справа — столбец меток,
+   и глазу не приходится искать их на разном отступе у каждой строки */
+.person__tags{margin-left:auto;flex:none;display:flex;align-items:center;gap:8px}
+.person__s{margin-left:auto;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
+/* дорожка белая, а не surface-3: строка участников под курсором красится ровно
+   в surface-3, и дорожка сливалась с ней — полоса теряла второй конец */
+.progress{height:5px;border-radius:3px;background:var(--surface);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--act);border-radius:3px}
+.photos{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.photos img{width:82px;height:82px;object-fit:cover;border-radius:var(--r-s);flex:none;border:1px solid var(--line)}
+
+/* ---------- feed ---------- */
+.feedlist{display:flex;flex-direction:column}
+.feed__sort{display:flex;align-items:center;gap:8px;padding:0 4px 4px;color:var(--ink-3);font-size:var(--f-s10);line-height:var(--l-s10);border-bottom:1px solid var(--line)}
+/* Шапка списка приклеена сверху и выезжает поверх содержимого, а не сжимается в потоке.
+   Сжимаясь, она укорачивала список, браузер подтягивал прокрутку, и получалась борьба:
+   шапка то уезжала, то возвращалась сама. Приклеенная ничего не двигает */
+.feedhead{position:sticky;top:0;z-index:3;background:var(--surface);transition:transform .2s ease;will-change:transform}
+.feedhead.is-away{pointer-events:none}
+/* активное состояние серой заливкой, как у вкладок профиля и переключателя над картой:
+   белая таблетка рисовалась для ленты на сером фоне и в панели сливалась с белым */
+.feed__sort button{padding:4px 12px;border-radius:7px;font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;color:var(--ink-3)}
+.feed__sort button:hover{color:var(--ink)}
+.feed__sort button.is-on{background:var(--surface-3);color:var(--ink);font-weight:600}
+/* Список пинов — не карточки, а строки во всю доступную ширину. Карточка с собственной
+   рамкой была единственным таким элементом во всём приложении: чаты, станции и профиль
+   давно живут на строках с разделителем. Цветного корешка типа тоже больше нет — он
+   дублировал чип категории, который стоит первой строкой в самой карточке */
+/* Разделители не доходят до краёв: линия принадлежит содержимому строки, а не панели.
+   Псевдоэлементом, а не рамкой, — рамку внутрь не подвинуть */
+.fcard{position:relative;display:block;background:var(--surface);width:100%;transition:background .14s}
+.fcard::after,.listrow::after,.districtrow::after{
+  content:'';position:absolute;left:16px;right:16px;bottom:0;height:1px;background:var(--line);
+  transition:left .14s,right .14s;
+}
+/* Последняя строка своей линии не рисует: ниже почти всегда чужая граница — таббар,
+   подвал с кнопками, край панели, — и две линии встают в пиксель друг от друга */
+.feedlist .fcard:last-child::after,
+.listrow:last-child::after,
+.districtrow:last-child::after{display:none}
+/* Под курсором и у открытой строки линии расходятся до краёв — своя нижняя и нижняя
+   предыдущей строки, то есть та, что видна сверху. Предыдущую обычным селектором не
+   выбрать, поэтому :has(); где его нет, растянется одна нижняя и ничего не сломается */
+.fcard:hover::after,.fcard.is-sel::after,.listrow:hover::after,.listrow.is-sel::after,
+.districtrow:hover::after,.districtrow.is-on::after{left:0;right:0}
+.fcard:has(+ .fcard:hover)::after,.fcard:has(+ .fcard.is-sel)::after,
+.listrow:has(+ .listrow:hover)::after,.listrow:has(+ .listrow.is-sel)::after,
+.districtrow:has(+ .districtrow:hover)::after,.districtrow:has(+ .districtrow.is-on)::after{left:0;right:0}
+/* строка над крупным разделителем свою линию не рисует: границу и так задаёт полоса,
+   а вместе они давали некрасивый стык короткой линии с длинной */
+.fcard:has(+ .divider--lg)::after,.listrow:has(+ .divider--lg)::after,
+.districtrow:has(+ .divider--lg)::after{display:none}
+/* открытая во второй колонке строка помечается той же заливкой, что и карточка списка */
+.listrow.is-sel{background:var(--surface-2)}
+/* тип пина в строке чата: место под линию занято всегда, цвет появляется только там,
+   где он что-то сообщает */
+.listrow__rule{position:absolute;left:0;top:16px;bottom:16px;width:4px;border-radius:0 999px 999px 0;background:transparent}
+.listrow__rule--act{background:var(--act)}
+.listrow__rule--offer{background:var(--offer)}
+.listrow__rule--find{background:var(--find)}
+.fcard:hover{background:var(--surface-2)}
+
+/* Выбранная строка — только в двухколоночном режиме, где список виден рядом с карточкой.
+   Корешок справа и обводка внутрь рисуются поверх содержимого и потому ничего не сдвигают
+   при клике; фон не трогаем — он уже занят наведением.
+   Цвет тот же, которым в рейле отмечен выбранный пункт, — --surface-3. Наведение остаётся
+   на --surface-2, то есть выбор и наведение разведены той же парой оттенков, что и в меню */
+/* Выбранная строка заливается тем же цветом, что и строка под курсором. Обводка и корешок
+   справа убраны: три способа сказать «эта» вместо одного. Выбранная от наведённой отличается
+   тем, что остаётся на месте, а наведённая едет за курсором */
+.fcard.is-sel{background:var(--surface-2)}
+/* Вертикальная линия слева вместо цветного тега категории: тип теперь виден цветом, а не
+   ещё одним чипом в и без того плотной строке. Это не корешок прежних версий — тот стоял
+   встык у края; здесь слева обычное поле карточки, а справа зазор чуть меньше, поэтому
+   линия читается как часть содержимого, а не как метка на кромке строки */
+.fcard__main{padding:16px;min-width:0;display:flex;gap:12px}
+/* цвет основной, а не светлый оттенок: полоской в 4px оттенок почти не читался,
+   а под курсором на сером фоне растворялся совсем */
+.fcard__rule{width:4px;border-radius:999px;flex:none;background:var(--ink-3)}
+.fcard__rule--act{background:var(--act)}
+.fcard__rule--offer{background:var(--offer)}
+.fcard__rule--find{background:var(--find)}
+.fcard__col{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+/* заголовок максимум в две строки, дальше многоточие: карточки держат общую высоту */
+.fcard__t{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fcard__d{font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-2);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.fcard__m{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+/* дата слева, повтор справа: они относятся к разному — одна к ближайшему разу,
+   другой ко всему ряду встреч, — и разведённые по краям не читаются одной фразой */
+.fcard__when{display:flex;gap:8px;justify-content:space-between;align-items:baseline;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
+.fcard__rep{flex:none}
+
+/* ---------- forms ---------- */
+.field{display:flex;flex-direction:column;gap:8px}
+.field>label{font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;color:var(--ink-2)}
+.field .hint{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
+/* обязательные поля: их ровно три — заголовок, дата и время. Остальные имеют значения
+   по умолчанию, и звёздочка на них обесценила бы саму пометку */
+.req{color:var(--danger-solid);font-weight:700;margin-left:2px}
+/* Поле стоит на белом и обведено настоящей рамкой. Раньше было наоборот: серая заливка
+   темнее панели и почти невидимый край — то же отношение, что у выключенного контрола,
+   и тестировщики читали поля как недоступные. Серую заливку забрал себе дизейбл */
+.input,.textarea,.select{
+  width:100%;padding:12px;border-radius:var(--r-m);border:1px solid var(--field-line);
+  background:var(--surface);color:var(--ink);caret-color:var(--ink);
+  font-size:var(--f-m20);line-height:var(--l-m20);transition:border-color .12s,box-shadow .12s;
+}
+.input::placeholder,.textarea::placeholder{color:var(--ink-3);opacity:1}
+.input:focus,.textarea:focus,.select:focus{
+  outline:none;border-color:var(--focus);
+  box-shadow:0 0 0 3px var(--ring);
+}
+.input[disabled],.textarea[disabled],.select[disabled]{
+  background:var(--surface-2);color:var(--ink-3);border-color:var(--line-2);cursor:not-allowed;
+}
+.textarea{resize:vertical;min-height:92px;font-family:inherit}
+/* ползунок радиуса: своя дорожка и бегунок — системные в разных браузерах разного роста
+   и ломают ритм формы */
+input[type=range].input{padding:0;height:36px;background:transparent;border:none;appearance:none}
+input[type=range].input::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:var(--surface-3)}
+input[type=range].input::-webkit-slider-thumb{appearance:none;width:22px;height:22px;margin-top:-9px;border-radius:50%;background:var(--surface);border:1px solid var(--line-2);box-shadow:var(--shadow-2)}
+input[type=range].input::-moz-range-track{height:4px;border-radius:2px;background:var(--surface-3)}
+input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--surface);border:1px solid var(--line-2)}
+.select{appearance:none;cursor:pointer}
+/* системную стрелку у селекта мы убрали, поэтому рисуем свою — без неё он неотличим
+   от поля ввода. Насквозь кликабельна, чтобы попадание шло в сам список */
+.selectwrap{position:relative}
+.selectwrap .select{padding-right:36px}
+.selectwrap__chev{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--ink-3);pointer-events:none}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* ручка для перетаскивания домашней шторки — она же подсказка, что шторку можно тянуть */
+/* Ручка стоит первой в шторке и всегда одинаково: раньше у домашней она жила внутри
+   верхней зоны с отступом снизу, у остальных — перед шапкой с отступом сверху, и посадка
+   не совпадала. Полоса тянется во всю ширину, чтобы попадать по ней было легко, а видна
+   только сама плашка */
+/* Ручка вынесена над шторкой, на затемнение: так она заодно расширяет зону перетаскивания
+   вверх, за пределы самой шторки, и не отнимает строку у содержимого */
+.sheet-grip{
+  position:absolute;left:0;right:0;top:-22px;height:22px;display:flex;align-items:center;
+  cursor:grab;touch-action:none;z-index:4;
+}
+.sheet-grip::before{content:'';display:block;width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.85);margin:0 auto;box-shadow:0 1px 2px rgba(0,0,0,.18)}
+/* во весь экран затемнения над шторкой нет — ручке там не на чем лежать */
+.panel.is-full .sheet-grip{display:none}
+@media (min-width:821px){.sheet-grip{display:none}}
+.searchfield{position:relative}
+.searchfield .input{padding-left:38px;padding-right:40px}
+/* лупа остаётся на месте и при фокусе; насквозь кликабельна, чтобы попадание ставило курсор */
+.searchfield__ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--ink-3);pointer-events:none}
+/* кружок линии на месте лупы, пока строка не в работе: она показывает станцию, а не ищет */
+.searchfield__dot{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;pointer-events:none}
+.searchfield__clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:27px;height:27px;border-radius:50%;display:grid;place-items:center;color:var(--ink-3)}
+.searchfield__clear:hover{background:var(--surface-3);color:var(--ink)}
+.searchfield__clear svg{width:13px;height:13px}
+/* между группами втрое больше, чем внутри группы: при двукратном отрыве граница групп
+   не читалась, и подписи следующей спорили с содержимым предыдущей */
+.stack{display:flex;flex-direction:column;gap:16px}
+/* строка прогресса: сама полоса плюс название шага справа (на мобильном название
+   стоит в шапке шторки, поэтому здесь скрыто) */
+/* Полоса шагов: у каждого отрезка своя подпись сверху, текущий шаг тёмный и жирный.
+   Пройденные отрезки — кнопки, возвращают к своему шагу; будущие отключены */
+/* полоса шагов — вторая полоса экрана (первая у создания это шапка с названием), поэтому
+   высота у неё общая с рядом вкладок и счётчиком станции, а снизу разделитель, как у них */
+.stepbar{display:flex;gap:12px;padding:0 16px;min-height:var(--head-h);align-items:center;border-bottom:1px solid var(--line)}
+.stepseg{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;text-align:left}
+.stepseg__t{font-size:var(--f-s20);line-height:var(--l-s20);font-weight:500;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stepseg.is-now .stepseg__t{color:var(--ink);font-weight:700}
+.stepseg i{display:block;height:3px;border-radius:2px;background:var(--brand-soft);position:relative;overflow:hidden}
+/* заливка растёт от левого края — поэтому при возврате назад она с правого края и сходит */
+.stepseg i::after{content:'';position:absolute;inset:0;border-radius:2px;background:var(--brand);transform:scaleX(0);transform-origin:left;transition:transform .34s ease}
+.stepseg.is-on i::after{transform:scaleX(1)}
+.stepseg:disabled{cursor:default}
+/* Контролы выбора говорят одним языком: белый фон, видимая рамка, выбор показывает кольцо.
+   Раньше было наоборот — невыбранная карточка серая, выбранная белая, — и заливка стояла
+   на состоянии «не тронуто», где она читается как «выключено» */
+.typecard{
+  display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:var(--r-m);
+  border:1px solid var(--field-line);background:var(--surface);width:100%;
+  transition:border-color .12s,box-shadow .12s;
+}
+.typecard:hover{border-color:var(--ink-2)}
+/* Знак типа говорит заливкой, а не силой цвета: невыбранный — мягкая подложка с цветным
+   значком, выбранный — сплошная заливка и светлый значок, ровно как булавка того же типа
+   на карте. Цвет значка берётся тем же токеном, поэтому тёмная тема достаётся даром */
+.typecard.is-on .typecard__ic{background:var(--tc-solid);color:var(--tc-ink)}
+.typecard--act{--tc-solid:var(--act);--tc-ink:var(--act-ink)}
+.typecard--offer{--tc-solid:var(--offer);--tc-ink:var(--offer-ink)}
+.typecard--find{--tc-solid:var(--find);--tc-ink:var(--find-ink)}
+/* Рамка при выборе остаётся обычной: тёмная обводка вместе с кольцом давала двойной
+   сигнал, и громче звучал самый тяжёлый. Второй признак — ведущий элемент в полную силу,
+   у невыбранных он приглушён. Одного кольца мало в тёмной теме */
+.typecard.is-on{box-shadow:0 0 0 3px var(--ring)}
+.typecard .typecard__ic{transition:background .14s,color .14s}
+.typecard__ic{width:38px;height:38px;border-radius:var(--r-m);display:grid;place-items:center;flex:none}
+.typecard__ic svg{width:19px;height:19px}
+.typecard--act .typecard__ic{background:var(--act-soft);color:var(--act)}
+.typecard--offer .typecard__ic{background:var(--offer-soft);color:var(--offer)}
+.typecard--find .typecard__ic{background:var(--find-soft);color:var(--find)}
+/* Третий признак выбора: заголовок невыбранного отступает в --ink-2. Один приём на все
+   части контрола — заголовок, ведущий элемент, кольцо */
+.typecard b{display:block;font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;margin-bottom:4px;color:var(--ink-2)}
+.typecard.is-on b{color:var(--ink)}
+.typecard span{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
+/* Варианты одного выбора — одна группа: 8 внутри неё, а не зазор между группами. Раньше
+   карточки типа лежали прямыми детьми .stack и брали его расстояние, хотя рисуют то же
+   самое, что радио под ними */
+.opts{display:flex;flex-direction:column;gap:8px}
+/* Тот же узор, что у карточки типа, и собран так же: отступы 16, заголовок 16/20
+   полужирный, подпись 13/16, между ними 4px. Раньше эти два контрола отличались всем —
+   отступами, кеглями, зазором — хотя рисуют одно и то же */
+.radio{
+  display:flex;align-items:flex-start;gap:12px;padding:16px;border-radius:var(--r-m);
+  border:1px solid var(--field-line);background:var(--surface);color:var(--ink-2);
+  font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;width:100%;text-align:left;
+  transition:border-color .12s,box-shadow .12s,color .12s;
+}
+.radio.is-on{color:var(--ink)}
+.radio__dot{margin-top:2px}
+.radio.is-on{box-shadow:0 0 0 3px var(--ring)}
+.radio .radio__dot{opacity:.45;transition:opacity .14s}
+.radio.is-on .radio__dot{opacity:1}
+/* кружок виден у всех вариантов, а не только у выбранного: на --line-2 он терялся */
+.radio__dot{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--field-line);flex:none;display:grid;place-items:center}
+.radio.is-on .radio__dot{border-color:var(--ink)}
+.radio.is-on .radio__dot::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--ink)}
+.radio small{display:block;font-weight:400;color:var(--ink-3);font-size:var(--f-s20);line-height:var(--l-s20);margin-top:4px}
+/* Пустая зона крупная и зовущая — это главное действие на экране находки. Как появилась
+   первая фотография, сжимается в строку: миниатюры над ней уже занимают это место */
+.uploader{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  min-height:140px;padding:16px;border-radius:var(--r-m);
+  border:1px dashed var(--field-line);color:var(--ink-2);font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;width:100%;
+}
+/* Одно правило на размер значка: их было два — 26 и 17, — и побеждало второе, поэтому
+   прежние попытки увеличить значок молча ничего не меняли. Приглушён только он: подпись
+   несёт смысл, а значок его повторяет, и гасить его можно без потерь для читаемости */
+.uploader svg{width:32px;height:32px;opacity:.5}
+.uploader--compact{flex-direction:row;min-height:0;padding:12px}
+.uploader--compact svg{width:16px;height:16px;opacity:1}
+.uploader:hover{border-color:var(--ink-3);background:var(--surface-2)}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumb{position:relative;width:74px;height:74px;border-radius:var(--r-s);overflow:hidden;border:1px solid var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb button{
+  position:absolute;right:3px;top:3px;width:20px;height:20px;border-radius:50%;
+  background:rgba(0,0,0,.62);color:#fff;display:grid;place-items:center;
+}
+.thumb button svg{width:11px;height:11px}
+
+/* ---------- lists / tabs ---------- */
+/* четыре вкладки в панель шириной 380 не помещаются в строку: даём прокрутку вбок,
+   а не перенос — перенос ломает высоту шапки и сдвигает список */
+.tabs{display:flex;align-items:center;gap:4px;padding:0 16px;min-height:var(--head-h);overflow-x:auto;border-bottom:1px solid var(--line)}
+/* Разделы отмечены подчёркиванием, а не плашкой: тонкая линия под рядом служит и границей
+   шапки, и дорожкой для указателя, то есть один элемент делает две работы */
+.tabs button{flex:none;white-space:nowrap;position:relative}
+.tabs button{padding:0 2px;font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;color:var(--ink-3);align-self:stretch;display:flex;align-items:center}
+.tabs{gap:12px}
+/* ряд вкладок шире экрана на телефоне, а полосы прокрутки в приложении скрыты — без
+   растворения у правого края четвёртая вкладка превращалась в тайник */
+.tabswrap{position:relative;min-width:0}
+/* Растворение у каждого края живёт по своему условию: слева — пока начало ряда уехало,
+   справа — пока за краем остался хвост. Прежде оно включалось один раз по факту «ряд шире
+   экрана» и висело даже когда листать уже некуда */
+.tabswrap::before,.tabswrap::after{
+  content:'';position:absolute;top:0;bottom:1px;width:28px;pointer-events:none;
+  opacity:0;transition:opacity .15s;
+}
+.tabswrap::before{left:0;background:linear-gradient(to left,color-mix(in srgb,var(--surface) 0%,transparent),var(--surface))}
+.tabswrap::after{right:0;background:linear-gradient(to right,color-mix(in srgb,var(--surface) 0%,transparent),var(--surface))}
+.tabswrap.is-start::before{opacity:1}
+.tabswrap.is-end::after{opacity:1}
+.tabs button:hover{color:var(--ink)}
+.tabs button.is-on{color:var(--ink);font-weight:600}
+/* Число на вкладке появляется только когда есть непрочитанное — значит само его наличие
+   и есть сигнал внимания, а цвет свободен и может нести тип. Кружок стал лишним */
+.tabs .tag{margin-left:4px;position:relative;top:1px;border-color:transparent;color:var(--ink)}
+.tabs .tag--act{background:var(--act-soft)}
+.tabs .tag--offer{background:var(--offer-soft)}
+.tabs .tag--find{background:var(--find-soft)}
+/* «Все» не про один тип, и серое здесь значит именно это — а не отсутствие решения */
+.tabs .tag{background:var(--surface-3)}
+/* Полоса состава: доли в цвета типов. Рисовать нечем, кроме флекса, — и не нужно */
+.statbar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--surface-3)}
+/* ненулевая доля всегда видна: одна встреча против двадцати вещей иначе пропадает */
+.statbar i{display:block;min-width:6px}
+.chronicle{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 16px;text-align:center}
+.statlegend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-2)}
+.statlegend span{display:inline-flex;align-items:center;gap:6px}
+.statlegend i{width:8px;height:8px;border-radius:50%;flex:none}
+/* Плавающая кнопка внизу фильтра: нависает над списком станций, а прокрутив до конца,
+   зависает над пустотой. Подложка растворяется кверху, чтобы список под ней не обрывался */
+.stdone{position:absolute;left:0;right:0;bottom:0;z-index:4;padding:16px;pointer-events:none;
+  background:linear-gradient(to top,var(--surface) 58%,transparent)}
+.stdone .btn{pointer-events:auto}
+/* место под кнопкой, чтобы последняя станция не пряталась под ней */
+.stdone__gap{height:84px}
+/* снимок уходящего раздела: лежит слоем поверх, ничего не занимает в потоке
+   и не ловит нажатия — он уже не интерактивен, он уезжает */
+.panel__ghost{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;
+  background:var(--surface);overflow:hidden;pointer-events:none}
+/* обёртка вокруг переключаемого списка: в ней живёт снимок уходящей вкладки */
+.swrap{position:relative;overflow:hidden}
+.swghost{position:absolute;left:0;right:0;top:0;background:var(--surface);pointer-events:none}
+/* подчёркивание в цвет типа — счётчик рядом красится им же, линия просто догоняет.
+   У «Все» типа нет, там остаётся тёмная */
+.tabs button.is-on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:2px 2px 0 0;background:var(--tab-line,var(--ink))}
+.tabs button.tab--act{--tab-line:var(--act)}
+.tabs button.tab--offer{--tab-line:var(--offer)}
+.tabs button.tab--find{--tab-line:var(--find)}
+.listrow{position:relative;display:flex;gap:12px;padding:16px;width:100%;align-items:center;text-align:left;transition:background .14s}
+.listrow__cover{width:50px;height:50px;border-radius:var(--r-s);flex:none;object-fit:cover;display:grid;place-items:center}
+/* Личную переписку от общего чата по обложке не отличить: событие одно, фотография одна
+   и та же. Поэтому поверх обложки встаёт лицо собеседника — у общего чата его нет, и это
+   отсутствие и есть признак. Кольцо цветом строки, иначе тёмное лицо слипается с фото */
+.listrow__pic{position:relative;flex:none}
+/* лицо в верхнем углу — вровень с именем написавшего: у нижнего края оно стояло
+   у превью сообщения, к которому отношения не имеет */
+.listrow__face{position:absolute;right:-3px;top:-3px;box-shadow:0 0 0 2px var(--surface)}
+/* обложка во всю высоту трёх строк: 20 имя + 2 + 18 событие + 4 + 16 превью = 60.
+   Высоту ряда задаёт текст, поэтому крупнее обложка ничего не двигает — только текст
+   отходит вправо. Модификатором, а не правилом на класс: строки профиля и канала
+   короче на строку, и там 60 разъехалось бы */
+.listrow__cover--lg,.listrow__cover--lg.listrow__cover{width:60px;height:60px}
+.listrow:hover .listrow__face,.listrow.is-sel .listrow__face{box-shadow:0 0 0 2px var(--surface-2)}
+.listrow__cover--act{background:var(--act-soft);color:var(--act)}
+.listrow__cover--offer{background:var(--offer-soft);color:var(--offer)}
+.listrow__cover--find{background:var(--find-soft);color:var(--find)}
+.listrow__cover--muted{background:var(--surface-3);color:var(--ink-3)}
+.listrow__cover svg{width:19px;height:19px}
+.listrow__cover--s{width:40px;height:40px}
+.listrow__cover--s svg{width:16px;height:16px}
+.listrow__pin{font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.listrow__msg{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:4px}
+.listrow:hover{background:var(--surface-2)}
+/* Самая тесная ступень — 2: имя и название события отвечают на один вопрос «кто и по какому
+   поводу» и должны читаться парой. Тем, кому нужно 4 и 6, добавка выдаётся явно */
+.listrow__body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.listrow__t{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600}
+.listrow--chat .listrow__t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Строка факта переносится, а не обрезается: многоточие съедало именно повтор — самое
+   редкое в ней, — а дату оставляло. Потолок в две строки, высота ряда растёт только
+   у повторяющихся событий */
+.listrow__s{font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3);overflow:hidden;margin-top:2px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.listrow__r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+/* время в строке чата держится верхнего края: в профиле тот же блок носит шеврон,
+   и его поднимать наверх не надо — поэтому модификатор, а не общее правило */
+.listrow__r--top{align-self:flex-start}
+/* имя, время и точка в одной строке; название пина и текст ниже идут во всю ширину */
+.listrow__top{display:flex;align-items:baseline;gap:8px;min-width:0}
+.listrow__top .listrow__t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.listrow__top .listrow__time{flex:none}
+.listrow__top .unread{flex:none;align-self:center}
+.listrow__r svg{width:16px;height:16px;color:var(--ink-3)}
+.listrow__time{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap}
+.unread{width:8px;height:8px;border-radius:50%;background:var(--brand)}
+/* Системный канал даёт точку, а не число: цифра на разделе должна значить ровно одно —
+   «вам написал живой человек», иначе ей перестают верить, как «99+» в маркетплейсах */
+.navbtn__badge--dot{min-width:9px;width:9px;height:9px;padding:0;border-radius:50%;font-size:0}
+.tabs button .tabn{margin-left:6px;font-variant-numeric:tabular-nums;opacity:.75}
+/* системное сообщение — не пузырь разговора, а карточка с одним действием */
+/* Уведомление собрано как карточка пина в списке: чип типа, жирное название, пояснение.
+   Раньше всё это лежало одним абзацем через двоеточие и читалось тяжело */
+/* Четыре яруса в одной карточке — чип, название, пояснение, время — при отступе в 8
+   слипались в один ком. Между заголовком и текстом по правилу 12, остальное 8 */
+.sysmsg{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:var(--r-m);background:var(--surface);border:1px solid var(--line)}
+.sysmsg__t{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;margin-bottom:4px}
+/* чип типа и шеврон — одной строкой: слева что это, справа что карточка ведёт дальше.
+   В подвале шеврон стоял у времени, к которому отношения не имеет */
+.sysmsg__head{display:flex;align-items:center;gap:8px}
+.sysmsg__x{font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)}
+/* уведомление, у которого есть объект, ведёт в него целиком: название события в заголовке
+   и есть вход, а кнопка «Открыть» говорила бы то же самое второй раз */
+.sysmsg--go{cursor:pointer}
+.sysmsg--go:hover{border-color:var(--line-2)}
+.sysmsg__go{margin-left:auto;width:16px;height:16px;color:var(--ink-3);flex:none;align-self:flex-start}
+.sysmsg__d{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
+.sysmsg__foot{display:flex;align-items:center;gap:8px}
+.sysmsg__foot .chip{margin-left:auto}
+.sysmsg .btn{width:auto;align-self:flex-start}
+.sysmsg .chip{align-self:flex-start}
+/* Непрочитанное отмечено заливкой: прежде залитыми были все карточки, и заливка ничего
+   не сообщала — приходилось метить новое тёмной обводкой. Теперь прочитанное белое с рамкой,
+   и залитая среди них ровно настолько заметна, насколько нужно. Рамка остаётся у всех,
+   у новых она прозрачная: иначе карточки прыгали бы на два пикселя, когда канал прочитан */
+.sysmsg.is-new{background:var(--surface-2);border-color:transparent}
+/* Разделитель дня между сообщениями и метка «Новые» — один элемент: обе отвечают на вопрос
+   «где я остановился». Раз день назван здесь, в самом сообщении остаётся только время */
+.daysep{text-align:center;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);padding:4px 0}
+.districtrow{position:relative;display:flex;align-items:center;gap:8px;padding:16px;width:100%;transition:background .14s}
+/* у первой строки списка есть и верхняя линия: без неё заливка под курсором открыта сверху.
+   Псевдоэлементом самой строки, а не отдельным разделителем, — иначе линия не узнает
+   про наведение и останется узкой, когда заливка уже разошлась до краёв */
+.districtrow:first-of-type::before{
+  content:'';position:absolute;left:16px;right:16px;top:0;height:1px;background:var(--line);
+  transition:left .14s,right .14s;
+}
+.districtrow:first-of-type:hover::before,.districtrow:first-of-type.is-on::before{left:0;right:0}
+.districtrow:hover{background:var(--surface-2)}
+.districtrow.is-on{background:var(--surface-2)}
+.metro{width:26px;height:26px;flex:none;display:block}
+.districtrow b{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;display:block}
+.districtrow span{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
+/* у станции теперь две подписи — линия и итог месяца; без блочности они шли одной строкой */
+.districtrow>span>span{display:block;margin-top:4px}
+.districtrow .cnt{margin-left:auto;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* поиск слева, выбор ветки справа — одна строка между «Весь город» и списком станций */
+/* линии под строкой поиска нет: ниже в том же блоке лежат выбранные станции и «весь город»,
+   и она резала один блок пополам */
+.stools{display:flex;align-items:center;gap:8px;padding:12px 16px}
+.stools__line{margin-left:auto;min-width:0}
+.stools__line .select{padding:8px 32px 8px 12px;font-size:var(--f-s10);line-height:var(--l-s10)}
+.stools .searchfield .input{padding:8px 36px 8px 38px}
+.stools .searchfield__clear{width:24px;height:24px;right:6px}
+
+/* ---------- chat ---------- */
+.chat{display:flex;flex-direction:column;gap:12px;padding:16px}
+/* строки текста держатся теснее, чем текст держится за имя и время: раньше было наоборот,
+   и абзац не читался как одно целое */
+.msg{max-width:82%;padding:8px 12px;border-radius:14px;font-size:var(--f-m20);line-height:var(--l-m20);white-space:pre-wrap;word-break:break-word}
+/* светлее пузырьков, а не темнее: фон переписки белый, и всё, что светлее surface-2, —
+   это белое. Отделяем рамкой, иначе плашка растворится */
+.chatnote{align-self:center;max-width:80%;text-align:center;background:var(--surface);
+  border:1px solid var(--line);color:var(--ink-3);
+  font-size:var(--f-s20);line-height:var(--l-s20);padding:4px 12px;border-radius:999px;margin:2px 0}
+.msg--in{align-self:flex-start;background:var(--surface-2);border-bottom-left-radius:5px}
+.msg--out{align-self:flex-end;background:var(--ink);color:var(--ground);border-bottom-right-radius:5px}
+/* время под сообщением: .6 давало на тёмном пузыре около 3:1, что для текста мало */
+.msg__t{display:block;font-size:var(--f-xs10);line-height:var(--l-xs10);opacity:.78;margin-top:6px}
+/* в общем чате имя обязательно: без него непонятно, кто из восьми человек это написал */
+.msg__a{display:block;font-size:var(--f-s20);line-height:var(--l-s20);font-weight:600;color:var(--ink-3);margin-bottom:4px;text-align:left}
+.msg__a:hover{color:var(--brand-icon);text-decoration:underline}
+/* шапка переписки — тот же язык, что строка в списке чатов: фото пина, имя соседа, название пина.
+   Кликабельна целиком и ведёт на карточку пина, поэтому отдельная строка-контекст под ней не нужна */
+/* единая шапка всех экранов: одна высота, содержимое слева, выход стрелкой назад */
+.chathead{display:flex;align-items:center;gap:4px;padding:8px 12px;border-bottom:1px solid var(--line);flex:none;min-height:var(--head-h)}
+.chathead__main{display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:4px 8px;border-radius:var(--r-m)}
+.chathead__main:hover{background:var(--surface-2)}
+/* в шапке кегль крупнее, и той же паре нужно меньше воздуха, чем в строке списка */
+.chathead__txt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.chathead__n{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chathead__p{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Название в шапке проявляется только когда карточка прокручена и собственный заголовок
+   уехал вверх. В покое там пусто: подпись «Услуга или вещь · Сокольники» дословно повторяла
+   два чипа, стоящих строкой ниже */
+.chathead__n--fade{opacity:0;transition:opacity .18s}
+.is-scrolled .chathead__n--fade{opacity:1}
+.chathead__act{margin-left:auto}
+/* Шапка раздела на телефоне устроена тремя частями: слева кнопка, по центру название,
+   справа действие. Боковые слоты равной доли, поэтому название стоит по оптическому
+   центру и не съезжает от того, есть справа иконка или нет */
+.chathead--center .chathead__side{flex:1 1 0;min-width:36px;display:flex;align-items:center;gap:4px}
+.chathead--center .chathead__side--r{justify-content:flex-end}
+.chathead--center .chathead__txt{flex:0 1 auto;align-items:center;text-align:center;min-width:0}
+.chathead--center .chathead__act{margin-left:0}
+/* меню «ещё»: поделиться и пожаловаться. Всплывает под кнопкой, закрывается тапом мимо */
+/* Меню не забирает экран, поэтому фон под ним не гасится: плашку выделяет только тень.
+   Вес селектора из двух классов обязателен — общее правило .scrim лежит ниже по файлу
+   и с одним классом перебивало бы прозрачность обратно в затемнение */
+.scrim.scrim--clear{background:transparent}
+.menu{position:fixed;min-width:212px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);box-shadow:var(--shadow-2);display:flex;flex-direction:column}
+.menu__i{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r-s);width:100%;font-size:var(--f-m20);line-height:var(--l-m20);color:var(--ink)}
+.menu__i:hover{background:var(--surface-2)}
+.menu__i svg{width:18px;height:18px;color:var(--ink-3);flex:none}
+.composer{display:flex;gap:8px;align-items:flex-end}
+.composer .textarea{min-height:44px;max-height:120px;padding:12px}
+.composer .iconbtn{width:44px;height:44px;background:var(--brand);color:#fff;border-radius:var(--r-m)}
+.composer .iconbtn:hover{opacity:.9;background:var(--brand);color:#fff}
+.typing{align-self:flex-start;display:flex;gap:4px;padding:12px 16px;background:var(--surface-2);border-radius:14px;border-bottom-left-radius:5px}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--ink-3);animation:blink 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.18s}
+.typing i:nth-child(3){animation-delay:.36s}
+@keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:.9}}
+.demo-note{
+  display:flex;gap:8px;align-items:flex-start;margin:0 16px;padding:8px 12px;border-radius:var(--r-s);
+  background:var(--surface-2);color:var(--ink-3);font-size:var(--f-s20);line-height:var(--l-s20);
+}
+.demo-note svg{width:14px;height:14px;flex:none;margin-top:1px}
+/* Просьба подтвердить — не заметка, а действие, поэтому у неё своя вёрстка: заголовок,
+   отступ, текст, кнопки в один рост. Подложка нейтральная — на красной и текст, и кнопка
+   теряли контраст, а тревожный цвет здесь ничего не сообщал */
+.ask{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:var(--r-m);background:var(--surface-2)}
+.ask b{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;display:block;margin-bottom:4px}
+.ask p{margin:0;font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-2)}
+.ask .row>.btn{flex:1}
+
+/* ---------- modal / onboarding ---------- */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;padding:20px;z-index:40;overflow-y:auto}
+/* затемнение под мобильной шторкой: показывает, что фон неактивен и что тап по нему закрывает */
+.sheet-scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:19;display:none}
+/* под домашней шторкой затемняем только карту: дом — состояние просмотра, и уходить
+   из него в чаты одним касанием человек вправе, поэтому таббар остаётся живым */
+.sheet-scrim--home{bottom:66px}
+/* плашка с расстоянием на шаге выбора места — тёмная, как всплывающие сообщения */
+/* Плашка занимает тот же слот, что кнопка охвата, и уходит тем же движением. Видна она
+   только пока шторка внизу и вы целитесь: как только шторка поднялась, станция
+   и расстояние уже стоят в поле внутри неё, и плашка становится дублем */
+.pickinfo.is-away{opacity:0;transform:translateX(-50%) translateY(-160%) scale(.92)}
+.pickinfo{
+  position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:7;
+  transition:transform .22s ease,opacity .22s ease;
+  background:var(--ink);color:var(--ground);padding:8px 16px;border-radius:var(--r-m);
+  font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;white-space:nowrap;box-shadow:var(--shadow-2);pointer-events:none;
+}
+.modal{
+  margin:auto;width:100%;max-width:440px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r-l);box-shadow:var(--shadow-3);overflow:hidden;
+}
+.modal__body{padding:24px}
+.modal h1{font-family:'Unbounded',system-ui,sans-serif;font-size:var(--f-h20);line-height:var(--l-h20);font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
+.modal h2{font-size:var(--f-h30);line-height:var(--l-h30);font-weight:600;margin:0 0 8px}
+.modal p{margin:0 0 20px;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10)}
+.modal__foot{padding:0 24px 24px;display:flex;flex-direction:column;gap:8px}
+.brandbig{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.brandbig .brand__mark{width:38px;height:38px;border-radius:10px}
+.brandbig .brand__mark svg{width:21px;height:21px}
+.codeline{display:flex;gap:8px}
+.codeline .input{text-align:center;font-family:'JetBrains Mono',monospace;font-size:var(--f-h30);line-height:var(--l-h30);letter-spacing:.3em;padding-left:16px}
+/* Тот же слот и то же движение, что у плашки расстояния и кнопки охвата. Снизу тост
+   наезжал на плавающую кнопку в фильтрах, сверху ему никто не мешает */
+.toast{
+  position:fixed;left:50%;top:16px;transform:translateX(-50%) translateY(-160%) scale(.92);
+  opacity:0;pointer-events:none;
+  background:var(--ink);color:var(--ground);padding:12px 16px;border-radius:var(--r-m);
+  font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;box-shadow:var(--shadow-2);z-index:60;
+  transition:opacity .22s ease,transform .22s ease;
+  max-width:min(440px,88vw);
+  display:flex;align-items:center;gap:12px;
+}
+.toast.is-on{opacity:1;transform:translateX(-50%) translateY(0) scale(1);pointer-events:auto}
+.toast__a{color:var(--brand);font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.toast__a svg{width:15px;height:15px}
+/* тост без сообщения: остаётся одно действие, и поля ему нужны кнопочные, а не абзацные */
+.toast--bare{padding:8px 14px}
+
+/* ---------- responsive ---------- */
+/* меняем саму переменную, а не ширину панели: от неё же отсчитывается кнопка сворачивания */
+@media (max-width:1080px){
+  :root{--panel-w:352px}
+}
+@media (max-width:820px){
+  .app{flex-direction:column-reverse}
+  /* таббар лежит поверх карты отдельным слоем, а не занимает место в колонке: пока он был
+     в потоке, карта до него не доходила, и когда он уезжал на время жеста, снизу
+     оставалась белая полоса. Он непрозрачный, поэтому в обычном виде ничего не изменилось */
+  .rail{
+    position:absolute;left:0;right:0;bottom:0;width:auto;height:66px;
+    flex:none;flex-direction:row;justify-content:space-around;align-items:center;
+    border-right:none;border-top:1px solid var(--line);padding:8px;
+  }
+  .rail .navbtn{width:auto;flex:1;padding:4px}
+  .rail .brand,.rail__spacer{display:none}
+  /* .work снимаем с position:relative, чтобы абсолютная .panel считалась от .app: тогда шторка
+     доезжает до самого низа экрана и ложится поверх таббара, как в мобильных картах */
+  .work{flex:1;min-height:0;position:static}
+  /* шторка: высота по содержимому с потолком в 72% экрана — короткие шторки вроде категорий
+     больше не растягиваются на пустоту. Теней у шторок нет вообще (правило проекта) */
+  .panel{
+    position:absolute;left:0;right:0;width:auto;bottom:0;top:auto;flex-basis:auto;height:auto;max-height:calc(100dvh - 76px);z-index:20;order:0;
+    border-right:none;border-top:1px solid var(--line);border-radius:var(--r-l) var(--r-l) 0 0;
+  }
+  /* «разделы» (чаты, профиль, поиск, переписка) — во весь экран над таббаром: он их навигация,
+     поэтому таббар остаётся виден и затемнения под ними нет */
+  .panel.is-section{top:0;bottom:66px;height:auto;max-height:none;border-radius:0;border-top:none}
+  /* Переписка не раздел, а экран внутри него: выход даёт стрелка в шапке, а не таббар.
+     И нижний край там принадлежит содержимому — внизу поле ввода, а с открытой клавиатурой
+     полос становится три */
+  .panel.is-chat{bottom:0}
+  .panel.is-chat .panel__foot,.panel.is-chat .composer{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+  .app.is-chat .rail{transform:translateY(100%);pointer-events:none}
+  .rail{transition:transform .22s ease}
+  .sheet-scrim.is-on{display:block}
+  /* после подтверждения места высота жёсткая, а не потолок: иначе второй и третий шаг
+     были бы разной высоты и прыгали друг относительно друга */
+  .panel.is-tall{height:calc(100dvh - 100px);max-height:none}
+  .panel.is-tall .panel__body{flex:1 1 auto}
+  /* палец на карте при выборе места — шторка уезжает вниз почти целиком и открывает карту */
+  .panel{transition:transform .22s ease}
+  /* на мобильном сдвиг вниз, а не вбок: правило сворачивания сюда не достаёт */
+  .work.is-collapsed .panel{transform:none}
+  .panel.is-peek{transform:translateY(calc(100% - 12px))}
+
+  /* Домашняя шторка: развёрнутая — обычный полноэкранный раздел над таббаром; свёрнутая —
+     уезжает вниз так, что над таббаром остаётся только строка поиска. Тянется пальцем,
+     прилипает к двум положениям. Карта под ней всё это время живая */
+  /* Двигается только верхний край: нижний прибит к верху таббара, поэтому шторка физически
+     не может его накрыть. Свёрнутая показывает ровно строку поиска, остальное обрезается.
+     Развёрнутая встаёт по тому же правилу, что шторка создания — сто пикселей карты сверху */
+  .panel.is-home,.panel.is-screen{
+    top:100px;bottom:66px;height:auto;max-height:none;
+    border-radius:var(--r-l) var(--r-l) 0 0;border-top:1px solid var(--line);
+    transition:top .24s ease;
+  }
+  /* У шторки два края, и сводить их к общему знаменателю надо порознь. Верхний — про то,
+     сколько видно карты, он общий. Нижний — про то, работает ли под шторкой навигация:
+     у домашней таббар живой, у фильтра нет, и шторка накрывает его собой. Пока она
+     кончалась над ним, таббар оставался виден, но лежал под затемнением — и нажатие
+     попадало в затемнение, а не в него */
+  .panel.is-screen{bottom:0}
+  /* при жёсткой высоте тело обязано растянуться, иначе короткий список схлопнется
+     и под ним останется пустая плита: общее правило ниже держит обратное для шторок,
+     высота которых считается по содержимому */
+  .panel.is-home .panel__body,.panel.is-screen .panel__body{flex:1 1 auto;min-height:0}
+  /* жест перетаскивания шторки ловится с этой зоны, поэтому полю поиска внутри неё
+     возвращаем собственные касания — иначе тап уходит в жест */
+  .panel.is-home .panel__top{touch-action:none}
+  .panel.is-home .panel__top .searchfield{touch-action:auto}
+  .panel.is-home.is-shut{top:calc(100dvh - 66px - var(--home-peek))}
+  /* в свёрнутом виде своя линия под строкой поиска не нужна: она встала бы в пиксель
+     от границы таббара и читалась как вторая полоса */
+  .panel.is-home.is-shut .panel__top{border-bottom:none}
+  /* Карточка пина живёт в трёх положениях, как в картах: раскрыта, свёрнута до корешка,
+     закрыта. В свёрнутом стоит над таббаром — это состояние просмотра карты, и уходить
+     из него одним касанием человек вправе, ровно как из домашней шторки */
+  /* У карточки есть пол: без него короткий пин оставлял полэкрана пустой карты. Лишняя
+     высота уходит в тело, содержимое остаётся вверху, кнопки прибиты к низу — и между
+     последним блоком и кнопками сам собой появляется воздух */
+  /* Третье положение: почти во весь экран, но не во весь. Прежде карточка вставала в самый
+     верх, выпрямляла углы и меняла шапку на сплошную полосу — и уменьшить её было нечем:
+     жест ловится с ручки, а ручку в этом положении прятали, потому что ей «не на чем лежать».
+     Полоса в 24 пикселя возвращает и ручку, и затемнение под ней, а обложка остаётся
+     обложкой: кнопки лежат поверх фотографии на своих плашках, как и в других положениях */
+  .panel.is-pin.is-full{top:24px;bottom:66px;height:auto;max-height:none;min-height:0}
+  .panel.is-pin.is-full .sheet-grip{display:flex}
+  /* Пол карточки: сверху остаётся полоска карты с булавкой и её окружением — карта здесь
+     часть ответа, а не фон, — но не половина экрана пустоты, как было при 60dvh */
+  .panel.is-pin:not(.is-shut):not(.is-full){min-height:calc(100dvh - 160px)}
+  /* Обложка идёт от самого верха и повторяет скругление шторки. Обрезкой по панели этого
+     не сделать: ручка лежит выше её края, на затемнении, и обрезка съела бы её */
+  .panel.is-pin .cover{border-radius:var(--r-l) var(--r-l) 0 0}
+  .panel.is-pin:not(.is-shut) .panel__body{flex:1 1 auto}
+  /* Подвал с кнопками не отрезан линией, а растворяется: тот же приём, что у плавающей
+     кнопки в фильтрах. Тень не нужна — контраста заливки хватает */
+  .panel:not(.is-section) .panel__foot{
+    border-top:none;
+    background:linear-gradient(to top,var(--surface) 64%,color-mix(in srgb,var(--surface) 0%,transparent));
+    padding-top:12px;
+    /* внизу поле блока по лестнице плюс безопасная зона телефона: на растворяющемся
+       подвале двенадцати пикселей не хватало, кнопки стояли у самого края */
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+  }
+  /* Ручка вынесена из потока и больше не держит верхний отступ собой — возвращаем его
+     панели там, где ручка есть */
+  /* У карточки события верхнего отступа нет: первым элементом идёт обложка, и восемь
+     пикселей подложки ложились над ней белой полосой — казалось, что фотография положена
+     поверх шторки. У остальных сверху поле поиска или шапка, им отступ нужен */
+  .panel.is-swipe{padding-top:8px}
+  .panel.is-pin{transition:top .24s ease,transform .22s ease}
+  .panel.is-pin.is-shut{
+    top:calc(100dvh - 66px - var(--pin-peek));bottom:66px;height:auto;max-height:none;
+  }
+  .panel.is-pin.is-shut .panel__body,.panel.is-pin.is-shut .panel__foot{display:none}
+  .panel.is-pin.is-shut .panelhead--over{display:none}
+  .pinpeek{display:none}
+  .panel.is-pin.is-shut .pinpeek{display:block}
+  /* поля равные: полоса корешка задана числом (--pin-peek), содержимое — названием 20
+     и станцией 16, и при полях 0 сверху и 12 снизу двадцать восемь пикселей падали вниз
+     пустотой под станцией, а название прижималось к верху */
+  .pinpeek__b{display:flex;align-items:center;gap:12px;padding:16px;width:100%;min-width:0}
+  .pinpeek__b>svg{width:16px;height:16px;color:var(--ink-3);flex:none}
+  .pinpeek__t{flex:1;min-width:0}
+  .pinpeek__n{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pinpeek__s{display:flex;align-items:center;gap:4px;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap}
+  /* обложка стала первым, что видно в шторке, поэтому её верхние углы скругляем сами:
+     раньше их прикрывала непрозрачная шапка */
+  .panel:not(.is-section) .panel__body>.cover:first-child{border-radius:var(--r-l) var(--r-l) 0 0}
+  /* пока палец на карте — район, категории и таббар уезжают вместе с зумом: экран отдан карте */
+  .app.is-peek .rail{opacity:0;pointer-events:none}
+  .stage.is-peek .toolbar{opacity:0}
+  .stage.is-peek .toolbar>*{pointer-events:none}
+  .rail,.toolbar{transition:opacity .18s}
+  .stage.is-peek .zoomctl{opacity:0;pointer-events:none}
+  /* у шторки по содержимому телу нельзя оставлять flex-basis:0 — оно схлопнулось бы в ноль.
+     У шторки с жёсткой высотой (.is-tall) наоборот: тело обязано растянуться на остаток,
+     иначе под коротким шагом осталась бы пустая полоса */
+  .panel:not(.is-section):not(.is-tall) .panel__body{flex:0 1 auto}
+  .toolbar{left:16px;right:16px;top:16px;gap:8px}
+  /* уезжает вверх с уменьшением, а не выключается: display не анимируется, поэтому
+     кнопка остаётся в потоке и просто перестаёт ловить нажатия. Длительность та же,
+     что у самой шторки, — они двигаются одним движением */
+  .scopetop{display:flex;flex:1;height:42px;padding:0 12px;transform-origin:50% 0;transition:transform .22s ease,opacity .22s ease}
+  .app.is-homeopen .scopetop{transform:translateY(-160%) scale(.92);opacity:0;pointer-events:none}
+  /* центр не по экрану, а по свободной полосе между низом «Категорий» (10+42) и верхом
+     свёрнутой шторки (76 над таббаром в 66): (52 + 100dvh - 142) / 2 */
+  .zoomctl{top:calc(50dvh - 45px)}
+  .scalebar{display:none}
+}
+</style>
+<style>/* Собственные стили каталога. Всё с приставкой ds-, чтобы не столкнуться с продуктовыми */
+/* Прототип держит себя ровно в размер экрана и запрещает прокрутку: он приложение, а не
+   страница. Каталог — страница, и запрет надо снять, иначе одиннадцать тысяч пикселей
+   содержимого лежат в окне высотой семьсот и выглядят застывшим экраном */
+html,body{height:auto;min-height:100%;overflow:visible}
+body{overflow-y:auto;overscroll-behavior:auto}
+body{background:var(--ground);color:var(--ink);font-family:'Golos Text',system-ui,sans-serif;margin:0}
+.dshead{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;
+  padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--line)}
+.dshead__t{display:flex;flex-direction:column;gap:2px;font-size:var(--f-h40);line-height:var(--l-h40);font-weight:600}
+.dshead__t span{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);font-weight:400}
+.dshead__c{display:flex;gap:8px}
+.dshead .segctl{width:auto}
+.dshead .segctl button{padding:8px 12px}
+.dswrap{display:flex;align-items:flex-start;gap:24px;padding:24px;max-width:1280px;margin:0 auto}
+.dsnav{position:sticky;top:96px;flex:0 0 200px;display:flex;flex-direction:column;gap:2px}
+.dsnav a{padding:6px 10px;border-radius:var(--r-s);color:var(--ink-2);text-decoration:none;font-size:var(--f-s10);line-height:var(--l-s10)}
+.dsnav a:hover{background:var(--surface-2);color:var(--ink)}
+.dsmain{flex:1;min-width:0;display:flex;flex-direction:column;gap:40px}
+.dssec{display:flex;flex-direction:column;gap:16px}
+.dssec>h2{margin:0;font-size:var(--f-h30);line-height:var(--l-h30);font-weight:600}
+.dssec>p{margin:0;max-width:72ch;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10)}
+.dsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.dsitem{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:var(--r-m);background:var(--surface);border:1px solid var(--line)}
+.dsitem__n{font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600}
+.dsitem__c{font-family:'JetBrains Mono',monospace;font-size:var(--f-xs10);line-height:var(--l-xs10);color:var(--ink-3)}
+.dsitem__b{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:4px}
+.dsitem--col .dsitem__b{flex-direction:column;align-items:stretch}
+.dsitem--flat{padding:0;overflow:hidden}
+.dsitem--flat .dsitem__n,.dsitem--flat .dsitem__c{padding:0 16px}
+.dsitem--flat .dsitem__n{padding-top:16px}
+.dsitem--flat .dsitem__c{padding-bottom:8px}
+.dsnote{color:var(--ink-3);font-size:var(--f-s20);line-height:var(--l-s20);max-width:72ch}
+.dsswatch{display:flex;align-items:center;gap:10px;font-size:var(--f-s10);line-height:var(--l-s10)}
+.dsswatch i{width:26px;height:26px;border-radius:var(--r-s);border:1px solid var(--line);flex:none}
+.dsrules{display:flex;flex-direction:column;gap:12px;max-width:72ch}
+.dsrule{padding:14px 16px;border-radius:var(--r-m);background:var(--surface);border:1px solid var(--line)}
+.dsrule b{display:block;font-size:var(--f-h60);line-height:var(--l-h60)}
+.dsrule span{display:block;margin-top:4px;color:var(--ink-3);font-size:var(--f-s10);line-height:var(--l-s10)}
+.dsmap{position:relative;height:140px;border-radius:var(--r-m);background:var(--build);overflow:hidden}
+.dsmap .marker{position:absolute}
+body.ds-narrow .dsmain{max-width:400px}
+</style>
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false"><defs>
+<g id="ico" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></g>
+<symbol id="i-map" viewBox="0 0 24 24" fill="currentColor"><path d="M2 5L9 2L15 5L21.303 2.299C21.3791 2.26638 21.4621 2.25317 21.5445 2.26054C21.627 2.26792 21.7063 2.29565 21.7754 2.34124C21.8445 2.38684 21.9012 2.44888 21.9404 2.5218C21.9796 2.59471 22.0001 2.67622 22 2.759V19L15 22L9 19L2.697 21.701C2.62091 21.7336 2.53792 21.7468 2.45547 21.7395C2.37301 21.7321 2.29368 21.7044 2.22459 21.6588C2.1555 21.6132 2.09881 21.5511 2.05961 21.4782C2.02041 21.4053 1.99993 21.3238 2 21.241V5ZM15 19.764V7.176L14.935 7.204L9 4.236V16.824L9.065 16.796L15 19.764Z" fill="currentColor"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24" fill="currentColor"><path d="M8 4H21V6H8V4ZM4.5 6.5C4.10218 6.5 3.72064 6.34196 3.43934 6.06066C3.15804 5.77936 3 5.39782 3 5C3 4.60218 3.15804 4.22064 3.43934 3.93934C3.72064 3.65804 4.10218 3.5 4.5 3.5C4.89782 3.5 5.27936 3.65804 5.56066 3.93934C5.84196 4.22064 6 4.60218 6 5C6 5.39782 5.84196 5.77936 5.56066 6.06066C5.27936 6.34196 4.89782 6.5 4.5 6.5ZM4.5 13.5C4.10218 13.5 3.72064 13.342 3.43934 13.0607C3.15804 12.7794 3 12.3978 3 12C3 11.6022 3.15804 11.2206 3.43934 10.9393C3.72064 10.658 4.10218 10.5 4.5 10.5C4.89782 10.5 5.27936 10.658 5.56066 10.9393C5.84196 11.2206 6 11.6022 6 12C6 12.3978 5.84196 12.7794 5.56066 13.0607C5.27936 13.342 4.89782 13.5 4.5 13.5ZM4.5 20.4C4.10218 20.4 3.72064 20.242 3.43934 19.9607C3.15804 19.6794 3 19.2978 3 18.9C3 18.5022 3.15804 18.1206 3.43934 17.8393C3.72064 17.558 4.10218 17.4 4.5 17.4C4.89782 17.4 5.27936 17.558 5.56066 17.8393C5.84196 18.1206 6 18.5022 6 18.9C6 19.2978 5.84196 19.6794 5.56066 19.9607C5.27936 20.242 4.89782 20.4 4.5 20.4ZM8 11H21V13H8V11ZM8 18H21V20H8V18Z" fill="currentColor"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5.5v13M5.5 12h13"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5.5 12h13"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24" fill="currentColor"><path d="M7.29101 20.824L2.00001 22L3.17601 16.709C2.40154 15.2604 1.99754 13.6426 2.00001 12C2.00001 6.477 6.47701 2 12 2C17.523 2 22 6.477 22 12C22 17.523 17.523 22 12 22C10.3574 22.0025 8.73963 21.5985 7.29101 20.824V20.824Z" fill="currentColor"/></symbol>
+<!-- контур вписан в то же поле, что у шестерни: высота 20, центр 12×12. Иначе значки -->
+<!-- одного размера рисуются разными и сидят на разной высоте -->
+<symbol id="i-user" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"><g transform="translate(-2.04,-2.68) scale(1.1696)"><path d="M12 12.6a4.3 4.3 0 1 0 0-8.6 4.3 4.3 0 0 0 0 8.6Zm0 1.7c-4.1 0-7.4 2.6-7.4 5.9 0 .5.4.9.9.9h13c.5 0 .9-.4.9-.9 0-3.3-3.3-5.9-7.4-5.9Z"/></g></symbol>
+<symbol id="i-close" viewBox="0 0 24 24" fill="currentColor"><path d="M12 10.586L16.95 5.63599L18.364 7.04999L13.414 12L18.364 16.95L16.95 18.364L12 13.414L7.04999 18.364L5.63599 16.95L10.586 12L5.63599 7.04999L7.04999 5.63599L12 10.586Z" fill="currentColor"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol>
+<symbol id="i-chev-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></symbol>
+<symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24" fill="currentColor"><path d="M18.364 17.364L12 23.728L5.636 17.364C4.37734 16.1054 3.52019 14.5017 3.17293 12.7559C2.82567 11.0101 3.00391 9.20047 3.6851 7.55595C4.36629 5.91142 5.51984 4.50582 6.99988 3.51689C8.47992 2.52796 10.22 2.00012 12 2.00012C13.78 2.00012 15.5201 2.52796 17.0001 3.51689C18.4802 4.50582 19.6337 5.91142 20.3149 7.55595C20.9961 9.20047 21.1743 11.0101 20.8271 12.7559C20.4798 14.5017 19.6227 16.1054 18.364 17.364V17.364ZM12 13C12.5304 13 13.0391 12.7893 13.4142 12.4143C13.7893 12.0392 14 11.5305 14 11C14 10.4696 13.7893 9.9609 13.4142 9.58583C13.0391 9.21076 12.5304 9.00004 12 9.00004C11.4696 9.00004 10.9609 9.21076 10.5858 9.58583C10.2107 9.9609 10 10.4696 10 11C10 11.5305 10.2107 12.0392 10.5858 12.4143C10.9609 12.7893 11.4696 13 12 13Z" fill="currentColor"/></symbol>
+<symbol id="i-people" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22C2 19.8783 2.84285 17.8434 4.34315 16.3431C5.84344 14.8429 7.87827 14 10 14C12.1217 14 14.1566 14.8429 15.6569 16.3431C17.1571 17.8434 18 19.8783 18 22H2ZM10 13C6.685 13 4 10.315 4 7C4 3.685 6.685 1 10 1C13.315 1 16 3.685 16 7C16 10.315 13.315 13 10 13ZM17.363 15.233C18.8926 15.6261 20.2593 16.4918 21.2683 17.7068C22.2774 18.9218 22.8774 20.4242 22.983 22H20C20 19.39 19 17.014 17.363 15.233ZM15.34 12.957C16.178 12.2075 16.8482 11.2893 17.3066 10.2627C17.765 9.23616 18.0013 8.12429 18 7C18.0021 5.63347 17.6526 4.28937 16.985 3.097C18.1176 3.32459 19.1365 3.93737 19.8685 4.8312C20.6004 5.72502 21.0002 6.84473 21 8C21.0003 8.71247 20.8482 9.41676 20.5541 10.0657C20.26 10.7146 19.8305 11.2931 19.2946 11.7625C18.7586 12.2319 18.1285 12.5814 17.4464 12.7874C16.7644 12.9934 16.0462 13.0512 15.34 12.957V12.957Z" fill="currentColor"/></symbol>
+<symbol id="i-box" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5021 5.92225L12 1L3.49793 5.92225L12 10.8445L20.5021 5.92225ZM2.5 7.6555V17.5L11 22.4211V12.5765L2.5 7.6555ZM13 22.4211L21.5 17.5V7.6555L13 12.5765V22.4211Z" fill="currentColor"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.477 22 2 17.523 2 12C2 6.477 6.477 2 12 2C17.523 2 22 6.477 22 12C22 17.523 17.523 22 12 22ZM13 12V7H11V14H17V12H13Z" fill="currentColor"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24" fill="currentColor"><path d="M2 11H22V20C22 20.2652 21.8946 20.5196 21.7071 20.7071C21.5196 20.8946 21.2652 21 21 21H3C2.73478 21 2.48043 20.8946 2.29289 20.7071C2.10536 20.5196 2 20.2652 2 20V11ZM17 3H21C21.2652 3 21.5196 3.10536 21.7071 3.29289C21.8946 3.48043 22 3.73478 22 4V9H2V4C2 3.73478 2.10536 3.48043 2.29289 3.29289C2.48043 3.10536 2.73478 3 3 3H7V1H9V3H15V1H17V3Z" fill="currentColor"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24" fill="currentColor"><path d="M9 3H15L17 5H21C21.2652 5 21.5196 5.10536 21.7071 5.29289C21.8946 5.48043 22 5.73478 22 6V20C22 20.2652 21.8946 20.5196 21.7071 20.7071C21.5196 20.8946 21.2652 21 21 21H3C2.73478 21 2.48043 20.8946 2.29289 20.7071C2.10536 20.5196 2 20.2652 2 20V6C2 5.73478 2.10536 5.48043 2.29289 5.29289C2.48043 5.10536 2.73478 5 3 5H7L9 3ZM12 19C13.5913 19 15.1174 18.3679 16.2426 17.2426C17.3679 16.1174 18 14.5913 18 13C18 11.4087 17.3679 9.88258 16.2426 8.75736C15.1174 7.63214 13.5913 7 12 7C10.4087 7 8.88258 7.63214 7.75736 8.75736C6.63214 9.88258 6 11.4087 6 13C6 14.5913 6.63214 16.1174 7.75736 17.2426C8.88258 18.3679 10.4087 19 12 19V19ZM12 17C10.9391 17 9.92172 16.5786 9.17157 15.8284C8.42143 15.0783 8 14.0609 8 13C8 11.9391 8.42143 10.9217 9.17157 10.1716C9.92172 9.42143 10.9391 9 12 9C13.0609 9 14.0783 9.42143 14.8284 10.1716C15.5786 10.9217 16 11.9391 16 13C16 14.0609 15.5786 15.0783 14.8284 15.8284C14.0783 16.5786 13.0609 17 12 17Z" fill="currentColor"/></symbol>
+<symbol id="i-flag" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3H12.382C12.5677 3.0001 12.7496 3.05188 12.9075 3.14955C13.0654 3.24722 13.193 3.38692 13.276 3.553L14 5H20C20.2652 5 20.5196 5.10536 20.7071 5.29289C20.8946 5.48043 21 5.73478 21 6V17C21 17.2652 20.8946 17.5196 20.7071 17.7071C20.5196 17.8946 20.2652 18 20 18H13.618C13.4323 17.9999 13.2504 17.9481 13.0925 17.8504C12.9346 17.7528 12.807 17.6131 12.724 17.447L12 16H5V22H3V3Z" fill="currentColor"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.6l4.6 4.6L19 7.4"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24" fill="currentColor"><path d="M1.94626 9.31697C1.42402 9.14293 1.41902 8.86185 1.95627 8.6828L21.0521 2.31905C21.5814 2.14301 21.8845 2.43909 21.7365 2.95723L16.2799 22.0485C16.1298 22.5776 15.8247 22.5956 15.6006 22.0935L12.0049 14.0033L18.0077 6.00106L10.004 12.0027L1.94626 9.31697V9.31697Z" fill="currentColor"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24" fill="currentColor"><path d="M17 6H22V8H20V21C20 21.2652 19.8946 21.5196 19.7071 21.7071C19.5196 21.8946 19.2652 22 19 22H5C4.73478 22 4.48043 21.8946 4.29289 21.7071C4.10536 21.5196 4 21.2652 4 21V8H2V6H7V3C7 2.73478 7.10536 2.48043 7.29289 2.29289C7.48043 2.10536 7.73478 2 8 2H16C16.2652 2 16.5196 2.10536 16.7071 2.29289C16.8946 2.48043 17 2.73478 17 3V6ZM9 11V17H11V11H9ZM13 11V17H15V11H13ZM9 4V6H15V4H9Z" fill="currentColor"/></symbol>
+<symbol id="i-geo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7.4"/><circle cx="12" cy="12" r="2.6"/><path d="M12 1.8v2.6M12 19.6v2.6M22.2 12h-2.6M4.4 12H1.8"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22ZM12 9.5C12.8284 9.5 13.5 8.82843 13.5 8C13.5 7.17157 12.8284 6.5 12 6.5C11.1716 6.5 10.5 7.17157 10.5 8C10.5 8.82843 11.1716 9.5 12 9.5ZM14 15H13V10.5H10V12.5H11V15H10V17H14V15Z" fill="currentColor"/></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24" fill="currentColor"><path d="M12.9 6.85796L17.142 11.101L7.242 21H3V16.757L12.9 6.85696V6.85796ZM14.314 5.44396L16.435 3.32196C16.6225 3.13449 16.8768 3.02917 17.142 3.02917C17.4072 3.02917 17.6615 3.13449 17.849 3.32196L20.678 6.15096C20.8655 6.33849 20.9708 6.5928 20.9708 6.85796C20.9708 7.12313 20.8655 7.37743 20.678 7.56496L18.556 9.68596L14.314 5.44396Z" fill="currentColor"/></symbol>
+<symbol id="i-exit" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"><path d="M14.2 3.2a2.4 2.4 0 0 1 2.4 2.4v12.8a2.4 2.4 0 0 1-2.4 2.4h-2.6a.9.9 0 0 1 0-1.8h2.6c.3 0 .6-.3.6-.6V5.6a.6.6 0 0 0-.6-.6h-2.6a.9.9 0 0 1 0-1.8h2.6ZM9.4 7.7a.9.9 0 0 1 0 1.3l-2.1 2.1h5.1a.9.9 0 0 1 0 1.8H7.3l2.1 2.1a.9.9 0 1 1-1.3 1.3l-3.6-3.6a.9.9 0 0 1 0-1.3l3.6-3.7a.9.9 0 0 1 1.3 0Z"/></symbol>
+<symbol id="i-archive" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10H21V20.004C21 20.554 20.555 21 20.007 21H3.993C3.86238 20.9999 3.73307 20.974 3.61246 20.9239C3.49184 20.8737 3.3823 20.8003 3.29007 20.7078C3.19785 20.6153 3.12477 20.5055 3.07499 20.3848C3.02522 20.264 2.99974 20.1346 3 20.004V10ZM9 12V14H15V12H9ZM2 4C2 3.448 2.455 3 2.992 3H21.008C21.556 3 22 3.444 22 4V8H2V4Z" fill="currentColor"/></symbol>
+<symbol id="i-undo" viewBox="0 0 24 24" fill="currentColor"><path d="M5.828 6.99999L8.364 9.53599L6.95 10.95L2 5.99999L6.95 1.04999L8.364 2.46399L5.828 4.99999H13C15.1217 4.99999 17.1566 5.84284 18.6569 7.34313C20.1571 8.84342 21 10.8783 21 13C21 15.1217 20.1571 17.1566 18.6569 18.6568C17.1566 20.1571 15.1217 21 13 21H4V19H13C14.5913 19 16.1174 18.3678 17.2426 17.2426C18.3679 16.1174 19 14.5913 19 13C19 11.4087 18.3679 9.88257 17.2426 8.75735C16.1174 7.63213 14.5913 6.99999 13 6.99999H5.828Z"/></symbol>
+<symbol id="i-reset" viewBox="0 0 24 24" fill="currentColor"><path d="M2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2V4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 9.25022 5.38734 6.82447 7.50024 5.38451L7.5 8H9.5V2H3.5V4L5.99918 3.99989C3.57075 5.82434 2 8.72873 2 12Z" fill="currentColor"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24" fill="currentColor"><path d="M21 16.42V19.956C21.0001 20.2092 20.9042 20.453 20.7316 20.6382C20.559 20.8234 20.3226 20.9363 20.07 20.954C19.633 20.984 19.276 21 19 21C10.163 21 3 13.837 3 5C3 4.724 3.015 4.367 3.046 3.93C3.06372 3.67744 3.17658 3.44101 3.3618 3.26841C3.54703 3.09581 3.79082 2.99989 4.044 3H7.58C7.70404 2.99987 7.8237 3.04586 7.91573 3.12902C8.00776 3.21218 8.0656 3.32658 8.078 3.45C8.101 3.68 8.122 3.863 8.142 4.002C8.34073 5.38892 8.748 6.73783 9.35 8.003C9.445 8.203 9.383 8.442 9.203 8.57L7.045 10.112C8.36445 13.1865 10.8145 15.6365 13.889 16.956L15.429 14.802C15.4919 14.714 15.5838 14.6509 15.6885 14.6237C15.7932 14.5964 15.9042 14.6068 16.002 14.653C17.267 15.2539 18.6156 15.6601 20.002 15.858C20.141 15.878 20.324 15.9 20.552 15.922C20.6752 15.9346 20.7894 15.9926 20.8724 16.0846C20.9553 16.1766 21.0012 16.2961 21.001 16.42H21Z" fill="currentColor"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24" fill="currentColor"><path d="M3.783 2.826L12 1L20.217 2.826C20.4391 2.87536 20.6377 2.99897 20.78 3.1764C20.9224 3.35384 21 3.57452 21 3.802V13.789C20.9999 14.7767 20.756 15.7492 20.2899 16.62C19.8238 17.4908 19.1499 18.2331 18.328 18.781L12 23L5.672 18.781C4.85027 18.2332 4.17646 17.4911 3.71035 16.6205C3.24424 15.7498 3.00024 14.7776 3 13.79V3.802C3.00004 3.57452 3.07764 3.35384 3.21999 3.1764C3.36234 2.99897 3.56094 2.87536 3.783 2.826V2.826Z" fill="currentColor"/></symbol>
+<symbol id="i-metro" viewBox="0 0 148 148"><rect x="4" y="4" width="140" height="140" rx="70" fill="currentColor" stroke="#fff" stroke-width="8"/><path fill="#fff" d="M111.014 90.6182L90.6912 39L73.5 69.1746L56.3784 39L35.9856 90.6182H30V98.4412H60.7632V90.6182H56.1696L60.624 77.766L73.5 99L86.376 77.766L90.8304 90.6182H86.2368V98.4412H117V90.6182H111.014Z"/></symbol>
+<symbol id="i-filter" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18H14V16H10V18ZM3 6V8H21V6H3ZM6 13H18V11H6V13Z" fill="currentColor"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24" fill="currentColor"><path d="M9.95405 2.20997C11.303 1.9271 12.6958 1.92642 14.045 2.20797C14.1349 2.80126 14.3574 3.36666 14.6958 3.86215C15.0343 4.35764 15.4801 4.77048 16 5.06997C16.5196 5.3705 17.1002 5.55004 17.6987 5.59522C18.2973 5.64041 18.8983 5.55009 19.457 5.33097C20.3753 6.35903 21.0709 7.56601 21.5 8.87597C21.0314 9.25055 20.6532 9.72592 20.3935 10.2668C20.1338 10.8076 19.9993 11.4 20 12C20 13.264 20.586 14.391 21.502 15.124C21.0704 16.4328 20.3739 17.6389 19.456 18.667C18.8974 18.448 18.2966 18.3578 17.6983 18.403C17.0999 18.4481 16.5195 18.6276 16 18.928C15.4805 19.2274 15.0351 19.6399 14.6968 20.1351C14.3585 20.6302 14.1361 21.1951 14.046 21.788C12.6973 22.0715 11.3044 22.0729 9.95505 21.792C9.86559 21.1982 9.64335 20.6322 9.30487 20.1361C8.96639 19.6401 8.52038 19.2268 8.00005 18.927C7.48041 18.6266 6.89975 18.4472 6.30124 18.4022C5.70272 18.3572 5.10176 18.4477 4.54305 18.667C3.62465 17.6386 2.92905 16.4313 2.50005 15.121C2.96844 14.7466 3.34651 14.2716 3.60618 13.7311C3.86586 13.1906 4.00048 12.5986 4.00005 11.999C4.00054 11.3989 3.86575 10.8063 3.60571 10.2655C3.34568 9.72463 2.96707 9.24935 2.49805 8.87497C2.92972 7.56609 3.62616 6.36007 4.54405 5.33197C5.1027 5.55093 5.70352 5.64117 6.30184 5.59598C6.90017 5.5508 7.48061 5.37135 8.00005 5.07097C8.51959 4.77157 8.96503 4.35899 9.30331 3.86388C9.64158 3.36876 9.864 2.80381 9.95405 2.21097V2.20997ZM12 15C12.7957 15 13.5588 14.6839 14.1214 14.1213C14.684 13.5587 15 12.7956 15 12C15 11.2043 14.684 10.4413 14.1214 9.87865C13.5588 9.31604 12.7957 8.99997 12 8.99997C11.2044 8.99997 10.4413 9.31604 9.87873 9.87865C9.31612 10.4413 9.00005 11.2043 9.00005 12C9.00005 12.7956 9.31612 13.5587 9.87873 14.1213C10.4413 14.6839 11.2044 15 12 15V15Z" fill="currentColor"/></symbol>
+<symbol id="i-walk" viewBox="0 0 24 24" fill="currentColor"><path d="M7.61702 8.712L10.822 6.384C11.1818 6.1207 11.6194 5.98551 12.065 6C12.6085 6.01355 13.1343 6.19611 13.5693 6.52228C14.0042 6.84846 14.3268 7.30205 14.492 7.82C14.678 8.403 14.848 8.797 15.002 9.002C15.4673 9.6228 16.0709 10.1266 16.7649 10.4734C17.4589 10.8203 18.2242 11.0005 19 11V13C17.9673 13.0011 16.9472 12.7733 16.0131 12.3329C15.079 11.8925 14.2542 11.2504 13.598 10.453L12.901 14.408L14.962 16.138L17.185 22.246L15.305 22.93L13.265 17.326L9.87502 14.481C9.59682 14.2564 9.38394 13.9612 9.25854 13.6264C9.13314 13.2915 9.09981 12.9291 9.16202 12.577L9.67102 9.692L8.99402 10.184L6.86702 13.112L5.24902 11.936L7.60002 8.7L7.61702 8.712ZM13.5 5.5C12.9696 5.5 12.4609 5.28929 12.0858 4.91421C11.7107 4.53914 11.5 4.03043 11.5 3.5C11.5 2.96957 11.7107 2.46086 12.0858 2.08579C12.4609 1.71071 12.9696 1.5 13.5 1.5C14.0305 1.5 14.5392 1.71071 14.9142 2.08579C15.2893 2.46086 15.5 2.96957 15.5 3.5C15.5 4.03043 15.2893 4.53914 14.9142 4.91421C14.5392 5.28929 14.0305 5.5 13.5 5.5ZM10.528 18.681L7.31402 22.511L5.78202 21.226L8.75802 17.68L9.50402 15.5L11.295 17L10.528 18.681Z" fill="currentColor"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24" fill="currentColor"><path d="M18.031 16.617L22.314 20.899L20.899 22.314L16.617 18.031C15.0237 19.3082 13.042 20.0029 11 20C6.032 20 2 15.968 2 11C2 6.032 6.032 2 11 2C15.968 2 20 6.032 20 11C20.0029 13.042 19.3082 15.0237 18.031 16.617ZM16.025 15.875C17.2941 14.5699 18.0029 12.8204 18 11C18 7.132 14.867 4 11 4C7.132 4 4 7.132 4 11C4 14.867 7.132 18 11 18C12.8204 18.0029 14.5699 17.2941 15.875 16.025L16.025 15.875V15.875Z" fill="currentColor"/></symbol>
+<!-- контур вписан в то же поле, что у шестерни: был 17× 21,5 с центром 12× 12,75 -->
+<symbol id="i-bell" viewBox="0 0 24 24" fill="currentColor"><g transform="translate(0.84,0.14) scale(0.9302)"><path d="M20 18.667L20.4 19.2C20.4557 19.2743 20.4896 19.3626 20.498 19.4551C20.5063 19.5476 20.4887 19.6406 20.4472 19.7236C20.4057 19.8067 20.3419 19.8765 20.2629 19.9253C20.1839 19.9741 20.0929 20 20 20H4C3.90714 20 3.81612 19.9741 3.73713 19.9253C3.65815 19.8765 3.59431 19.8067 3.55279 19.7236C3.51126 19.6406 3.49368 19.5476 3.50202 19.4551C3.51036 19.3626 3.54429 19.2743 3.6 19.2L4 18.667V10C4 7.87827 4.84286 5.84344 6.34315 4.34315C7.84344 2.84285 9.87827 2 12 2C14.1217 2 16.1566 2.84285 17.6569 4.34315C19.1571 5.84344 20 7.87827 20 10V18.667ZM9.5 21H14.5C14.5 21.663 14.2366 22.2989 13.7678 22.7678C13.2989 23.2366 12.663 23.5 12 23.5C11.337 23.5 10.7011 23.2366 10.2322 22.7678C9.76339 22.2989 9.5 21.663 9.5 21V21Z" fill="currentColor"/></g></symbol>
+<symbol id="i-dots" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5.4" r="1.75"/><circle cx="12" cy="12" r="1.75"/><circle cx="12" cy="18.6" r="1.75"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24" fill="currentColor"><path d="M13 14H11C9.3596 13.9994 7.75023 14.4471 6.34588 15.2949C4.94152 16.1427 3.7956 17.3582 3.032 18.81C3.01054 18.5405 2.99986 18.2703 3 18C3 12.477 7.477 8 13 8V3L23 11L13 19V14Z" fill="currentColor"/></symbol>
+<symbol id="i-chev-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14.5l6-6 6 6"/></symbol>
+<symbol id="i-chev-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol>
+</defs></svg>
+<header class="dshead">
+  <div class="dshead__t">«Район» — дизайн-система<span id="dsver"></span></div>
+  <div class="dshead__c">
+    <div class="segctl"><button data-ds-theme="light" class="is-on">Светлая</button><button data-ds-theme="dark">Тёмная</button></div>
+    <div class="segctl"><button data-ds-width="wide" class="is-on">Широко</button><button data-ds-width="narrow">Телефон</button></div>
+  </div>
+</header>
+<div class="dswrap">
+<nav class="dsnav" id="dsnav"></nav>
+<main class="dsmain">
+
+<section class="dssec" id="about">
+  <h2>Как этим пользоваться</h2>
+  <p>Каталог собирается из самого прототипа: стили и значки берутся из его файла, поэтому цвета,
+  шкала и отступы здесь всегда те же, что в продукте. Разметка образцов написана руками — под
+  каждым стоит адрес класса, чтобы можно было сказать «поправь .chip--muted», а не описывать словами.</p>
+</section>
+
+<section class="dssec" id="colors">
+  <h2>Цвета</h2>
+  <p>Токены переворачиваются по теме: переключите её сверху, и образцы поедут сами. Правило:
+  на брендовом и категорийном фоне знак светлый в светлой теме и тёмный в тёмной — за это
+  отвечает парный токен --*-ink.</p>
+  <div class="dsgrid">
+    <div class="dsitem"><span class="dsitem__n">Поверхности</span>
+      <span data-ds-var="--ground"></span><span data-ds-var="--surface"></span>
+      <span data-ds-var="--surface-2"></span><span data-ds-var="--surface-3"></span></div>
+    <div class="dsitem"><span class="dsitem__n">Текст и линии</span>
+      <span data-ds-var="--ink"></span><span data-ds-var="--ink-2"></span>
+      <span data-ds-var="--ink-3"></span><span data-ds-var="--line"></span>
+      <span data-ds-var="--line-2"></span><span data-ds-var="--field-line"></span></div>
+    <div class="dsitem"><span class="dsitem__n">Типы событий</span>
+      <span data-ds-var="--act"></span><span data-ds-var="--act-soft"></span>
+      <span data-ds-var="--offer"></span><span data-ds-var="--offer-soft"></span>
+      <span data-ds-var="--find"></span><span data-ds-var="--find-soft"></span></div>
+    <div class="dsitem"><span class="dsitem__n">Бренд и необратимое</span>
+      <span data-ds-var="--brand"></span><span data-ds-var="--brand-soft"></span>
+      <span data-ds-var="--danger-solid"></span></div>
+  </div>
+</section>
+
+<section class="dssec" id="type">
+  <h2>Типографика</h2>
+  <p>Кегль и интерлиньяж — одна пара, менять их можно только вместе. Правило контраста:
+  над текстом S заголовок не мельче H60, над текстом M — не мельче H50.</p>
+  <div class="dsgrid">
+    <div class="dsitem"><span class="dsitem__n">Заголовочные</span><span class="dsitem__c">--f-h20 … --f-h60</span>
+      <span class="dsitem__b" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <span style="font-size:var(--f-h20);line-height:var(--l-h20);font-weight:600">26/30 заглавие</span>
+        <span style="font-size:var(--f-h30);line-height:var(--l-h30);font-weight:600">21/26 карточка события</span>
+        <span style="font-size:var(--f-h40);line-height:var(--l-h40);font-weight:600">18/22 имя в профиле</span>
+        <span style="font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600">16/20 строка списка</span>
+        <span style="font-size:var(--f-h60);line-height:var(--l-h60);font-weight:600">14/18 мелкий заголовок</span>
+      </span></div>
+    <div class="dsitem"><span class="dsitem__n">Наборные</span><span class="dsitem__c">--f-m10 … --f-xs10</span>
+      <span class="dsitem__b" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <span style="font-size:var(--f-m10);line-height:var(--l-m10)">15/22 текст по умолчанию</span>
+        <span style="font-size:var(--f-m20);line-height:var(--l-m20)">15/20 списки и контролы</span>
+        <span style="font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)">13/18 второстепенный</span>
+        <span style="font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)">13/16 в плотных блоках</span>
+        <span class="eyebrow">11/14 надзаголовок</span>
+      </span></div>
+  </div>
+</section>
+
+<section class="dssec" id="space">
+  <h2>Отступы и полосы</h2>
+  <p>Лестница: 4 внутри пары, 8 внутри группы, 16 между группами, 24 внешнее поле блока.
+  Внешнее всегда больше внутреннего. У пары «заголовок и подпись» 4 — но только при нормальном
+  интерлиньяже подписи: тесную 13/16 под заголовок не ставим вовсе.</p>
+  <p>Полос две. 78 — содержательная: зона поиска и шапка профиля, её высоту диктует поле ввода.
+  56 — заголовочная и вкладочная: шапка раздела, вкладки, счётчик станции, шаги создания.</p>
+</section>
+
+<section class="dssec" id="btn">
+  <h2>Кнопки</h2>
+  <p>Основная кнопка в паре всегда справа. Красное осталось за необратимым: удалить, сбросить, пожаловаться.</p>
+  <div class="dsgrid">
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Основная</span><span class="dsitem__c">.btn.btn--primary</span>
+      <span class="dsitem__b"><button class="btn btn--primary">Опубликовать</button></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Тихая</span><span class="dsitem__c">.btn.btn--ghost</span>
+      <span class="dsitem__b"><button class="btn btn--ghost">Завершить</button></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Контурная</span><span class="dsitem__c">.btn.btn--line</span>
+      <span class="dsitem__b"><button class="btn btn--line">Не смогу</button></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Необратимая</span><span class="dsitem__c">.btn.btn--danger-solid</span>
+      <span class="dsitem__b"><button class="btn btn--danger-solid">Удалить</button></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Выключенная</span><span class="dsitem__c">.btn[disabled]</span>
+      <span class="dsitem__b"><button class="btn btn--primary" disabled>Укажите место на карте</button></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Пара: основная справа</span><span class="dsitem__c">.row &gt; .btn</span>
+      <span class="dsitem__b"><span class="row" style="width:100%"><button class="btn btn--line">Отмена</button><button class="btn btn--primary">Завершить</button></span></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Мелкая</span><span class="dsitem__c">.btn--sm</span>
+      <span class="dsitem__b"><button class="btn btn--line btn--sm">Принять</button><button class="btn btn--primary btn--sm">Иду</button></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Текстовая</span><span class="dsitem__c">.linkbtn</span>
+      <span class="dsitem__b"><button class="linkbtn">Открыть архив</button></span></div>
+  </div>
+</section>
+
+<section class="dssec" id="chips">
+  <h2>Чипы и теги</h2>
+  <p>Чип со срезанным углом называет, что это за объект: тип события, станция, ваша роль.
+  Тег говорит о состоянии или числе — он мельче и без фирменного угла.</p>
+  <div class="dsgrid">
+    <div class="dsitem"><span class="dsitem__n">Тип события</span><span class="dsitem__c">.chip--act / --offer / --find</span>
+      <span class="dsitem__b">
+        <span class="chip chip--act">Встреча</span>
+        <span class="chip chip--offer">Вещь</span>
+        <span class="chip chip--find">Находка</span></span></div>
+    <div class="dsitem"><span class="dsitem__n">Роль и место</span><span class="dsitem__c">.chip--brand / .chip--muted</span>
+      <span class="dsitem__b">
+        <span class="chip chip--brand">Вы автор</span>
+        <span class="chip chip--muted">В архиве</span>
+        <span class="chip chip--muted">~7 мин</span></span></div>
+    <div class="dsitem"><span class="dsitem__n">Теги</span><span class="dsitem__c">.tag / .tag--solid</span>
+      <span class="dsitem__b">
+        <span class="tag">автор</span><span class="tag">вы</span>
+        <span class="tag">11 сентября</span><span class="tag tag--solid">9/10</span></span></div>
+  </div>
+</section>
+
+<section class="dssec" id="fields">
+  <h2>Поля и контролы выбора</h2>
+  <p>Поле стоит на белом и обведено настоящей рамкой — серая заливка отдана выключенному состоянию.
+  Обязательные поля идут первыми, необязательные после.</p>
+  <div class="dsgrid">
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Поле с подписью</span><span class="dsitem__c">.field &gt; label + .input</span>
+      <span class="dsitem__b"><span class="field" style="width:100%"><label>Заголовок</label>
+        <input class="input" placeholder="Коротко и по делу"><span class="hint">Подсказка под полем</span></span></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Поиск</span><span class="dsitem__c">.searchfield</span>
+      <span class="dsitem__b"><span class="searchfield" style="width:100%">
+        <svg class="searchfield__ic"><use href="#i-search"/></svg>
+        <input class="input" placeholder="Поиск по названию и описанию"></span></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Выключенное</span><span class="dsitem__c">.input[disabled]</span>
+      <span class="dsitem__b"><input class="input" value="Сокольники" disabled></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Тумблер</span><span class="dsitem__c">.switch.is-on</span>
+      <span class="dsitem__b"><span class="switchrow" style="width:100%"><span class="switchrow__txt"><b>Считать расстояние от меня</b>
+        <span>Выключено — считаем от станции до события</span></span><button class="switch is-on"><i></i></button></span></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Варианты выбора</span><span class="dsitem__c">.opts &gt; .radio.is-on</span>
+      <span class="dsitem__b"><span class="opts" style="width:100%">
+        <button class="radio is-on"><span class="radio__dot"></span><span>Отдаю</span></button>
+        <button class="radio"><span class="radio__dot"></span><span>Нужна помощь</span></button></span></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Карточка типа</span><span class="dsitem__c">.typecard.is-on</span>
+      <span class="dsitem__b"><span class="opts" style="width:100%">
+        <button class="typecard typecard--offer is-on"><span class="typecard__ic"><svg><use href="#i-box"/></svg></span>
+          <span><b>Услуга или вещь</b><span>Отдайте ненужное или предложите то, что умеете</span></span></button>
+        <button class="typecard typecard--act"><span class="typecard__ic"><svg><use href="#i-people"/></svg></span>
+          <span><b>Встреча</b><span>Соберите соседей на пробежку или уборку во дворе</span></span></button></span></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Сегментед</span><span class="dsitem__c">.segctl</span>
+      <span class="dsitem__b"><span class="segctl" style="width:100%">
+        <button class="is-on">Системная</button><button>Светлая</button><button>Тёмная</button></span></span></div>
+  </div>
+</section>
+
+<section class="dssec" id="rows">
+  <h2>Строки и карточки списков</h2>
+  <p>Подсветка строки означает «это открыто рядом», а не «отсюда вы пришли»: она живёт только там,
+  где список виден одновременно с карточкой.</p>
+  <div class="dsgrid">
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Карточка ленты</span><span class="dsitem__c">.fcard — feedCard</span>
+      <button class="fcard"><span class="fcard__main"><i class="fcard__rule fcard__rule--act"></i><span class="fcard__col">
+        <span class="fcard__when"><span>завтра, 12:30</span><span class="fcard__rep">↻ еженедельно</span></span>
+        <span class="fcard__t">футбол 5х5 у оленьих прудов</span>
+        <span class="fcard__d">не хватает троих, уровень любой, главное без подкатов</span>
+        <span class="fcard__m"><span class="chip chip--brand">Вы участвуете</span>
+          <span class="chip chip--muted">Участники · 8/10</span>
+          <span class="chip chip--muted">~7 мин</span></span>
+      </span></span></button></div>
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Карточка: открыта рядом</span><span class="dsitem__c">.fcard.is-sel</span>
+      <button class="fcard is-sel"><span class="fcard__main"><i class="fcard__rule fcard__rule--find"></i><span class="fcard__col">
+        <span class="fcard__when"><span>закрыто вчера</span></span>
+        <span class="fcard__t">Нашла связку ключей у детской площадки</span>
+        <span class="fcard__m"><span class="chip chip--muted">Находка</span></span>
+      </span></span></button></div>
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Строка переписки</span><span class="dsitem__c">.listrow--chat — viewChats</span>
+      <button class="listrow listrow--chat"><i class="listrow__rule listrow__rule--find"></i>
+        <span class="listrow__pic"><span class="listrow__cover listrow__cover--lg listrow__cover--find"><svg><use href="#i-search"/></svg></span>
+          <span class="avatar avatar--s listrow__face"></span></span>
+        <span class="listrow__body"><span class="listrow__top"><span class="listrow__t">Никита Р.</span>
+          <span class="listrow__time">12:42</span><span class="unread"></span></span>
+          <span class="listrow__pin">потерялась рыжая собака, зовут Тиша</span>
+          <span class="listrow__msg">Выезжаю</span></span></button></div>
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Строка профиля</span><span class="dsitem__c">.listrow--chat — viewProfile</span>
+      <button class="listrow listrow--chat">
+        <span class="listrow__cover listrow__cover--act"><svg><use href="#i-people"/></svg></span>
+        <span class="listrow__body"><span class="listrow__t">Чистим двор перед зимой</span>
+          <span class="listrow__s">завтра, 09:30</span></span>
+        <span class="listrow__r"><svg><use href="#i-chev-right"/></svg></span></button></div>
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Строка человека</span><span class="dsitem__c">.person — viewPeople</span>
+      <span class="peoplelist"><span class="people">
+        <button class="person"><span class="avatar avatar--s"></span>
+          <span class="person__n">Сергей Тесто</span>
+          <span class="person__tags"><span class="tag">автор</span><span class="tag">вы</span></span></button>
+        <button class="person"><span class="avatar avatar--s"></span>
+          <span class="person__n">Анна К.</span></button></span></span></div>
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Строка-кнопка карточки</span><span class="dsitem__c">.author</span>
+      <span style="padding:16px;display:block">
+        <button class="author"><span class="avatar"></span>
+          <span class="author__body"><span class="author__n">Анна К.</span><span class="author__s">автор встречи</span></span>
+          <svg><use href="#i-chev-right"/></svg></button>
+        <button class="author" style="margin-top:8px"><span class="author__body"><span class="author__n">Участники · 8/10</span>
+          <span class="progress" style="margin-top:6px"><i style="width:80%"></i></span></span>
+          <svg><use href="#i-chev-right"/></svg></button></span></div>
+  </div>
+</section>
+
+<section class="dssec" id="notes">
+  <h2>Обращения сервиса</h2>
+  <p>Всё, что сервис говорит или просит лично у вас, живёт одним слоем: одно место, одно оформление.
+  Фон контекстный — в карточке белое с рамкой, в канале уведомлений новое залито, прочитанное белое.</p>
+  <div class="dsgrid">
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Обращение в карточке</span><span class="dsitem__c">.cardnote</span>
+      <span class="dsitem__b"><span class="cardnote" style="width:100%"><span><b>Подтвердите участие</b>
+        <p>Без ответа место уйдёт другому соседу</p></span>
+        <span class="row"><button class="btn btn--line btn--sm">Не смогу</button>
+        <button class="btn btn--primary btn--sm"><svg><use href="#i-check"/></svg>Иду</button></span></span></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Уведомление прочитанное</span><span class="dsitem__c">.sysmsg.sysmsg--go</span>
+      <span class="dsitem__b"><span class="sysmsg sysmsg--go" style="width:100%">
+        <span class="sysmsg__head"><span class="chip chip--find"><svg><use href="#i-search"/></svg>Рядом пропажа</span>
+          <span class="sysmsg__go"><svg><use href="#i-chev-right"/></svg></span></span>
+        <span class="sysmsg__t">пропал рыжий кот, зовут рыжик</span>
+        <span class="sysmsg__x">ищет Дима С., Сокольники</span>
+        <span class="sysmsg__foot"><span class="sysmsg__d">12:08</span></span></span></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Уведомление новое</span><span class="dsitem__c">.sysmsg.is-new</span>
+      <span class="dsitem__b"><span class="sysmsg sysmsg--go is-new" style="width:100%">
+        <span class="sysmsg__head"><span class="chip chip--act"><svg><use href="#i-people"/></svg>Подтвердите участие</span>
+          <span class="sysmsg__go"><svg><use href="#i-chev-right"/></svg></span></span>
+        <span class="sysmsg__t">Утренняя пробежка, темп 6:00</span>
+        <span class="sysmsg__x">завтра, 09:30. Подтвердите за 6 часов до начала</span>
+        <span class="sysmsg__foot"><span class="sysmsg__d">14:10</span></span></span></span></div>
+    <div class="dsitem dsitem--col"><span class="dsitem__n">Тост и тост-действие</span><span class="dsitem__c">.toast / .toast--bare</span>
+      <span class="dsitem__b" style="flex-direction:column;align-items:flex-start;gap:12px">
+        <span class="toast is-on" style="position:static;transform:none;max-width:none"><span>Изменения сохранены</span></span>
+        <span class="toast toast--bare is-on" style="position:static;transform:none;max-width:none">
+          <button class="toast__a">Вернуть<svg><use href="#i-undo"/></svg></button></span></span></div>
+  </div>
+</section>
+
+<section class="dssec" id="bands">
+  <h2>Полосы экрана</h2>
+  <div class="dsgrid">
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Первая полоса: поиск</span><span class="dsitem__c">.panel__top — 78</span>
+      <span class="panel__top" style="display:block"><span class="searchfield">
+        <svg class="searchfield__ic"><use href="#i-search"/></svg>
+        <input class="input" placeholder="Поиск по названию и описанию"></span></span></div>
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Вторая полоса: вкладки</span><span class="dsitem__c">.tabs — 56</span>
+      <span class="tabswrap" style="display:block"><span class="tabs" style="display:flex">
+        <button class="is-on">Все<span class="tag">3</span></button>
+        <button class="tab--act">Встречи<span class="tag tag--act">1</span></button>
+        <button class="tab--offer">Услуги и вещи</button></span></span></div>
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Вторая полоса: счётчик</span><span class="dsitem__c">.scoperow — 56</span>
+      <span class="scoperow" style="display:flex"><button class="scopebtn"><b>20 событий</b>
+        <span class="scopebtn__st"><i class="linedot" style="background:#EF161E"></i>Сокольники</span>
+        <svg><use href="#i-chev-down"/></svg></button></span></div>
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Заголовок группы</span><span class="dsitem__c">.eyebrow</span>
+      <span style="display:block;padding:24px 16px 16px"><span class="eyebrow">Опубликовано · 3</span></span></div>
+  </div>
+</section>
+
+<section class="dssec" id="empty">
+  <h2>Пустые состояния</h2>
+  <p>У пустого экрана всегда есть выход, и единственное действие на нём — основная кнопка.</p>
+  <div class="dsgrid">
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Ничего нет</span><span class="dsitem__c">.empty</span>
+      <span class="empty"><svg><use href="#i-list"/></svg><b>Здесь пока пусто</b>
+        <p>Нет активных событий с выбранными фильтрами</p>
+        <button class="btn btn--primary btn--sm"><svg><use href="#i-plus"/></svg>Создать событие</button></span></div>
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Ничего не нашлось</span><span class="dsitem__c">.empty</span>
+      <span class="empty"><svg><use href="#i-search"/></svg><b>Ничего не нашлось</b>
+        <p>Попробуйте другое слово или проверьте фильтры категорий</p></span></div>
+  </div>
+</section>
+
+<section class="dssec" id="map">
+  <h2>Карта</h2>
+  <div class="dsgrid">
+    <div class="dsitem"><span class="dsitem__n">Булавки</span><span class="dsitem__c">.pin--act / --offer / --find / --mine</span>
+      <span class="dsitem__b" style="gap:28px;padding:28px 8px 8px">
+        <span class="pin pin--act" style="position:static;transform:rotate(-45deg)"><svg><use href="#i-people"/></svg></span>
+        <span class="pin pin--offer" style="position:static;transform:rotate(-45deg)"><svg><use href="#i-box"/></svg></span>
+        <span class="pin pin--find" style="position:static;transform:rotate(-45deg)"><svg><use href="#i-search"/></svg></span>
+        <span class="pin pin--mine" style="position:static;transform:rotate(-45deg)"><svg><use href="#i-people"/></svg></span></span></div>
+    <div class="dsitem"><span class="dsitem__n">Кластер и станция</span><span class="dsitem__c">.cluster / .metrodot</span>
+      <span class="dsitem__b" style="gap:24px;padding:12px 8px">
+        <span class="cluster" style="position:static;transform:none">4<span class="cluster__ring"></span></span>
+        <svg class="metrodot" style="position:static;transform:none;color:#EF161E"><use href="#i-metro"/></svg></span></div>
+  </div>
+</section>
+
+<section class="dssec" id="rules">
+  <h2>Правила</h2>
+  <div class="dsrules">
+    <div class="dsrule"><b>На брендовом фоне — только светлое</b><span>Белый текст и значки на заливке бренда и категорий. В тёмной теме заливки светлеют, и знак на них темнеет парным токеном.</span></div>
+    <div class="dsrule"><b>Основная кнопка в паре всегда справа</b><span>И в подвалах, и в модальных окнах.</span></div>
+    <div class="dsrule"><b>Одно значение — один текст</b><span>Один факт называется одинаково везде и считается одним кодом. Разным бывает только оформление, когда у мест разные задачи.</span></div>
+    <div class="dsrule"><b>Лестница отступов 4 / 8 / 16 / 24</b><span>Внешнее поле всегда больше внутренних разрывов. Полосы, заданные числом, обязаны сходиться с содержимым в арифметике.</span></div>
+    <div class="dsrule"><b>У шторок и разделов теней нет</b><span>Границу держит линия и заливка, а не тень.</span></div>
+    <div class="dsrule"><b>Точки в конце нет</b><span>Подписи и подсказки — не предложения. Вторую фразу-пересказ убираем: если сказанное уже видно на экране, повторять его нечем.</span></div>
+    <div class="dsrule"><b>Обязательные поля первыми</b><span>Необязательные после. Погашенная кнопка называет, чего не хватает.</span></div>
+    <div class="dsrule"><b>Меняешь высоту от действия внутри блока — анимируй</b><span>Раскрытие и схлопывание идут по высоте, а не рывком.</span></div>
+    <div class="dsrule"><b>Формы безличные</b><span>«Провёл» и «сходила» требуют знать род человека, а мы его не знаем и по имени угадывать не станем.</span></div>
+    <div class="dsrule"><b>Подсветка строки означает «открыто рядом»</b><span>А не «отсюда вы пришли». Список, который сам лежит в цепочке, ничего рядом с собой не показывает.</span></div>
+    <div class="dsrule"><b>В архиве чип опознаёт объект</b><span>Пока событие живо — зовёт к действию: «Отдаю» превращается в «Вещь», расстояние уходит, станция остаётся.</span></div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>/* Каталог: переключатели темы и ширины, оглавление собирается из заголовков разделов */
+(function(){
+  var doc=document.documentElement;
+  document.addEventListener('click',function(e){
+    var t=e.target.closest('[data-ds-theme]');
+    if(t){
+      doc.setAttribute('data-theme',t.getAttribute('data-ds-theme'));
+      [].forEach.call(t.parentNode.children,function(b){b.classList.toggle('is-on',b===t)});
+      return;
+    }
+    var w=e.target.closest('[data-ds-width]');
+    if(w){
+      document.body.classList.toggle('ds-narrow',w.getAttribute('data-ds-width')==='narrow');
+      [].forEach.call(w.parentNode.children,function(b){b.classList.toggle('is-on',b===w)});
+    }
+  });
+  var nav=document.getElementById('dsnav');
+  [].forEach.call(document.querySelectorAll('.dssec'),function(s,i){
+    var h=s.querySelector('h2'); if(!h)return;
+    s.id=s.id||('sec'+i);
+    var a=document.createElement('a'); a.href='#'+s.id; a.textContent=h.textContent;
+    nav.appendChild(a);
+  });
+  /* образцы цвета красятся своими переменными: список собран из :root, а не переписан руками */
+  [].forEach.call(document.querySelectorAll('[data-ds-var]'),function(el){
+    var v=el.getAttribute('data-ds-var');
+    var i=document.createElement('i'); i.style.background='var('+v+')';
+    var s=document.createElement('span'); s.textContent=v;
+    el.className='dsswatch'; el.appendChild(i); el.appendChild(s);
+  });
+})();
+</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.11";</script>
