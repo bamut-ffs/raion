@@ -2,7 +2,11 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Район">
 <meta name="description" content="Каталог элементов интерфейса «Района»: токены, компоненты во всех состояниях, правила проекта.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
@@ -76,7 +80,22 @@
   --shadow-1:0 1px 2px rgba(0,0,0,.08);
   --shadow-2:0 2px 4px rgba(0,0,0,.07),0 10px 28px rgba(0,0,0,.13);
   --shadow-3:0 4px 8px rgba(0,0,0,.09),0 24px 60px rgba(0,0,0,.22);
-  --r-s:6px; --r-m:10px; --r-l:16px; --panel-w:380px; --panel-b-w:340px; --home-peek:78px;
+  --r-s:6px; --r-m:10px; --r-l:16px; --panel-w:380px; --panel-b-w:340px; --home-peek:70px;
+  /* Безопасные зоны телефона. В обычной вкладке браузера они равны нулю: верх экрана
+     занимает панель Safari, и страница под остров не заходит в принципе. Настоящие
+     значения появляются, когда страницу добавили на домашний экран — тогда приложение
+     занимает весь экран, и остров сверху с полосой жестов снизу становятся нашей заботой.
+     Держим их переменными, а не пишем env() по месту: прибавлять их приходится в семи
+     местах внутри calc(), и читается это тяжело */
+  /* В исходнике они нули, и это не заглушка: артефакт оборачивает страницу своим каркасом,
+     который сам добавляет корню отступы на безопасные зоны. Возьми мы env() и здесь —
+     отступ на телефоне удвоился бы. На GitHub Pages обёртки нет, и там настоящие значения
+     подставляет сборка (собрать.js) — вместе с головой страницы, которой здесь тоже нет */
+  --top-safe:0px;
+  --bot-safe:0px;
+  /* высота таббара вместе с полосой жестов: от неё отсчитываются нижние края всех шторок,
+     и пока это было числом 66, полоса жестов ложилась поверх кнопок */
+  --rail-h:calc(66px + var(--bot-safe));
   /* высота верхней полосы экрана: одна на шапку с заголовком и на ряд вкладок, иначе
      в двух колонках рядом стоят две шапки разной высоты и списки под ними разъезжаются */
   --head-h:56px;
@@ -213,6 +232,12 @@ body{
   font-family:'Golos Text',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   font-size:var(--f-m10);line-height:var(--l-m10);-webkit-font-smoothing:antialiased;
   overscroll-behavior:none;overflow:hidden;
+  /* Двойное касание здесь не «приблизить текст», а промах: в интерфейсе, где нажимают
+     на каждый элемент, два быстрых попадания по одной кнопке уводили страницу в масштаб.
+     Прокрутка и щипок остаются — уходит только двойной тап. Собственные запреты внутри
+     (карта, ручка шторки, ряд вкладок) этим не ломаются: браузер берёт пересечение,
+     то есть более строгое из двух */
+  touch-action:manipulation;
 }
 button,input,textarea,select{font:inherit;color:inherit}
 button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
@@ -391,7 +416,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 
 /* ---------- toolbar ---------- */
 .toolbar{
-  position:absolute;left:16px;right:16px;top:14px;display:flex;gap:12px;align-items:flex-start;
+  position:absolute;left:16px;right:16px;top:calc(14px + var(--top-safe));display:flex;gap:12px;align-items:flex-start;
   justify-content:flex-end;
   pointer-events:none;flex-wrap:wrap;z-index:6;
 }
@@ -568,6 +593,15 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Строки в столбик, кружок и подпись в строку. Выбранная — белая плашка с тенью на серой
    дорожке: так сразу видно, что выбрано, и контрол читается как один предмет, а не как
    продолжение списка станций под ним. Кегль тот же, что у названия станции */
+/* Ряд переключателей типа над списком своих событий: по виду это те же кнопки, что
+   в строке сортировки рядом, а цветная точка перед словом говорит, что тут категории,
+   а не порядок */
+.catrow{display:flex;align-items:center;gap:8px;padding:12px 16px;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior-x:contain}
+.catrow button{flex:none;display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:7px;
+  font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;color:var(--ink-3);white-space:nowrap}
+.catrow button:hover{color:var(--ink)}
+.catrow button.is-on{background:var(--surface-3);color:var(--ink);font-weight:600}
+.catrow i{width:10px;height:10px;border-radius:50%;flex:none;border:2px solid transparent;display:block}
 .segctl--cat{flex-direction:column}
 .segctl--cat button{
   flex:none;flex-direction:row;gap:6px;padding:10px 12px;white-space:normal;text-align:left;
@@ -726,6 +760,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .factrow{display:flex;gap:12px;align-items:flex-start;font-size:var(--f-h60);line-height:var(--l-h60)}
 .factrow svg{width:16px;height:16px;color:var(--ink-3);flex:none;margin-top:2px}
 .factrow b{font-weight:600}
+/* будильник на строке времени: прижат к правому краю строки и не спорит с текстом */
+.factrow__act{margin-left:auto;flex:none;color:var(--ink-3)}
+.factrow__act.is-on{color:var(--brand)}
+.factrow__act.is-on svg{fill:currentColor}
 .factrow span{color:var(--ink-3);font-size:var(--f-s20);line-height:var(--l-s20);display:block;margin-top:4px}
 /* Обе кнопки — автор и участники — одного роста: содержимое внутри держится в 36, поэтому
    при центрировании верхняя строка встаёт на те же 12 сверху, а полоса заполнения остаётся
@@ -773,7 +811,9 @@ button.person:hover{background:var(--surface-2)}
    в surface-3, и дорожка сливалась с ней — полоса теряла второй конец */
 .progress{height:5px;border-radius:3px;background:var(--surface);overflow:hidden}
 .progress i{display:block;height:100%;background:var(--act);border-radius:3px}
-.photos{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+/* лента снимков — второй случай общей полосы. Жест здесь за горизонталью не закрепляем:
+   полоса лежит внутри прокручиваемой карточки, и смах вверх с неё обязан листать карточку */
+.photos{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;padding-bottom:4px}
 .photos img{width:82px;height:82px;object-fit:cover;border-radius:var(--r-s);flex:none;border:1px solid var(--line)}
 
 /* ---------- feed ---------- */
@@ -871,6 +911,12 @@ button.person:hover{background:var(--surface-2)}
   width:100%;padding:12px;border-radius:var(--r-m);border:1px solid var(--field-line);
   background:var(--surface);color:var(--ink);caret-color:var(--ink);
   font-size:var(--f-m20);line-height:var(--l-m20);transition:border-color .12s,box-shadow .12s;
+}
+/* На сенсорном экране кегль полей — шестнадцать, и это не про красоту: айос сам приближает
+   страницу, когда курсор встаёт в поле мельче шестнадцати. Межстрочное не трогаем, поэтому
+   высота поля остаётся прежней, ровно 46, и все расчёты вокруг неё сходятся */
+@media (pointer:coarse){
+  .input,.textarea,.select{font-size:16px}
 }
 .input::placeholder,.textarea::placeholder{color:var(--ink-3);opacity:1}
 .input:focus,.textarea:focus,.select:focus{
@@ -1031,30 +1077,60 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* ---------- lists / tabs ---------- */
 /* четыре вкладки в панель шириной 380 не помещаются в строку: даём прокрутку вбок,
    а не перенос — перенос ломает высоту шапки и сдвигает список */
-.tabs{display:flex;align-items:center;gap:4px;padding:0 16px;min-height:var(--head-h);overflow-x:auto;border-bottom:1px solid var(--line)}
+/* Вертикальная прокрутка запрещена прямо: у контейнера с прокруткой вбок вторая ось
+   по умолчанию тоже становится подвижной, и на айосе палец по диагонали оттягивает ряд
+   резинкой на десятки пикселей. Жест закреплён за горизонталью, а перетяг не отдаётся
+   наружу — иначе смах вправо от первой вкладки читается системой как «назад» */
+.tabs{display:flex;align-items:center;gap:4px;padding:0 16px;min-height:var(--head-h);
+  overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior-x:contain}
 /* Разделы отмечены подчёркиванием, а не плашкой: тонкая линия под рядом служит и границей
    шапки, и дорожкой для указателя, то есть один элемент делает две работы */
 .tabs button{flex:none;white-space:nowrap;position:relative}
 .tabs button{padding:0 2px;font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;color:var(--ink-3);align-self:stretch;display:flex;align-items:center}
 .tabs{gap:12px}
-/* ряд вкладок шире экрана на телефоне, а полосы прокрутки в приложении скрыты — без
-   растворения у правого края четвёртая вкладка превращалась в тайник */
-.tabswrap{position:relative;min-width:0}
+/* Полоса с прокруткой вбок — общий элемент, а не часть вкладок: те же края и те же стрелки
+   нужны ленте снимков в карточке события и любой следующей такой полосе. Внутри обёртки
+   лежит ровно один прокручиваемый ряд; края и стрелки считает hscrollEdges */
+.hscroll{position:relative;min-width:0}
 /* Растворение у каждого края живёт по своему условию: слева — пока начало ряда уехало,
    справа — пока за краем остался хвост. Прежде оно включалось один раз по факту «ряд шире
    экрана» и висело даже когда листать уже некуда */
-.tabswrap::before,.tabswrap::after{
-  content:'';position:absolute;top:0;bottom:1px;width:28px;pointer-events:none;
-  opacity:0;transition:opacity .15s;
+.hscroll::before,.hscroll::after{
+  content:'';position:absolute;top:0;bottom:0;width:28px;pointer-events:none;
+  opacity:0;transition:opacity .15s;z-index:1;
 }
-.tabswrap::before{left:0;background:linear-gradient(to left,color-mix(in srgb,var(--surface) 0%,transparent),var(--surface))}
-.tabswrap::after{right:0;background:linear-gradient(to right,color-mix(in srgb,var(--surface) 0%,transparent),var(--surface))}
-.tabswrap.is-start::before{opacity:1}
-.tabswrap.is-end::after{opacity:1}
+.hscroll::before{left:0;background:linear-gradient(to left,color-mix(in srgb,var(--surface) 0%,transparent),var(--surface))}
+.hscroll::after{right:0;background:linear-gradient(to right,color-mix(in srgb,var(--surface) 0%,transparent),var(--surface))}
+.hscroll.is-start::before{opacity:1}
+.hscroll.is-end::after{opacity:1}
+/* Черта под рядом вкладок нарисована внутренней тенью обёртки, а не границей самого ряда.
+   Причина не в красоте: указатель активной вкладки свисал на пиксель ниже ряда, чтобы лечь
+   поверх черты, — и этот пиксель делал ряд прокручиваемым по вертикали. Тень места
+   не занимает и ничего не свешивает, а указатель по-прежнему перекрывает черту собой,
+   потому что лежит выше по слоям */
+.tabswrap{box-shadow:inset 0 -1px 0 var(--line)}
+/* Стрелки показываются по наведению и только с той стороны, где есть скрытое. Условие —
+   наличие мыши, а не ширина экрана: узкое окно на ноутбуке это всё ещё мышь, а планшет
+   в тысячу пикселей — палец, и наведения на нём не существует.
+   Тени нет: стрелка лежит поверх растворения, и второй приём отделения тут лишний */
+.hscroll__arr{
+  position:absolute;top:50%;transform:translateY(-50%);z-index:2;
+  width:26px;height:26px;border-radius:50%;display:none;place-items:center;
+  background:var(--surface);border:1px solid var(--line);color:var(--ink-2);
+  opacity:0;transition:opacity .15s,background .12s,color .12s;
+}
+.hscroll__arr svg{width:14px;height:14px}
+.hscroll__arr:hover{background:var(--surface-2);color:var(--ink)}
+.hscroll__arr--l{left:2px}
+.hscroll__arr--r{right:2px}
+@media (hover:hover) and (pointer:fine){
+  .hscroll.is-start .hscroll__arr--l,.hscroll.is-end .hscroll__arr--r{display:grid}
+  .hscroll:hover .hscroll__arr{opacity:1}
+}
 /* Перебор в считанные пиксели не прокручиваем, а убираем: ряд поджимается зазором и правым
    полем и встаёт целиком. Иначе вкладки ездят на два-три пикселя, и на двух снимках подряд
    «Все» стоит в разных местах */
-.tabswrap.is-tight .tabs{gap:8px;padding-right:8px;overflow-x:hidden}
+.hscroll.is-tight .tabs{gap:8px;padding-right:8px;overflow-x:hidden}
 .tabs button:hover{color:var(--ink)}
 .tabs button.is-on{color:var(--ink);font-weight:600}
 /* Число на вкладке появляется только когда есть непрочитанное — значит само его наличие
@@ -1089,7 +1165,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .swghost{position:absolute;left:0;right:0;top:0;background:var(--surface);pointer-events:none}
 /* подчёркивание в цвет типа — счётчик рядом красится им же, линия просто догоняет.
    У «Все» типа нет, там остаётся тёмная */
-.tabs button.is-on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:2px 2px 0 0;background:var(--tab-line,var(--ink))}
+.tabs button.is-on::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:2px 2px 0 0;background:var(--tab-line,var(--ink))}
 .tabs button.tab--act{--tab-line:var(--act)}
 .tabs button.tab--offer{--tab-line:var(--offer)}
 .tabs button.tab--find{--tab-line:var(--find)}
@@ -1132,6 +1208,9 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* время в строке чата держится верхнего края: в профиле тот же блок носит шеврон,
    и его поднимать наверх не надо — поэтому модификатор, а не общее правило */
 .listrow__r--top{align-self:flex-start}
+/* число и шеврон в строке перехода стоят в строку: столбцом они читались бы как две
+   отдельные вещи, а это один ответ — «сколько там» и «туда» */
+.listrow__r--row{flex-direction:row;align-items:center;gap:8px}
 /* имя, время и точка в одной строке; название пина и текст ниже идут во всю ширину */
 .listrow__top{display:flex;align-items:baseline;gap:8px;min-width:0}
 .listrow__top .listrow__t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1284,14 +1363,14 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .sheet-scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:19;display:none}
 /* под домашней шторкой затемняем только карту: дом — состояние просмотра, и уходить
    из него в чаты одним касанием человек вправе, поэтому таббар остаётся живым */
-.sheet-scrim--home{bottom:66px}
+.sheet-scrim--home{bottom:var(--rail-h)}
 /* плашка с расстоянием на шаге выбора места — тёмная, как всплывающие сообщения */
 /* Плашка занимает тот же слот, что кнопка охвата, и уходит тем же движением. Видна она
    только пока шторка внизу и вы целитесь: как только шторка поднялась, станция
    и расстояние уже стоят в поле внутри неё, и плашка становится дублем */
 .pickinfo.is-away{opacity:0;transform:translateX(-50%) translateY(-160%) scale(.92)}
 .pickinfo{
-  position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:7;
+  position:absolute;left:50%;top:calc(16px + var(--top-safe));transform:translateX(-50%);z-index:7;
   transition:transform .22s ease,opacity .22s ease;
   background:var(--ink);color:var(--ground);padding:8px 16px;border-radius:var(--r-m);
   font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;white-space:nowrap;box-shadow:var(--shadow-2);pointer-events:none;
@@ -1313,7 +1392,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* Тот же слот и то же движение, что у плашки расстояния и кнопки охвата. Снизу тост
    наезжал на плавающую кнопку в фильтрах, сверху ему никто не мешает */
 .toast{
-  position:fixed;left:50%;top:16px;transform:translateX(-50%) translateY(-160%) scale(.92);
+  position:fixed;left:50%;top:calc(16px + var(--top-safe));transform:translateX(-50%) translateY(-160%) scale(.92);
   overflow:hidden;
   opacity:0;pointer-events:none;
   background:var(--ink);color:var(--ground);padding:12px 16px;border-radius:var(--r-m);
@@ -1328,11 +1407,11 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
    и в тёмной теме переворачивается в светлую плашку с тёмным текстом */
 /* Правило стоит после .toast: у них одинаковая специфичность, и раньше по порядку
    побеждало базовое — тост получал и top, и bottom разом и растягивался во всю высоту.
-   На телефоне тост выезжает сверху тост выезжает сверху: там у него общий слот с плашкой расстояния и кнопкой
+   На телефоне тост выезжает сверху: там у него общий слот с плашкой расстояния и кнопкой
    охвата, и уходят они одним движением. На десктопе верх занят шапками панелей, и тост
    падал на них — поэтому он живёт внизу и уходит к нижней границе тем же движением */
 @media (min-width:821px){
-  .toast{top:auto;bottom:16px;transform:translateX(-50%) translateY(160%) scale(.92)}
+  .toast{top:auto;bottom:calc(16px + var(--bot-safe));transform:translateX(-50%) translateY(160%) scale(.92)}
   .toast.is-on{transform:translateX(-50%) translateY(0) scale(1)}
 }
 .toast__a{color:var(--ground);font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
@@ -1356,9 +1435,9 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      в потоке, карта до него не доходила, и когда он уезжал на время жеста, снизу
      оставалась белая полоса. Он непрозрачный, поэтому в обычном виде ничего не изменилось */
   .rail{
-    position:absolute;left:0;right:0;bottom:0;width:auto;height:66px;
+    position:absolute;left:0;right:0;bottom:0;width:auto;height:var(--rail-h);
     flex:none;flex-direction:row;justify-content:space-around;align-items:center;
-    border-right:none;border-top:1px solid var(--line);padding:8px;
+    border-right:none;border-top:1px solid var(--line);padding:8px 8px calc(8px + var(--bot-safe));
   }
   .rail .navbtn{width:auto;flex:1;padding:4px}
   .rail .brand,.rail__spacer{display:none}
@@ -1373,7 +1452,9 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   }
   /* «разделы» (чаты, профиль, поиск, переписка) — во весь экран над таббаром: он их навигация,
      поэтому таббар остаётся виден и затемнения под ними нет */
-  .panel.is-section{top:0;bottom:66px;height:auto;max-height:none;border-radius:0;border-top:none}
+  .panel.is-section{top:0;bottom:var(--rail-h);height:auto;max-height:none;border-radius:0;border-top:none;
+    /* подложка доходит до физического верха экрана, а содержимое начинается под островом */
+    padding-top:var(--top-safe)}
   /* Переписка не раздел, а экран внутри него: выход даёт стрелка в шапке, а не таббар.
      И нижний край там принадлежит содержимому — внизу поле ввода, а с открытой клавиатурой
      полос становится три */
@@ -1399,7 +1480,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      не может его накрыть. Свёрнутая показывает ровно строку поиска, остальное обрезается.
      Развёрнутая встаёт по тому же правилу, что шторка создания — сто пикселей карты сверху */
   .panel.is-home,.panel.is-screen{
-    top:100px;bottom:66px;height:auto;max-height:none;
+    top:calc(100px + var(--top-safe));bottom:var(--rail-h);height:auto;max-height:none;
     border-radius:var(--r-l) var(--r-l) 0 0;border-top:1px solid var(--line);
     transition:top .24s ease;
   }
@@ -1417,10 +1498,17 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      возвращаем собственные касания — иначе тап уходит в жест */
   .panel.is-home .panel__top{touch-action:none}
   .panel.is-home .panel__top .searchfield{touch-action:auto}
-  .panel.is-home.is-shut{top:calc(100dvh - 66px - var(--home-peek))}
+  .panel.is-home.is-shut{top:calc(100dvh - var(--rail-h) - var(--home-peek))}
   /* в свёрнутом виде своя линия под строкой поиска не нужна: она встала бы в пиксель
      от границы таббара и читалась как вторая полоса */
-  .panel.is-home.is-shut .panel__top{border-bottom:none}
+  .panel.is-home.is-shut .panel__top{border-bottom:none;
+    /* В свёрнутом виде под полем поиска шторка кончается, и держать полный шаг не за чем:
+     внешнее поле блока больше внутреннего. Высота корешка (--home-peek) уменьшена на
+     те же восемь пикселей, иначе из-под поля показался бы срез первой строки списка */
+    padding-bottom:8px}
+  /* поле меняется вместе с движением шторки, иначе список подпрыгивает на восемь
+     пикселей в момент раскрытия */
+  .panel.is-home .panel__top{transition:padding-bottom .24s ease}
   /* Карточка пина живёт в трёх положениях, как в картах: раскрыта, свёрнута до корешка,
      закрыта. В свёрнутом стоит над таббаром — это состояние просмотра карты, и уходить
      из него одним касанием человек вправе, ровно как из домашней шторки */
@@ -1432,14 +1520,22 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      жест ловится с ручки, а ручку в этом положении прятали, потому что ей «не на чем лежать».
      Полоса в 24 пикселя возвращает и ручку, и затемнение под ней, а обложка остаётся
      обложкой: кнопки лежат поверх фотографии на своих плашках, как и в других положениях */
-  .panel.is-pin.is-full{top:24px;bottom:66px;height:auto;max-height:none;min-height:0}
-  .panel.is-pin.is-full .sheet-grip{display:flex}
+  /* Разворот идёт в самый верх экрана и дальше под остров — как полноэкранный проигрыватель
+     в «Музыке». Полоска карты в 24 пикселя была придумана единственно ради ручки, которой
+     негде было лежать; ручка переезжает внутрь, и полоска становится не нужна. Углы
+     выпрямляем: на телефоне их скругляет сам экран, а в браузере шторка во весь экран
+     и обязана быть прямоугольной */
+  .panel.is-pin.is-full{top:0;bottom:var(--rail-h);height:auto;max-height:none;min-height:0;
+    border-radius:0;border-top:none}
+  .panel.is-pin.is-full .sheet-grip{display:flex;top:var(--top-safe)}
+  /* кнопки шапки уходят ниже ручки и ниже острова: в этом положении над ними ничего нет */
+  .panel.is-pin.is-full .panelhead--over{padding-top:calc(var(--top-safe) + 22px)}
   /* Пол карточки: сверху остаётся полоска карты с булавкой и её окружением — карта здесь
      часть ответа, а не фон, — но не половина экрана пустоты, как было при 60dvh */
   .panel.is-pin:not(.is-shut):not(.is-full){min-height:calc(100dvh - 160px)}
   /* Обложка идёт от самого верха и повторяет скругление шторки. Обрезкой по панели этого
      не сделать: ручка лежит выше её края, на затемнении, и обрезка съела бы её */
-  .panel.is-pin .cover{border-radius:var(--r-l) var(--r-l) 0 0}
+  .panel.is-pin:not(.is-full) .cover{border-radius:var(--r-l) var(--r-l) 0 0}
   .panel.is-pin:not(.is-shut) .panel__body{flex:1 1 auto}
   /* Подвал с кнопками не отрезан линией, а растворяется: тот же приём, что у плавающей
      кнопки в фильтрах. Тень не нужна — контраста заливки хватает */
@@ -1459,7 +1555,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .panel.is-swipe{padding-top:8px}
   .panel.is-pin{transition:top .24s ease,transform .22s ease}
   .panel.is-pin.is-shut{
-    top:calc(100dvh - 66px - var(--pin-peek));bottom:66px;height:auto;max-height:none;
+    top:calc(100dvh - var(--rail-h) - var(--pin-peek));bottom:var(--rail-h);height:auto;max-height:none;
   }
   .panel.is-pin.is-shut .panel__body,.panel.is-pin.is-shut .panel__foot{display:none}
   .panel.is-pin.is-shut .panelhead--over{display:none}
@@ -1475,7 +1571,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .pinpeek__s{display:flex;align-items:center;gap:4px;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap}
   /* обложка стала первым, что видно в шторке, поэтому её верхние углы скругляем сами:
      раньше их прикрывала непрозрачная шапка */
-  .panel:not(.is-section) .panel__body>.cover:first-child{border-radius:var(--r-l) var(--r-l) 0 0}
+  /* в полном развороте скруглять нечего: шторка занимает весь экран, и её углы выпрямлены */
+  .panel:not(.is-section):not(.is-full) .panel__body>.cover:first-child{border-radius:var(--r-l) var(--r-l) 0 0}
   /* пока палец на карте — район, категории и таббар уезжают вместе с зумом: экран отдан карте */
   .app.is-peek .rail{opacity:0;pointer-events:none}
   .stage.is-peek .toolbar{opacity:0}
@@ -1540,6 +1637,9 @@ body{background:var(--ground);color:var(--ink);font-family:'Golos Text',system-u
 .dsmap{position:relative;height:140px;border-radius:var(--r-m);background:var(--build);overflow:hidden}
 .dsmap .marker{position:absolute}
 body.ds-narrow .dsmain{max-width:400px}
+/* В продукте стрелки полосы появляются по наведению — в каталоге их надо видеть всегда,
+   иначе образец показывает пустое место */
+.ds-arrows .hscroll__arr{display:grid;opacity:1}
 </style>
 <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false"><defs>
 <g id="ico" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></g>
@@ -1830,7 +1930,7 @@ body.ds-narrow .dsmain{max-width:400px}
         <svg class="searchfield__ic"><use href="#i-search"/></svg>
         <input class="input" placeholder="Поиск по названию и описанию"></span></span></div>
     <div class="dsitem dsitem--flat"><span class="dsitem__n">Вторая полоса: вкладки</span><span class="dsitem__c">.tabs — 56</span>
-      <span class="tabswrap" style="display:block"><span class="tabs" style="display:flex">
+      <span class="hscroll tabswrap" style="display:block"><span class="tabs" style="display:flex">
         <button class="is-on">Все<span class="tag">3</span></button>
         <button class="tab--act">Встречи<span class="tag tag--act">1</span></button>
         <button class="tab--offer">Услуги и вещи</button></span></span></div>
@@ -1840,6 +1940,35 @@ body.ds-narrow .dsmain{max-width:400px}
         <svg><use href="#i-chev-down"/></svg></button></span></div>
     <div class="dsitem dsitem--flat"><span class="dsitem__n">Заголовок группы</span><span class="dsitem__c">.eyebrow</span>
       <span style="display:block;padding:24px 16px 16px"><span class="eyebrow">Опубликовано · 3</span></span></div>
+  </div>
+</section>
+
+<section class="dssec" id="hscroll">
+  <h2>Полоса с прокруткой</h2>
+  <p>Общий элемент для любого ряда, который шире экрана: вкладки, лента снимков, переключатели типа.
+  У краёв растворение — слева, когда начало уехало, справа, когда остался хвост. При наведении мышью
+  в тех же местах появляются стрелки; шаг стрелки — целая страница, и элемент, обрезанный краем,
+  переходит на следующую страницу целиком. Стрелки создаёт скрипт, в разметке их нет.</p>
+  <div class="dsgrid">
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Начало ряда</span><span class="dsitem__c">.hscroll.is-end — hscrollEdges</span>
+      <span class="hscroll tabswrap is-end ds-arrows" style="display:block"><span class="tabs" style="display:flex">
+        <button class="is-on">Все<span class="tag">3</span></button>
+        <button class="tab--act">Встречи<span class="tag tag--act">1</span></button>
+        <button class="tab--offer">Услуги и вещи</button></span>
+        <button class="hscroll__arr hscroll__arr--l"><svg><use href="#i-chev-left"/></svg></button>
+        <button class="hscroll__arr hscroll__arr--r"><svg><use href="#i-chev-right"/></svg></button></span></div>
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Середина ряда</span><span class="dsitem__c">.hscroll.is-start.is-end</span>
+      <span class="hscroll tabswrap is-start is-end ds-arrows" style="display:block"><span class="tabs" style="display:flex">
+        <button class="tab--act">Встречи<span class="tag tag--act">1</span></button>
+        <button class="is-on">Услуги и вещи<span class="tag">2</span></button>
+        <button class="tab--find">Находки</button></span>
+        <button class="hscroll__arr hscroll__arr--l"><svg><use href="#i-chev-left"/></svg></button>
+        <button class="hscroll__arr hscroll__arr--r"><svg><use href="#i-chev-right"/></svg></button></span></div>
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Переключатели типа</span><span class="dsitem__c">.catrow — viewMine</span>
+      <span class="hscroll" style="display:block"><span class="catrow" style="display:flex">
+        <button class="is-on"><i style="border-color:var(--act);background:var(--act)"></i>Встречи</button>
+        <button><i style="border-color:var(--offer)"></i>Вещи и услуги</button>
+        <button><i style="border-color:var(--find)"></i>Находки</button></span></span></div>
   </div>
 </section>
 
@@ -1925,6 +2054,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.12";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.13";</script>
 </body>
 </html>

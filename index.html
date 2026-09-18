@@ -2,7 +2,11 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Район">
 <meta name="description" content="Карта района: соседи видят активности друг друга, отдают и просят вещи и услуги, публикуют находки и пропажи.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
@@ -76,7 +80,22 @@
   --shadow-1:0 1px 2px rgba(0,0,0,.08);
   --shadow-2:0 2px 4px rgba(0,0,0,.07),0 10px 28px rgba(0,0,0,.13);
   --shadow-3:0 4px 8px rgba(0,0,0,.09),0 24px 60px rgba(0,0,0,.22);
-  --r-s:6px; --r-m:10px; --r-l:16px; --panel-w:380px; --panel-b-w:340px; --home-peek:78px;
+  --r-s:6px; --r-m:10px; --r-l:16px; --panel-w:380px; --panel-b-w:340px; --home-peek:70px;
+  /* Безопасные зоны телефона. В обычной вкладке браузера они равны нулю: верх экрана
+     занимает панель Safari, и страница под остров не заходит в принципе. Настоящие
+     значения появляются, когда страницу добавили на домашний экран — тогда приложение
+     занимает весь экран, и остров сверху с полосой жестов снизу становятся нашей заботой.
+     Держим их переменными, а не пишем env() по месту: прибавлять их приходится в семи
+     местах внутри calc(), и читается это тяжело */
+  /* В исходнике они нули, и это не заглушка: артефакт оборачивает страницу своим каркасом,
+     который сам добавляет корню отступы на безопасные зоны. Возьми мы env() и здесь —
+     отступ на телефоне удвоился бы. На GitHub Pages обёртки нет, и там настоящие значения
+     подставляет сборка (собрать.js) — вместе с головой страницы, которой здесь тоже нет */
+  --top-safe:env(safe-area-inset-top,0px);
+  --bot-safe:env(safe-area-inset-bottom,0px);
+  /* высота таббара вместе с полосой жестов: от неё отсчитываются нижние края всех шторок,
+     и пока это было числом 66, полоса жестов ложилась поверх кнопок */
+  --rail-h:calc(66px + var(--bot-safe));
   /* высота верхней полосы экрана: одна на шапку с заголовком и на ряд вкладок, иначе
      в двух колонках рядом стоят две шапки разной высоты и списки под ними разъезжаются */
   --head-h:56px;
@@ -213,6 +232,12 @@ body{
   font-family:'Golos Text',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   font-size:var(--f-m10);line-height:var(--l-m10);-webkit-font-smoothing:antialiased;
   overscroll-behavior:none;overflow:hidden;
+  /* Двойное касание здесь не «приблизить текст», а промах: в интерфейсе, где нажимают
+     на каждый элемент, два быстрых попадания по одной кнопке уводили страницу в масштаб.
+     Прокрутка и щипок остаются — уходит только двойной тап. Собственные запреты внутри
+     (карта, ручка шторки, ряд вкладок) этим не ломаются: браузер берёт пересечение,
+     то есть более строгое из двух */
+  touch-action:manipulation;
 }
 button,input,textarea,select{font:inherit;color:inherit}
 button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
@@ -391,7 +416,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 
 /* ---------- toolbar ---------- */
 .toolbar{
-  position:absolute;left:16px;right:16px;top:14px;display:flex;gap:12px;align-items:flex-start;
+  position:absolute;left:16px;right:16px;top:calc(14px + var(--top-safe));display:flex;gap:12px;align-items:flex-start;
   justify-content:flex-end;
   pointer-events:none;flex-wrap:wrap;z-index:6;
 }
@@ -568,6 +593,15 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Строки в столбик, кружок и подпись в строку. Выбранная — белая плашка с тенью на серой
    дорожке: так сразу видно, что выбрано, и контрол читается как один предмет, а не как
    продолжение списка станций под ним. Кегль тот же, что у названия станции */
+/* Ряд переключателей типа над списком своих событий: по виду это те же кнопки, что
+   в строке сортировки рядом, а цветная точка перед словом говорит, что тут категории,
+   а не порядок */
+.catrow{display:flex;align-items:center;gap:8px;padding:12px 16px;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior-x:contain}
+.catrow button{flex:none;display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:7px;
+  font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;color:var(--ink-3);white-space:nowrap}
+.catrow button:hover{color:var(--ink)}
+.catrow button.is-on{background:var(--surface-3);color:var(--ink);font-weight:600}
+.catrow i{width:10px;height:10px;border-radius:50%;flex:none;border:2px solid transparent;display:block}
 .segctl--cat{flex-direction:column}
 .segctl--cat button{
   flex:none;flex-direction:row;gap:6px;padding:10px 12px;white-space:normal;text-align:left;
@@ -726,6 +760,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .factrow{display:flex;gap:12px;align-items:flex-start;font-size:var(--f-h60);line-height:var(--l-h60)}
 .factrow svg{width:16px;height:16px;color:var(--ink-3);flex:none;margin-top:2px}
 .factrow b{font-weight:600}
+/* будильник на строке времени: прижат к правому краю строки и не спорит с текстом */
+.factrow__act{margin-left:auto;flex:none;color:var(--ink-3)}
+.factrow__act.is-on{color:var(--brand)}
+.factrow__act.is-on svg{fill:currentColor}
 .factrow span{color:var(--ink-3);font-size:var(--f-s20);line-height:var(--l-s20);display:block;margin-top:4px}
 /* Обе кнопки — автор и участники — одного роста: содержимое внутри держится в 36, поэтому
    при центрировании верхняя строка встаёт на те же 12 сверху, а полоса заполнения остаётся
@@ -773,7 +811,9 @@ button.person:hover{background:var(--surface-2)}
    в surface-3, и дорожка сливалась с ней — полоса теряла второй конец */
 .progress{height:5px;border-radius:3px;background:var(--surface);overflow:hidden}
 .progress i{display:block;height:100%;background:var(--act);border-radius:3px}
-.photos{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+/* лента снимков — второй случай общей полосы. Жест здесь за горизонталью не закрепляем:
+   полоса лежит внутри прокручиваемой карточки, и смах вверх с неё обязан листать карточку */
+.photos{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;padding-bottom:4px}
 .photos img{width:82px;height:82px;object-fit:cover;border-radius:var(--r-s);flex:none;border:1px solid var(--line)}
 
 /* ---------- feed ---------- */
@@ -871,6 +911,12 @@ button.person:hover{background:var(--surface-2)}
   width:100%;padding:12px;border-radius:var(--r-m);border:1px solid var(--field-line);
   background:var(--surface);color:var(--ink);caret-color:var(--ink);
   font-size:var(--f-m20);line-height:var(--l-m20);transition:border-color .12s,box-shadow .12s;
+}
+/* На сенсорном экране кегль полей — шестнадцать, и это не про красоту: айос сам приближает
+   страницу, когда курсор встаёт в поле мельче шестнадцати. Межстрочное не трогаем, поэтому
+   высота поля остаётся прежней, ровно 46, и все расчёты вокруг неё сходятся */
+@media (pointer:coarse){
+  .input,.textarea,.select{font-size:16px}
 }
 .input::placeholder,.textarea::placeholder{color:var(--ink-3);opacity:1}
 .input:focus,.textarea:focus,.select:focus{
@@ -1031,30 +1077,60 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* ---------- lists / tabs ---------- */
 /* четыре вкладки в панель шириной 380 не помещаются в строку: даём прокрутку вбок,
    а не перенос — перенос ломает высоту шапки и сдвигает список */
-.tabs{display:flex;align-items:center;gap:4px;padding:0 16px;min-height:var(--head-h);overflow-x:auto;border-bottom:1px solid var(--line)}
+/* Вертикальная прокрутка запрещена прямо: у контейнера с прокруткой вбок вторая ось
+   по умолчанию тоже становится подвижной, и на айосе палец по диагонали оттягивает ряд
+   резинкой на десятки пикселей. Жест закреплён за горизонталью, а перетяг не отдаётся
+   наружу — иначе смах вправо от первой вкладки читается системой как «назад» */
+.tabs{display:flex;align-items:center;gap:4px;padding:0 16px;min-height:var(--head-h);
+  overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior-x:contain}
 /* Разделы отмечены подчёркиванием, а не плашкой: тонкая линия под рядом служит и границей
    шапки, и дорожкой для указателя, то есть один элемент делает две работы */
 .tabs button{flex:none;white-space:nowrap;position:relative}
 .tabs button{padding:0 2px;font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;color:var(--ink-3);align-self:stretch;display:flex;align-items:center}
 .tabs{gap:12px}
-/* ряд вкладок шире экрана на телефоне, а полосы прокрутки в приложении скрыты — без
-   растворения у правого края четвёртая вкладка превращалась в тайник */
-.tabswrap{position:relative;min-width:0}
+/* Полоса с прокруткой вбок — общий элемент, а не часть вкладок: те же края и те же стрелки
+   нужны ленте снимков в карточке события и любой следующей такой полосе. Внутри обёртки
+   лежит ровно один прокручиваемый ряд; края и стрелки считает hscrollEdges */
+.hscroll{position:relative;min-width:0}
 /* Растворение у каждого края живёт по своему условию: слева — пока начало ряда уехало,
    справа — пока за краем остался хвост. Прежде оно включалось один раз по факту «ряд шире
    экрана» и висело даже когда листать уже некуда */
-.tabswrap::before,.tabswrap::after{
-  content:'';position:absolute;top:0;bottom:1px;width:28px;pointer-events:none;
-  opacity:0;transition:opacity .15s;
+.hscroll::before,.hscroll::after{
+  content:'';position:absolute;top:0;bottom:0;width:28px;pointer-events:none;
+  opacity:0;transition:opacity .15s;z-index:1;
 }
-.tabswrap::before{left:0;background:linear-gradient(to left,color-mix(in srgb,var(--surface) 0%,transparent),var(--surface))}
-.tabswrap::after{right:0;background:linear-gradient(to right,color-mix(in srgb,var(--surface) 0%,transparent),var(--surface))}
-.tabswrap.is-start::before{opacity:1}
-.tabswrap.is-end::after{opacity:1}
+.hscroll::before{left:0;background:linear-gradient(to left,color-mix(in srgb,var(--surface) 0%,transparent),var(--surface))}
+.hscroll::after{right:0;background:linear-gradient(to right,color-mix(in srgb,var(--surface) 0%,transparent),var(--surface))}
+.hscroll.is-start::before{opacity:1}
+.hscroll.is-end::after{opacity:1}
+/* Черта под рядом вкладок нарисована внутренней тенью обёртки, а не границей самого ряда.
+   Причина не в красоте: указатель активной вкладки свисал на пиксель ниже ряда, чтобы лечь
+   поверх черты, — и этот пиксель делал ряд прокручиваемым по вертикали. Тень места
+   не занимает и ничего не свешивает, а указатель по-прежнему перекрывает черту собой,
+   потому что лежит выше по слоям */
+.tabswrap{box-shadow:inset 0 -1px 0 var(--line)}
+/* Стрелки показываются по наведению и только с той стороны, где есть скрытое. Условие —
+   наличие мыши, а не ширина экрана: узкое окно на ноутбуке это всё ещё мышь, а планшет
+   в тысячу пикселей — палец, и наведения на нём не существует.
+   Тени нет: стрелка лежит поверх растворения, и второй приём отделения тут лишний */
+.hscroll__arr{
+  position:absolute;top:50%;transform:translateY(-50%);z-index:2;
+  width:26px;height:26px;border-radius:50%;display:none;place-items:center;
+  background:var(--surface);border:1px solid var(--line);color:var(--ink-2);
+  opacity:0;transition:opacity .15s,background .12s,color .12s;
+}
+.hscroll__arr svg{width:14px;height:14px}
+.hscroll__arr:hover{background:var(--surface-2);color:var(--ink)}
+.hscroll__arr--l{left:2px}
+.hscroll__arr--r{right:2px}
+@media (hover:hover) and (pointer:fine){
+  .hscroll.is-start .hscroll__arr--l,.hscroll.is-end .hscroll__arr--r{display:grid}
+  .hscroll:hover .hscroll__arr{opacity:1}
+}
 /* Перебор в считанные пиксели не прокручиваем, а убираем: ряд поджимается зазором и правым
    полем и встаёт целиком. Иначе вкладки ездят на два-три пикселя, и на двух снимках подряд
    «Все» стоит в разных местах */
-.tabswrap.is-tight .tabs{gap:8px;padding-right:8px;overflow-x:hidden}
+.hscroll.is-tight .tabs{gap:8px;padding-right:8px;overflow-x:hidden}
 .tabs button:hover{color:var(--ink)}
 .tabs button.is-on{color:var(--ink);font-weight:600}
 /* Число на вкладке появляется только когда есть непрочитанное — значит само его наличие
@@ -1089,7 +1165,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .swghost{position:absolute;left:0;right:0;top:0;background:var(--surface);pointer-events:none}
 /* подчёркивание в цвет типа — счётчик рядом красится им же, линия просто догоняет.
    У «Все» типа нет, там остаётся тёмная */
-.tabs button.is-on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:2px 2px 0 0;background:var(--tab-line,var(--ink))}
+.tabs button.is-on::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:2px 2px 0 0;background:var(--tab-line,var(--ink))}
 .tabs button.tab--act{--tab-line:var(--act)}
 .tabs button.tab--offer{--tab-line:var(--offer)}
 .tabs button.tab--find{--tab-line:var(--find)}
@@ -1132,6 +1208,9 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* время в строке чата держится верхнего края: в профиле тот же блок носит шеврон,
    и его поднимать наверх не надо — поэтому модификатор, а не общее правило */
 .listrow__r--top{align-self:flex-start}
+/* число и шеврон в строке перехода стоят в строку: столбцом они читались бы как две
+   отдельные вещи, а это один ответ — «сколько там» и «туда» */
+.listrow__r--row{flex-direction:row;align-items:center;gap:8px}
 /* имя, время и точка в одной строке; название пина и текст ниже идут во всю ширину */
 .listrow__top{display:flex;align-items:baseline;gap:8px;min-width:0}
 .listrow__top .listrow__t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1284,14 +1363,14 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .sheet-scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:19;display:none}
 /* под домашней шторкой затемняем только карту: дом — состояние просмотра, и уходить
    из него в чаты одним касанием человек вправе, поэтому таббар остаётся живым */
-.sheet-scrim--home{bottom:66px}
+.sheet-scrim--home{bottom:var(--rail-h)}
 /* плашка с расстоянием на шаге выбора места — тёмная, как всплывающие сообщения */
 /* Плашка занимает тот же слот, что кнопка охвата, и уходит тем же движением. Видна она
    только пока шторка внизу и вы целитесь: как только шторка поднялась, станция
    и расстояние уже стоят в поле внутри неё, и плашка становится дублем */
 .pickinfo.is-away{opacity:0;transform:translateX(-50%) translateY(-160%) scale(.92)}
 .pickinfo{
-  position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:7;
+  position:absolute;left:50%;top:calc(16px + var(--top-safe));transform:translateX(-50%);z-index:7;
   transition:transform .22s ease,opacity .22s ease;
   background:var(--ink);color:var(--ground);padding:8px 16px;border-radius:var(--r-m);
   font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;white-space:nowrap;box-shadow:var(--shadow-2);pointer-events:none;
@@ -1313,7 +1392,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* Тот же слот и то же движение, что у плашки расстояния и кнопки охвата. Снизу тост
    наезжал на плавающую кнопку в фильтрах, сверху ему никто не мешает */
 .toast{
-  position:fixed;left:50%;top:16px;transform:translateX(-50%) translateY(-160%) scale(.92);
+  position:fixed;left:50%;top:calc(16px + var(--top-safe));transform:translateX(-50%) translateY(-160%) scale(.92);
   overflow:hidden;
   opacity:0;pointer-events:none;
   background:var(--ink);color:var(--ground);padding:12px 16px;border-radius:var(--r-m);
@@ -1328,11 +1407,11 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
    и в тёмной теме переворачивается в светлую плашку с тёмным текстом */
 /* Правило стоит после .toast: у них одинаковая специфичность, и раньше по порядку
    побеждало базовое — тост получал и top, и bottom разом и растягивался во всю высоту.
-   На телефоне тост выезжает сверху тост выезжает сверху: там у него общий слот с плашкой расстояния и кнопкой
+   На телефоне тост выезжает сверху: там у него общий слот с плашкой расстояния и кнопкой
    охвата, и уходят они одним движением. На десктопе верх занят шапками панелей, и тост
    падал на них — поэтому он живёт внизу и уходит к нижней границе тем же движением */
 @media (min-width:821px){
-  .toast{top:auto;bottom:16px;transform:translateX(-50%) translateY(160%) scale(.92)}
+  .toast{top:auto;bottom:calc(16px + var(--bot-safe));transform:translateX(-50%) translateY(160%) scale(.92)}
   .toast.is-on{transform:translateX(-50%) translateY(0) scale(1)}
 }
 .toast__a{color:var(--ground);font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
@@ -1356,9 +1435,9 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      в потоке, карта до него не доходила, и когда он уезжал на время жеста, снизу
      оставалась белая полоса. Он непрозрачный, поэтому в обычном виде ничего не изменилось */
   .rail{
-    position:absolute;left:0;right:0;bottom:0;width:auto;height:66px;
+    position:absolute;left:0;right:0;bottom:0;width:auto;height:var(--rail-h);
     flex:none;flex-direction:row;justify-content:space-around;align-items:center;
-    border-right:none;border-top:1px solid var(--line);padding:8px;
+    border-right:none;border-top:1px solid var(--line);padding:8px 8px calc(8px + var(--bot-safe));
   }
   .rail .navbtn{width:auto;flex:1;padding:4px}
   .rail .brand,.rail__spacer{display:none}
@@ -1373,7 +1452,9 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   }
   /* «разделы» (чаты, профиль, поиск, переписка) — во весь экран над таббаром: он их навигация,
      поэтому таббар остаётся виден и затемнения под ними нет */
-  .panel.is-section{top:0;bottom:66px;height:auto;max-height:none;border-radius:0;border-top:none}
+  .panel.is-section{top:0;bottom:var(--rail-h);height:auto;max-height:none;border-radius:0;border-top:none;
+    /* подложка доходит до физического верха экрана, а содержимое начинается под островом */
+    padding-top:var(--top-safe)}
   /* Переписка не раздел, а экран внутри него: выход даёт стрелка в шапке, а не таббар.
      И нижний край там принадлежит содержимому — внизу поле ввода, а с открытой клавиатурой
      полос становится три */
@@ -1399,7 +1480,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      не может его накрыть. Свёрнутая показывает ровно строку поиска, остальное обрезается.
      Развёрнутая встаёт по тому же правилу, что шторка создания — сто пикселей карты сверху */
   .panel.is-home,.panel.is-screen{
-    top:100px;bottom:66px;height:auto;max-height:none;
+    top:calc(100px + var(--top-safe));bottom:var(--rail-h);height:auto;max-height:none;
     border-radius:var(--r-l) var(--r-l) 0 0;border-top:1px solid var(--line);
     transition:top .24s ease;
   }
@@ -1417,10 +1498,17 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      возвращаем собственные касания — иначе тап уходит в жест */
   .panel.is-home .panel__top{touch-action:none}
   .panel.is-home .panel__top .searchfield{touch-action:auto}
-  .panel.is-home.is-shut{top:calc(100dvh - 66px - var(--home-peek))}
+  .panel.is-home.is-shut{top:calc(100dvh - var(--rail-h) - var(--home-peek))}
   /* в свёрнутом виде своя линия под строкой поиска не нужна: она встала бы в пиксель
      от границы таббара и читалась как вторая полоса */
-  .panel.is-home.is-shut .panel__top{border-bottom:none}
+  .panel.is-home.is-shut .panel__top{border-bottom:none;
+    /* В свёрнутом виде под полем поиска шторка кончается, и держать полный шаг не за чем:
+     внешнее поле блока больше внутреннего. Высота корешка (--home-peek) уменьшена на
+     те же восемь пикселей, иначе из-под поля показался бы срез первой строки списка */
+    padding-bottom:8px}
+  /* поле меняется вместе с движением шторки, иначе список подпрыгивает на восемь
+     пикселей в момент раскрытия */
+  .panel.is-home .panel__top{transition:padding-bottom .24s ease}
   /* Карточка пина живёт в трёх положениях, как в картах: раскрыта, свёрнута до корешка,
      закрыта. В свёрнутом стоит над таббаром — это состояние просмотра карты, и уходить
      из него одним касанием человек вправе, ровно как из домашней шторки */
@@ -1432,14 +1520,22 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      жест ловится с ручки, а ручку в этом положении прятали, потому что ей «не на чем лежать».
      Полоса в 24 пикселя возвращает и ручку, и затемнение под ней, а обложка остаётся
      обложкой: кнопки лежат поверх фотографии на своих плашках, как и в других положениях */
-  .panel.is-pin.is-full{top:24px;bottom:66px;height:auto;max-height:none;min-height:0}
-  .panel.is-pin.is-full .sheet-grip{display:flex}
+  /* Разворот идёт в самый верх экрана и дальше под остров — как полноэкранный проигрыватель
+     в «Музыке». Полоска карты в 24 пикселя была придумана единственно ради ручки, которой
+     негде было лежать; ручка переезжает внутрь, и полоска становится не нужна. Углы
+     выпрямляем: на телефоне их скругляет сам экран, а в браузере шторка во весь экран
+     и обязана быть прямоугольной */
+  .panel.is-pin.is-full{top:0;bottom:var(--rail-h);height:auto;max-height:none;min-height:0;
+    border-radius:0;border-top:none}
+  .panel.is-pin.is-full .sheet-grip{display:flex;top:var(--top-safe)}
+  /* кнопки шапки уходят ниже ручки и ниже острова: в этом положении над ними ничего нет */
+  .panel.is-pin.is-full .panelhead--over{padding-top:calc(var(--top-safe) + 22px)}
   /* Пол карточки: сверху остаётся полоска карты с булавкой и её окружением — карта здесь
      часть ответа, а не фон, — но не половина экрана пустоты, как было при 60dvh */
   .panel.is-pin:not(.is-shut):not(.is-full){min-height:calc(100dvh - 160px)}
   /* Обложка идёт от самого верха и повторяет скругление шторки. Обрезкой по панели этого
      не сделать: ручка лежит выше её края, на затемнении, и обрезка съела бы её */
-  .panel.is-pin .cover{border-radius:var(--r-l) var(--r-l) 0 0}
+  .panel.is-pin:not(.is-full) .cover{border-radius:var(--r-l) var(--r-l) 0 0}
   .panel.is-pin:not(.is-shut) .panel__body{flex:1 1 auto}
   /* Подвал с кнопками не отрезан линией, а растворяется: тот же приём, что у плавающей
      кнопки в фильтрах. Тень не нужна — контраста заливки хватает */
@@ -1459,7 +1555,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .panel.is-swipe{padding-top:8px}
   .panel.is-pin{transition:top .24s ease,transform .22s ease}
   .panel.is-pin.is-shut{
-    top:calc(100dvh - 66px - var(--pin-peek));bottom:66px;height:auto;max-height:none;
+    top:calc(100dvh - var(--rail-h) - var(--pin-peek));bottom:var(--rail-h);height:auto;max-height:none;
   }
   .panel.is-pin.is-shut .panel__body,.panel.is-pin.is-shut .panel__foot{display:none}
   .panel.is-pin.is-shut .panelhead--over{display:none}
@@ -1475,7 +1571,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .pinpeek__s{display:flex;align-items:center;gap:4px;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap}
   /* обложка стала первым, что видно в шторке, поэтому её верхние углы скругляем сами:
      раньше их прикрывала непрозрачная шапка */
-  .panel:not(.is-section) .panel__body>.cover:first-child{border-radius:var(--r-l) var(--r-l) 0 0}
+  /* в полном развороте скруглять нечего: шторка занимает весь экран, и её углы выпрямлены */
+  .panel:not(.is-section):not(.is-full) .panel__body>.cover:first-child{border-radius:var(--r-l) var(--r-l) 0 0}
   /* пока палец на карте — район, категории и таббар уезжают вместе с зумом: экран отдан карте */
   .app.is-peek .rail{opacity:0;pointer-events:none}
   .stage.is-peek .toolbar{opacity:0}
@@ -1726,7 +1823,11 @@ function distText(u){
    круглого числа: «меньше 300 м» верно при любом сдвиге. Активности не смещаются — там точно. */
 /* сколько пикселей домашней шторки видно в свёрнутом виде; та же величина лежит
    в CSS-переменной --home-peek, менять надо обе */
-var HOME_PEEK=78, HOME_TOP=100, PIN_PEEK=68, PIN_FULL_TOP=24;
+var HOME_PEEK=70, HOME_TOP=100, PIN_PEEK=68, PIN_FULL_TOP=0;
+/* Высота таббара перестала быть числом: в приложении на домашнем экране в неё входит
+   полоса жестов. Меряем сам таббар, а не пересказываем CSS — calc() с env() из стилей
+   всё равно не прочитать */
+function railH(){var r=$(".rail"); return (r&&r.offsetHeight)||66}
 var FUZZ_UNITS=28, FUZZ_M=Math.round(Math.sqrt(2)*FUZZ_UNITS*METERS_PER_UNIT);
 var NICE_M=[100,200,300,500,700,1000,1500,2000,3000,5000];
 function niceUp(m){
@@ -1948,8 +2049,36 @@ var toastAct=null;
    Пустое сообщение — законный случай: если сказанное и так на экране, остаётся одна кнопка.
    Значок у неё идёт после слова: тост не кнопка в ряду, а одиночное действие у края,
    и значок в конце читается как точка в конце фразы */
+/* Отложенное действие — приём из электронной почты, где отправку можно отменить: письмо
+   уже ушло из ящика, но ещё лежит у сервиса. Разница с «сделать и вернуть» в том, кому
+   принадлежат эти секунды. Когда действие уже произошло, «Вернуть» — просьба, которая
+   может не сработать: место, например, успели занять. Когда оно ещё не произошло,
+   обещание выполнимо всегда, и проверять при возврате нечего.
+   Запись при этом убирается из данных сразу: интерфейс обязан показать то же, что показал бы
+   после настоящего удаления. Она не пропадает, а переезжает в db.held, откуда её возвращает
+   отмена. Ни одному читателю данных при этом не приходится знать про отсрочку — для всех
+   записи просто нет, и это важнее краткости: таких читателей у откликов два десятка.
+   Закрыли вкладку посреди отсрочки — отложенное всё-таки случается, как в почте:
+   db.held переживает перезагрузку и доводится до конца при запуске (flushHeldStored).
+   Новый тост забирает место у предыдущего вместе с кнопкой возврата, поэтому сначала
+   доводит отложенное до конца и только потом показывается — иначе действие зависло бы
+   в неизвестном состоянии. По той же причине часы у них одни: тост гасит сам себя
+   и тем же движением фиксирует придержанное */
+var heldAction=null;
+function flushHeld(){
+  var h=heldAction; heldAction=null;
+  if(h&&h.commit)h.commit();
+}
+function holdAction(text,commit,cancel){
+  toast(text,'Вернуть',function(){
+    var h=heldAction; heldAction=null;
+    if(h&&h.cancel)h.cancel();
+  },'undo');
+  heldAction={commit:commit,cancel:cancel};
+}
 function toast(text,label,fn,ic){
   var el=$('#toast');
+  flushHeld();
   toastAct=fn||null;
   var life=label?6000:2800;
   el.innerHTML=(text?'<span>'+H(noHang(text))+'</span>':'')+
@@ -1972,6 +2101,7 @@ function toast(text,label,fn,ic){
   if(pi&&!isDesktopPanel())pi.classList.add('is-away');
   clearTimeout(toastTimer); toastTimer=setTimeout(function(){
     el.classList.remove('is-on');
+    flushHeld();
     var p2=$('#pickInfo');
     if(p2&&!isDesktopPanel()&&ui.picking&&$('.stage')&&$('.stage').classList.contains('is-peek'))p2.classList.remove('is-away');
   },life);
@@ -2121,10 +2251,10 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.12';
+var VERSION='3.13';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
-var UPDATED='16 сентября 2026';
+var UPDATED='18 сентября 2026';
 var KEY='raion.v1';
 var db=null;
 
@@ -2750,6 +2880,14 @@ function user(id){for(var i=0;i<db.users.length;i++)if(db.users[i].id===id)retur
 function me(){return user(db.currentUserId)}
 function pin(id){for(var i=0;i<db.pins.length;i++)if(db.pins[i].id===id)return db.pins[i];return null}
 function responsesOf(pinId){return db.pins&&db.responses.filter(function(r){return r.pin_id===pinId})}
+/* Записан ли человек на самом деле. Третье состояние отклика — «место ушло»: запись
+   осталась, чтобы человек понял, что случилось, но участием она больше не является,
+   и все проверки состава обязаны считать её отсутствующей */
+/* Будильник на встречу, в которой человек не участвует. Это не подписка: количество
+   уведомлений равно количеству нажатий, и заспамить себя невозможно. Значение 1 — будильник
+   заведён, но ещё не сработал; после срабатывания там время, чтобы не звонить дважды */
+function remindOn(pid){var u=me();return !!(u&&u.reminders&&u.reminders[pid])}
+function isJoined(r){return !!r&&r.status!=="interested"&&r.status!=="released"}
 function myResponse(pinId){
   var m=db.currentUserId;
   for(var i=0;i<db.responses.length;i++)
@@ -2772,31 +2910,64 @@ function reportedByMe(pinId){
    сколько людей придёт, пока ещё можно позвать других. Напоминание уходит только в окно
    между 24 и 6 часами: кто записался позже, спрашивать поздно, и снимать его не за что */
 var REMIND_H=24, CONFIRM_H=6;
+/* Механизм подтверждения делится надвое, и делит его предел мест.
+   Напоминание о встрече полезно всем, кто записался: это будильник, и люди забывают.
+   Освобождение места существует ради дефицита, а дефицит создаёт предел участников —
+   там, где мест не считают, отбирать нечего и спрашивать не за чем. Прежде подтверждение
+   стояло на всех встречах подряд, и у прогулки без ограничения приложение молча вычёркивало
+   человека из того, на что он согласился.
+   И освобождение перестало быть беззвучным: отклик не удаляется, а получает состояние
+   «место ушло». Без записи след теряется — человек просто не находит встречу и не понимает,
+   куда она делась; а так он видит строку в профиле и может вернуться, если места есть */
 function sweepConfirm(){
   var t=now(), changed=false;
   db.pins.forEach(function(p){
     if(!isAct(p)||p.status!=='active')return;
-    var left=p.starts_at-t;
+    var left=p.starts_at-t, lim=p.participant_limit;
     var r=myResponse(p.id);
-    if(!r||r.status==='interested')return;
+    if(!isJoined(r))return;
     if(left>CONFIRM_H*HOUR&&left<REMIND_H*HOUR&&!r.confirmed_at&&!r.reminded_at){
       r.reminded_at=t; changed=true;
-      sysNotify('Подтвердите участие',
+      if(lim)sysNotify('Подтвердите участие',
         whenText(p.starts_at)+'. Подтвердите за '+CONFIRM_H+' '+
         plural(CONFIRM_H,'час','часа','часов')+' до начала',
         'open-pin',p.id,'Открыть','confirm');
+      else sysNotify('Скоро встреча',whenText(p.starts_at),'open-pin',p.id,'Открыть');
     }
-    /* спросили и не дождались — тихо выпадаем из списка, место достаётся другому */
-    if(left<=CONFIRM_H*HOUR&&r.reminded_at&&!r.confirmed_at){
-      db.responses=db.responses.filter(function(x){return x.id!==r.id});
-      changed=true;
+    if(lim&&left<=CONFIRM_H*HOUR&&r.reminded_at&&!r.confirmed_at){
+      r.status='released'; r.released_at=t; changed=true;
+      sysNotify('Место освободилось',
+        'Вы не подтвердили участие — место ушло другому соседу',
+        'open-pin',p.id,'Открыть');
+    }
+  });
+  if(changed)save();
+}
+/* Придержанное, которое застала перезагрузка. Почта в таком случае письмо всё-таки
+   отправляет: отложенное не значит отменённое. Довести до конца здесь — просто забыть
+   отложенную копию, потому что из живых данных запись убрали ещё при нажатии */
+function flushHeldStored(){
+  if(db&&db.held&&db.held.length){db.held=[]; save()}
+}
+/* Будильники, поставленные руками. Час до начала — тот же порог, что человек и имел
+   в виду, нажимая колокольчик; после встречи будильник снимается сам, как и вместе
+   с закрытием события */
+function sweepRemind(){
+  var t=now(), u=me(), changed=false;
+  if(!u||!u.reminders)return;
+  Object.keys(u.reminders).forEach(function(pid){
+    var p=pin(pid);
+    if(!p||!isAct(p)||p.status!=="active"||p.starts_at<t-HOUR){delete u.reminders[pid]; changed=true; return}
+    if(u.reminders[pid]===1&&p.starts_at-t<=HOUR){
+      u.reminders[pid]=t; changed=true;
+      sysNotify("Скоро встреча",whenText(p.starts_at)+" — вы просили напомнить","open-pin",p.id,"Открыть");
     }
   });
   if(changed)save();
 }
 function sweep(){
   var t=now(), changed=false;
-  sweepConfirm();
+  sweepConfirm(); sweepRemind();
   db.pins.forEach(function(p){
     if(p.status!=='active')return;
     if(!p.expires_at||p.expires_at>=t)return;
@@ -3201,7 +3372,29 @@ function drawMap(){
 }
 
 /* ============ 5. маркеры и кластеры ============ */
+/* Блокировка соседа. Жалоба и блокировка — разные вещи: первая сигнал району, после трёх
+   жалоб пин уходит с карты у всех; вторая личная граница и никого, кроме двоих, не касается.
+   Блокировка между людьми, а не внутри события: «заблокировать в этой встрече» не защищает
+   ни от чего — человек напишет с другого пина.
+   Действие взаимное. Односторонняя блокировка, которая прячет его от вас, оставляет вас
+   видимым для него — это худший из возможных вариантов, и поэтому проверка смотрит в обе
+   стороны: и мой список, и его.
+   Заблокированному не приходит ничего и никогда. Это и делает блокировку безопасной */
+function iBlocked(id){var m=me();return !!(m&&m.blocked&&m.blocked[id])}
+function blockedWith(id){
+  var m=me();
+  if(!m||!id||id===m.id)return false;
+  if(m.blocked&&m.blocked[id])return true;
+  var u=user(id);
+  return !!(u&&u.blocked&&u.blocked[m.id]);
+}
+function blockedList(){
+  var m=me(), out=[];
+  if(m&&m.blocked)for(var k in m.blocked)if(m.blocked[k]&&user(k))out.push(user(k));
+  return out;
+}
 function hiddenForMe(p){
+  if(blockedWith(p.author_id))return true;
   if(reportedByMe(p.id))return true;
   var n=0;
   for(var i=0;i<db.reports.length;i++)if(db.reports[i].pin_id===p.id)n++;
@@ -3405,7 +3598,8 @@ var ui={
 
   /* первая станция набора: по ней центрируется карта и к ней относят пин без своей точки */
   districtId:'d_sokol', feedSort:'time', draft:null, picking:false,
-  profileTab:'active', userTab:'active', typing:false, panelCollapsed:false, searchQuery:'',
+  /* роль внутри экрана своих событий, порядок и собственный фильтр типов */
+  mineTab:'own', mineSort:null, mineCats:null, userTab:'active', typing:false, panelCollapsed:false, searchQuery:'',
   /* вкладка сообщений живёт только в памяти сеанса: вернувшись, человек всегда видит «Все»,
      иначе вчерашний фильтр спрятал бы сегодняшнее сообщение */
   msgTab:'all',
@@ -3428,18 +3622,70 @@ var ui={
    повешенный на сам ряд, умирал вместе с узлом при первой же перерисовке панели.
    Перебор в считанные пиксели не прокручиваем, а убираем: ряд поджимается зазором и правым
    полем, иначе он ездит на два-три пикселя и вкладки не стоят на месте */
-function tabEdges(t){
+/* Всё это относится к любой полосе с прокруткой вбок, а не только к вкладкам: лента
+   снимков в карточке события устроена так же. Внутри обёртки .hscroll лежит ровно один
+   прокручиваемый ряд, остальные её дети — созданные здесь же стрелки */
+function hscrollStrip(wrap){
+  var c=wrap?wrap.children:[];
+  for(var i=0;i<c.length;i++)if(!c[i].classList.contains('hscroll__arr'))return c[i];
+  return null;
+}
+/* Стрелки не лежат в разметке, а создаются при первом расчёте краёв: полосы рождаются
+   в разных местах кода, и дублировать кнопки руками значит однажды забыть.
+   Из обхода клавиатурой они убраны: это дубль того, что и так делает переход стрелками
+   по самим вкладкам, и как отдельные остановки они только удлиняли бы путь */
+function hscrollArrows(wrap){
+  ['l','r'].forEach(function(d){
+    var b=document.createElement('button');
+    b.className='hscroll__arr hscroll__arr--'+d;
+    b.setAttribute('data-hscroll',d);
+    b.tabIndex=-1; b.setAttribute('aria-hidden','true');
+    b.innerHTML=icon(d==='l'?'chev-left':'chev-right');
+    wrap.appendChild(b);
+  });
+}
+function hscrollEdges(t){
   if(!t)return;
-  var wrap=t.closest('.tabswrap'); if(!wrap)return;
-  wrap.classList.remove('is-tight');
-  if(t.scrollWidth-t.clientWidth<=24)wrap.classList.add('is-tight');
+  var wrap=t.parentNode;
+  if(!wrap||!wrap.classList||!wrap.classList.contains('hscroll'))return;
+  /* поджим на считанные пиксели — свойство именно ряда вкладок: у ленты снимков лишний
+     зазор убирать неоткуда, там элементы одинаковые */
+  if(t.classList.contains('tabs')){
+    wrap.classList.remove('is-tight');
+    if(t.scrollWidth-t.clientWidth<=24)wrap.classList.add('is-tight');
+  }
   var over=t.scrollWidth-t.clientWidth>1;
   wrap.classList.toggle('is-start',over&&t.scrollLeft>1);
   wrap.classList.toggle('is-end',over&&t.scrollLeft+t.clientWidth<t.scrollWidth-1);
+  if(over&&!wrap.querySelector('.hscroll__arr'))hscrollArrows(wrap);
+}
+function hscrollInit(root){
+  var ws=(root||document).querySelectorAll('.hscroll');
+  for(var i=0;i<ws.length;i++){var t=hscrollStrip(ws[i]); if(t)hscrollEdges(t)}
+}
+/* Шаг стрелки — целая страница, а не один элемент: элемент, обрезанный краем, становится
+   первым на следующей странице и целиком. Один общий элемент между соседними страницами
+   не даёт потерять место — глаз цепляется за знакомое.
+   Назад зеркально: обрезанный левым краем подводится к правому. Если элемент вдруг шире
+   всей полосы, подводить его к началу бессмысленно — там сдвигаемся на ширину видимого,
+   иначе нажатие перестало бы что-либо менять */
+function hscrollPage(wrap,dir){
+  var t=hscrollStrip(wrap); if(!t)return;
+  var pad=parseFloat(getComputedStyle(t).paddingLeft)||0;
+  var vis=t.clientWidth, left=t.scrollLeft, right=left+vis, to=null, k=t.children, i;
+  if(dir==='r'){
+    for(i=0;i<k.length;i++)if(k[i].offsetLeft+k[i].offsetWidth>right+1){to=k[i].offsetLeft-pad;break}
+    if(to==null||to<=left+1)to=left+vis;
+  }else{
+    for(i=k.length-1;i>=0;i--)if(k[i].offsetLeft<left-1){to=k[i].offsetLeft+k[i].offsetWidth+pad-vis;break}
+    if(to==null||to>=left-1)to=left-vis;
+  }
+  to=Math.max(0,Math.min(to,t.scrollWidth-vis));
+  if(t.scrollTo)t.scrollTo({left:to,behavior:'smooth'}); else t.scrollLeft=to;
 }
 function scrollTabIntoView(root){
   var t=(root||document).querySelector('.tabs'); if(!t)return;
-  tabEdges(t);
+  hscrollEdges(t);
   var on=t.querySelector('.is-on'); if(!on)return;
   var l=on.offsetLeft, r=l+on.offsetWidth;
   if(l-12<t.scrollLeft)t.scrollLeft=Math.max(0,l-12);
@@ -3580,7 +3826,7 @@ function joinedOf(pinId){
   var p=pin(pinId), out=[];
   if(p&&isAct(p))out.push({id:'own_'+pinId,pin_id:pinId,user_id:p.author_id,status:'joined',
     created_at:p.created_at,author:true});
-  return out.concat(db.responses.filter(function(r){return r.pin_id===pinId&&r.status!=='interested'}));
+  return out.concat(db.responses.filter(function(r){return r.pin_id===pinId&&isJoined(r)}));
 }
 function pendingOf(pinId){
   return db.responses.filter(function(r){return r.pin_id===pinId&&r.status==='interested'});
@@ -4021,6 +4267,7 @@ function renderDetail(p){
   lastDetailKey=dKey;
   bindFadeTitle(el,dNew,v.fadeTitle);
   fixHang(el);
+  hscrollInit(el);
   if(v.after)v.after();
 }
 /* Название в шапке проявляется, когда обложка уехала вверх — порог чуть меньше её высоты.
@@ -4219,7 +4466,7 @@ function oneUp(p){
     return {type:'chats'};
   }
   if(p.type==='scope')return p.prev||null;
-  if(p.type==='settings')return {type:'profile'};
+  if(p.type==='settings'||p.type==='mine')return {type:'profile'};
   return p.prev||null;
 }
 /* что показывать в первой колонке: отматываем цепочку до списка. Одного шага мало —
@@ -4249,6 +4496,7 @@ function viewFor(p){
     case 'user': return viewUser(p.id,p.pinctx);
     case 'people': return viewPeople(p.id);
     case 'archive': return viewArchive();
+    case 'mine': return viewMine(p.id);
     case 'settings': return viewSettings();
     case 'edit': return viewEdit(p.id);
   }
@@ -4267,7 +4515,7 @@ function renderPanel(){
      складывание, перетаскивание. Смена экрана рисуется сразу на месте — иначе переход
      с профиля на карту проигрывал переезд шторки вниз, хотя ничего не двигалось,
      и это читалось как «что-то обновилось» */
-  var key=(main?main.type+':'+(main.id||''):'list')+':'+(ui.draft?ui.draft.step:'')+':'+ui.profileTab;
+  var key=(main?main.type+':'+(main.id||''):'list')+':'+(ui.draft?ui.draft.step:'')+':'+ui.mineTab;
   var sameScreen=(key===lastPanelKey);
   if(!sameScreen)el.style.transition='none';
   el.hidden=false;
@@ -4387,6 +4635,7 @@ function renderPanel(){
   bindFadeTitle(el,newBody,v.fadeTitle);
   fixHang(el);
   playReveals(el);
+  hscrollInit(el);
   if(v.after)v.after();
 }
 
@@ -4438,8 +4687,15 @@ function viewPin(id){
     /* у закрытого «уже прошло» повторяло бы строку «В архиве с 14 сентября» ниже */
     var rel=isNow(p)?'идёт сейчас':(closed?'':whenRel(p.starts_at)), rep=repeatWord(p);
     var relLine=[rel,rep?'↻ '+rep:''].filter(Boolean).join(' · ');
+    /* Будильник живёт на самой строке времени, а не в ряду кнопок внизу: он про время,
+       а не про участие, и третья кнопка внизу сплющила бы две осмысленные. Показываем его
+       тому, кто не записан и не автор: записавшемуся напоминание придёт и так */
+    var bell=(!mine&&!isJoined(mr)&&!closed&&p.starts_at>now())
+      ? '<button class="iconbtn iconbtn--20 factrow__act'+(remindOn(p.id)?' is-on':'')+'" data-act="remind" data-id="'+p.id+'"'+
+        ' aria-pressed="'+(remindOn(p.id)?'true':'false')+'" aria-label="Напомнить о встрече" title="Напомнить за час">'+icon('bell')+'</button>'
+      : '';
     facts+='<div class="factrow">'+icon('calendar')+'<div><b>'+H(whenAbs(p.starts_at))+'</b>'+
-      (relLine?'<span>'+H(relLine)+'</span>':'')+'</div></div>';
+      (relLine?'<span>'+H(relLine)+'</span>':'')+'</div>'+bell+'</div>';
   }else{
     facts+='<div class="factrow">'+icon('clock')+'<div><b>Опубликовано '+H(agoText(p.created_at))+'</b></div></div>';
   }
@@ -4474,14 +4730,14 @@ function viewPin(id){
       icon('check')+'Продлить на месяц</button></div>');
   }
 
-  var photos=(p.photos&&p.photos.length>1)?'<div class="photos">'+p.photos.map(function(src){return '<img src="'+src+'" alt="">'}).join('')+'</div>':'';
+  var photos=(p.photos&&p.photos.length>1)?'<div class="hscroll"><div class="photos">'+p.photos.map(function(src){return '<img src="'+src+'" alt="">'}).join('')+'</div></div>':'';
 
   var people='';
   if(act){
     /* Намерение подтверждается не на входе, а перед самой встречей: одобрение автора
        говорит, что автор хочет участника, а не что тот придёт. Не подтвердил — тихо
        выпадает из списка, и место освобождается для другого */
-    if(mr&&mr.status!=='interested'&&!mr.confirmed_at&&p.status==='active'&&
+    if(isJoined(mr)&&!mr.confirmed_at&&p.status==='active'&&
        (p.starts_at-now())>CONFIRM_H*HOUR&&(p.starts_at-now())<REMIND_H*HOUR){
       /* Дату отсюда убрали — она стоит строкой выше в той же карточке. Осталось то,
          чего в карточке нет: вопрос и цена молчания */
@@ -4533,7 +4789,7 @@ function viewPin(id){
   var partBtn='';
   if(act){
     var n=joinedOf(p.id).length, lim=p.participant_limit;
-    var full=lim&&n>=lim&&!(mr&&mr.status!=='interested');
+    var full=lim&&n>=lim&&!isJoined(mr);
     /* На активности по заявкам список — круг уже собравшихся, и посторонним он не нужен:
        до решения автора вы им не стали. Число мест при этом видно всем, иначе не понять,
        есть ли смысл подавать заявку */
@@ -4541,8 +4797,8 @@ function viewPin(id){
        публично мы не показываем нигде — в профиле участие соседа не видно вовсе, — а через
        летопись в закрытое событие заходит любой. До встречи список нужен для координации,
        после неё круг сужается до тех, кто в нём был, и автора: они и так знакомы лично */
-    var seeList=(!p.approval||mine||(mr&&mr.status!=='interested'))
-      &&(!closed||mine||(mr&&mr.status!=='interested'));
+    var seeList=(!p.approval||mine||isJoined(mr))
+      &&(!closed||mine||isJoined(mr));
     /* «1 из 8 участник» — число и существительное согласовать нельзя: слово должно
        следовать за восьмёркой, а стоит после единицы. Поэтому подпись отделена от числа
        точкой, как на кнопке летописи, и склонение перестаёт существовать */
@@ -4595,7 +4851,7 @@ function viewPin(id){
       if(mr&&mr.status==='interested'){
         /* заявка ещё не принята: участником человек не стал и в общий чат не попал */
         foot='<button class="btn btn--ghost" data-act="leave" data-id="'+p.id+'">'+icon('clock')+'Заявка отправлена — отозвать</button>';
-      }else if(mr){
+      }else if(isJoined(mr)){
         /* участник уже внутри, и главное для него — не выйти, а договориться. Поэтому
            сверху разговор, а отказ ниже и контуром: он нужен редко и промахиваться по нему
            не должно быть легко. Общий чат снимает нужду писать автору лично — вопрос
@@ -5115,25 +5371,78 @@ function myRole(p,m){
   if(!r)return '';
   if(isAct(p)){
     if(r.status==='interested')return past?'Вы подавали заявку':'Вы подали заявку';
+    /* потерянное место — тоже роль: строка обязана остаться в списке, иначе человек
+       не найдёт встречу и не поймёт, куда она делась */
+    if(r.status==='released')return 'Место ушло';
     return past?'Вы участвовали':'Вы участвуете';
   }
   if(r.settled_at)return p.type==='lost_found'?'Вам вернули':'Вы получили';
   return '';   /* просто написал — это ещё не участие */
 }
+/* Мои события — и свои, и те, где я участник. Список один, роль — свойство строки */
+function myPins(){
+  var m=me(), seen={}, out=[];
+  db.pins.forEach(function(p){
+    if(seen[p.id]||hiddenForMe(p))return;
+    if(p.author_id===m.id||myRole(p,m)){seen[p.id]=1; out.push(p)}
+  });
+  out.sort(function(a,b){return (b.starts_at||b.created_at)-(a.starts_at||a.created_at)});
+  return out;
+}
+/* Режем по состоянию моего участия, а не события: у встречи это одно и то же, а у вещи
+   расходится — мне её отдали, а раздача идёт дальше. Закрыть чужое событие человек
+   не вправе, и без этого его «Сейчас» копил бы чужие законченные дела */
+function mineSplit(){
+  var m=me(), my=myPins();
+  return {all:my,
+    active:my.filter(function(p){return !doneForMe(p,m)}),
+    archive:my.filter(function(p){return doneForMe(p,m)})};
+}
+/* Строка списка своих событий говорит не «что это», а «что от вас требуется»: потерянное
+   место и неотвеченное подтверждение важнее даты, ради которой строка существует обычно */
+function mineFact(p,m){
+  var r=responseOf(p.id,m.id);
+  if(r&&r.status==='released')return 'Место ушло — вы не подтвердили';
+  if(r&&isJoined(r)&&isAct(p)&&p.status==='active'&&p.participant_limit&&r.reminded_at&&!r.confirmed_at)
+    return 'Подтвердите участие';
+  return rowFact(p);
+}
+function mineRows(list,m){
+  return list.map(function(p){
+    return '<button class="listrow listrow--chat" data-pin="'+p.id+'">'+
+      pinCover(p)+
+      '<span class="listrow__body"><span class="listrow__t">'+H(p.title)+'</span>'+
+      '<span class="listrow__s">'+H(mineFact(p,m))+'</span></span>'+
+      '<span class="listrow__r">'+icon('chev-right')+'</span></button>';
+  }).join('');
+}
+/* «Ближайшее» — блок про запланированное время, а не про ближайшие встречи. Разница
+   в формулировке не косметическая: когда появятся договорённости о времени (отдать лампу
+   в семь), они встанут сюда сами, и переделывать блок не придётся. Сегодня источников два —
+   встречи, где я участвую или автор, и встречи с заведённым будильником.
+   Отдельного «расписания на сегодня» нет намеренно: у большинства людей оно пустое, а то,
+   что на сегодня есть, и так окажется первым и назовётся словом «сегодня» в своей строке */
+function plannedPins(){
+  var m=me(), t=now(), u=m, out=[], seen={};
+  myPins().forEach(function(p){
+    if(!isAct(p)||p.status!=='active')return;
+    if(!isNow(p)&&p.starts_at<t)return;
+    var r=responseOf(p.id,m.id);
+    if(r&&r.status==='released')return;     /* место ушло — это уже не план */
+    seen[p.id]=1; out.push(p);
+  });
+  if(u&&u.reminders)Object.keys(u.reminders).forEach(function(pid){
+    var p=pin(pid);
+    if(!p||seen[pid]||!isAct(p)||p.status!=='active')return;
+    if(!isNow(p)&&p.starts_at<t)return;
+    seen[pid]=1; out.push(p);
+  });
+  out.sort(function(a,b){return a.starts_at-b.starts_at});
+  return out;
+}
 function viewProfile(){
   var m=me();
-  /* и свои события, и те, где вы участник: список один, роль — свойство строки */
-  var seen={}, my=[];
-  db.pins.forEach(function(p){
-    if(seen[p.id])return;
-    if(p.author_id===m.id||myRole(p,m)){seen[p.id]=1; my.push(p)}
-  });
-  my.sort(function(a,b){return (b.starts_at||b.created_at)-(a.starts_at||a.created_at)});
-  /* Режем по состоянию моего участия, а не события: у встречи это одно и то же, а у вещи
-     расходится — мне её отдали, а раздача идёт дальше. Закрыть чужое событие человек
-     не вправе, и без этого его «Сейчас» копил бы чужие законченные дела */
-  var active=my.filter(function(p){return !doneForMe(p,m)});
-  var archive=my.filter(function(p){return doneForMe(p,m)});
+  var sp=mineSplit(), my=sp.all, active=sp.active, archive=sp.archive;
 
   /* Колокол — глобальный вход, ему место в углу экрана; шестерня настраивает профиль,
      ей место рядом с профилем. На десктопе у разделов шапки нет — её убрали, чтобы
@@ -5153,49 +5462,86 @@ function viewProfile(){
       '<button class="iconbtn iconbtn--20" data-act="settings" aria-label="Настройки" title="Настройки">'+icon('gear')+'</button>'+
     '</span></div>';
 
-  var tabs='<div class="tabs">'+
-    /* архив последним: в него заходят реже всего, а стоял он между двумя живыми вкладками */
-    [['active','Сейчас',active.length],['archive','Архив',archive.length]]
-    .map(function(t){return '<button data-tab="'+t[0]+'" class="'+(ui.profileTab===t[0]?'is-on':'')+'">'+t[1]+' '+t[2]+'</button>'}).join('')+
-  '</div>';
-
-  /* Роль ушла со строки в заголовок группы: в своём профиле она есть у каждой строки
-     и потому почти ничего не различает — двенадцать раз «Вы автор» подряд читаются как
-     фон, а место занимают на каждой строке, из-за чего время не помещалось.
-     Ось деления не меняется: вкладки по-прежнему режут по состоянию, роль — группировка
-     внутри состояния, а не третья вкладка, как было до 3.4 */
-  function rows(list){
-    return list.map(function(p){
-      return '<button class="listrow listrow--chat" data-pin="'+p.id+'">'+
-        pinCover(p)+
-        '<span class="listrow__body"><span class="listrow__t">'+H(p.title)+'</span>'+
-        '<span class="listrow__s">'+H(rowFact(p))+'</span></span>'+
-        '<span class="listrow__r">'+icon('chev-right')+'</span></button>';
-    }).join('');
+  /* «Сейчас» и «Архив» уехали отдельными экранами: у активного человека там накапливаются
+     десятки событий, которые хочется фильтровать и сортировать, а вкладка внутри профиля
+     места под это не даёт. То же решение мы однажды принимали уровнем выше — летопись
+     района тоже была половиной переключателя над лентой, пока не стала экраном.
+     В профиле остаётся содержание и две строки перехода: содержание выше навигации */
+  var planned=plannedPins().slice(0,3);
+  var soon=planned.length
+    ? /* блок фактов над этим заголовком уже отдал свои 24 снизу: добавить сюда ещё 24
+       значит поставить между ними 48, а в лестнице такого шага нет */
+    '<div class="eyebrow" style="padding:0 16px 8px">Ближайшее</div>'+mineRows(planned,m)
+    : '';
+  function goRow(era,label,n){
+    return '<button class="listrow" data-act="open-mine" data-id="'+era+'">'+
+      '<span class="listrow__body"><span class="listrow__t">'+label+'</span></span>'+
+      '<span class="listrow__r listrow__r--row"><span class="tag">'+n+'</span>'+icon('chev-right')+'</span></button>';
   }
-  function rowsFor(list,past){
-    if(!list.length)return '<div class="empty">'+icon('pin')+'<b>Пока пусто</b><p>События, которые вы создадите, появятся здесь</p></div>';
-    var own=list.filter(function(p){return p.author_id===m.id});
-    var join=list.filter(function(p){return p.author_id!==m.id});
-    /* Между группами крупный разделитель — тот же, которым разведены группы в настройках
-       и в фильтре. Заголовку после него хватает 16: полоса добавляет свои 8, и суммарный
-       отступ сходится с первым заголовком, у которого полосы над ним нет */
-    function group(ttl,l,after){
-      return l.length?'<div class="eyebrow" style="padding:'+(after?16:24)+'px 16px 0">'+ttl+' · '+l.length+'</div>'+rows(l):'';
-    }
-    var gap=(own.length&&join.length)?'<div class="divider divider--lg"></div>':'';
-    return group('Ваши события',own)+gap+group(past?'Участвовали':'Участвуете',join,!!gap);
-  }
-
-  /* старое значение вкладки переживает обновление: «resp» больше не существует */
-  if(ui.profileTab!=='archive')ui.profileTab='active';
   /* тот же блок фактов, что в профиле соседа: полоса состава дел, круг знакомств, свежесть */
-  var body=head+profileFacts(m.id,true,my.length>0)+'<div class="divider divider--lg"></div>'+
-    tabs+'<div class="swrap"><div id="swArea">'+
-    rowsFor(ui.profileTab==='archive'?archive:active,ui.profileTab==='archive')+'</div></div>';
+  var body=head+profileFacts(m.id,true,my.length>0)+soon+
+    '<div class="divider divider--lg"></div>'+
+    goRow('active','Сейчас',active.length)+goRow('archive','Архив',archive.length);
 
   return {title:'Профиль',body:body,section:true,
-    action:isDesktopPanel()?'':bellHTML('chathead__act'),
+    action:isDesktopPanel()?'':bellHTML('chathead__act')};
+}
+
+/* ---- свои события: «Сейчас» и «Архив» ---- */
+/* Три оси, и у каждой свой приём. Роль — вкладки, и только если ролей правда две: ряд
+   из одной вкладки человеку, который ничего не создавал, ничего не сообщает. Порядок —
+   тот же переключатель, что над лентой района. Тип — чипы категорий.
+   Фильтр здесь собственный, а не общий с картой: общий значил бы, что человек, сняв
+   «встречи» в своих событиях, молча перефильтровал себе карту */
+function mineCatOn(k){return ui.mineCats?ui.mineCats[k]!==false:true}
+function viewMine(era){
+  var m=me(), past=(era==='archive'), sp=mineSplit();
+  var list=(past?sp.archive:sp.active).filter(function(p){return mineCatOn(p.type)});
+  var own=list.filter(function(p){return p.author_id===m.id});
+  var join=list.filter(function(p){return p.author_id!==m.id});
+  var both=own.length&&join.length;
+  if(!both)ui.mineTab=own.length?'own':'join';
+  var cur=(ui.mineTab==='join')?join:own;
+
+  var tabs=both?'<div class="hscroll tabswrap"><div class="tabs">'+
+    [['own','Ваши события',own.length],['join',past?'Участвовали':'Участвуете',join.length]]
+    .map(function(t){return '<button data-tab="'+t[0]+'" class="'+(ui.mineTab===t[0]?'is-on':'')+'">'+t[1]+' '+t[2]+'</button>'}).join('')+
+  '</div></div>':'';
+
+  /* Чипы типов стоят строкой, а не столбцом, как в фильтре района: там они главное
+     содержание экрана, здесь — управление над списком, и три строки съели бы первый экран.
+     Не помещаются — полоса прокручивается и показывает края со стрелками, для этого
+     общий элемент и заводили. Короткие названия по той же причине */
+  var chips='';
+  for(var k in PIN_TYPES){
+    var t=PIN_TYPES[k], on=mineCatOn(k), c='var(--'+t.cls+')';
+    chips+='<button class="'+(on?'is-on':'')+'" data-minecat="'+k+'">'+
+      '<i style="border-color:'+c+(on?';background:'+c:'')+'"></i>'+H(t.short)+'</button>';
+  }
+  /* Порядок называется по ключу, а не по чувству: «сначала ближайшие» это starts_at,
+     «сначала новые» — когда событие появилось. В архиве ближайших не бывает, там пара
+     другая */
+  var sorts=past?[['late','недавние'],['early','давние']]:[['soon','ближайшие'],['new','новые']];
+  var sort=ui.mineSort||(past?'late':'soon');
+  if(!sorts.some(function(s){return s[0]===sort}))sort=sorts[0][0];
+  var bar='<div class="hscroll"><div class="catrow">'+chips+'</div></div>'+
+    '<div class="feed__sort" style="padding:0 16px 12px">'+
+    sorts.map(function(s){return '<button data-minesort="'+s[0]+'" class="'+(sort===s[0]?'is-on':'')+'">'+s[1]+'</button>'}).join('')+
+    '</div>';
+
+  cur=cur.slice();
+  if(sort==='soon')cur.sort(bySoon);
+  else if(sort==='new')cur.sort(function(a,b){return b.created_at-a.created_at});
+  else if(sort==='early')cur.sort(function(a,b){return (a.closed_at||a.created_at)-(b.closed_at||b.created_at)});
+  else cur.sort(function(a,b){return (b.closed_at||b.created_at)-(a.closed_at||a.created_at)});
+
+  var body=bar+tabs+'<div class="swrap"><div id="swArea">'+
+    (cur.length?mineRows(cur,m)
+      :'<div class="empty">'+icon(past?'archive':'pin')+'<b>'+(past?'В архиве пусто':'Здесь пока пусто')+'</b>'+
+       '<p>'+(past?'Сюда попадают законченные дела: встречи, которые прошли, и вещи, которые нашли хозяев'
+                 :'События, которые вы создадите или к которым присоединитесь, появятся здесь')+'</p></div>')+
+    '</div></div>';
+  return {title:past?'Архив':'Сейчас',back:true,body:body,
     after:function(){scrollTabIntoView($('#panel'))}};
 }
 
@@ -5343,7 +5689,20 @@ function viewUser(id,pinctx){
     ((!self&&pinctx&&pin(pinctx))
       ? '<button class="iconbtn iconbtn--20" data-act="dm" data-id="'+H(id)+'" data-pin="'+H(pinctx)+
         '" aria-label="Написать" title="Написать">'+icon('chat')+'</button>' : '')+
+    /* Блокировка живёт в меню редких действий — там же, где жалоба у события. Доступна
+       в любой момент, знакомства для этого не требуется: закрыться от автора пина, который
+       вам не понравился, можно ни разу ему не написав */
+    (self?'':'<button class="iconbtn iconbtn--20" data-act="user-menu" data-id="'+H(id)+
+      '" aria-label="Ещё" title="Ещё">'+icon('dots')+'</button>')+
     '</div>';
+  if(!self&&iBlocked(id)){
+    /* У заблокированного показывать нечего: его события у вас скрыты, переписка закрыта.
+       Экран остаётся ради одного действия — вернуть всё обратно */
+    return {title:H(u.name),fadeTitle:true,back:true,body:head+
+      '<div class="empty">'+icon('shield')+'<b>Сосед заблокирован</b>'+
+      '<p>Его события скрыты у вас, ваши — у него, переписка закрыта. Он об этом не знает</p>'+
+      '<button class="btn btn--line btn--sm" data-act="unblock" data-id="'+H(id)+'">Разблокировать</button></div>'};
+  }
 
   /* Полоса состава отвечает на «чем именно человек занят» за полсекунды — организатор
      встреч перед вами или раздающий вещи. Текстовые строки ниже говорят про роль */
@@ -5410,6 +5769,17 @@ function setTheme(m){
 }
 function viewSettings(){
   var tm=themeMode();
+  /* Список заблокированных появляется, только когда в нём кто-то есть: пустой раздел
+     про блокировки в настройках у человека, который никого не блокировал, — лишний повод
+     задуматься о том, чего не было */
+  var bl=blockedList();
+  var blocked=bl.length?'<div class="divider divider--lg"></div>'+
+    '<div class="eyebrow" style="padding:0 16px 8px">Заблокированные</div>'+
+    bl.map(function(u){
+      return '<div class="listrow">'+avatarHTML(u,'')+
+        '<span class="listrow__body"><span class="listrow__t">'+H(u.name)+'</span></span>'+
+        '<button class="btn btn--line btn--sm" data-act="unblock" data-id="'+H(u.id)+'">Разблокировать</button></div>';
+    }).join(''):'';
   var theme='<div class="field"><label>Тема оформления</label><div class="segctl">'+
     [['auto','Системная'],['light','Светлая'],['dark','Тёмная']].map(function(o){
       return '<button data-theme-set="'+o[0]+'" class="'+(tm===o[0]?'is-on':'')+'">'+o[1]+'</button>';
@@ -5431,6 +5801,7 @@ function viewSettings(){
     '<button class="btn btn--line" data-act="open-scope">'+icon('filter')+'Фильтры'+'</button>'+
     '<button class="btn btn--line" data-act="rename">'+icon('user')+'Изменить имя'+'</button>'+
   '</div>'+
+  blocked+
   '<div class="divider divider--lg"></div>'+
   '<div class="pad stack">'+
     '<button class="btn btn--danger" data-act="reset">'+icon('reset')+'Сбросить прототип'+'</button>'+
@@ -5460,6 +5831,13 @@ function threadPinType(t){var p=pin(t.pin_id);return p?p.type:null}
    Дальше она доступна через профиль: архив -> объявление -> переписка */
 function threadVisible(t){
   if(threadKind(t)==='system')return true;
+  /* Личная переписка с заблокированным закрывается в обе стороны: список её не показывает,
+     написать оттуда некуда. Групповой чат встречи — исключение: событие принадлежит автору,
+     и выкидывать из него кого-то из двоих мы не вправе. Там скрываются только реплики */
+  if(threadKind(t)==='direct'){
+    for(var i=0;i<t.users.length;i++)
+      if(t.users[i]!==db.currentUserId&&blockedWith(t.users[i]))return false;
+  }
   var p=pin(t.pin_id);
   if(!p||p.status==='active')return true;
   return !(p.closed_at&&(now()-p.closed_at)>7*DAY);
@@ -5586,7 +5964,7 @@ function viewChats(){
      при переключении экранов полосы разъезжались на несколько пикселей */
   var top='<div class="searchzone"><div class="searchfield">'+icon('search','searchfield__ic')+
       '<input class="input" id="msgSearch" placeholder="Поиск по сообщениям" value="'+H(mq)+'" autocomplete="off">'+
-    '</div></div><div class="tabswrap">'+tabs+'</div>';
+    '</div></div><div class="hscroll tabswrap">'+tabs+'</div>';
   var list=threadsFor(ui.msgTab);
   var body='<div class="swrap"><div id="swArea">'+(list.length
     ? list.map(threadRow).join('')
@@ -5608,6 +5986,9 @@ function sysStatus(m,op){
   if(!op)return '';
   var r=myResponse(op.id);
   if(r&&r.confirmed_at)return '<span class="chip chip--plate">'+icon('check')+'Подтверждено</span>';
+  /* не подтвердил и место ушло — исход тоже определённый, и говорить о нём надо иначе,
+     чем об отказе: человек не отменял участия, он его потерял */
+  if(r&&r.status==='released')return '<span class="chip chip--plate">Место ушло</span>';
   if(!r)return '<span class="chip chip--plate">Участие отменено</span>';
   return '';
 }
@@ -5703,6 +6084,11 @@ function viewThread(id){
           '<span class="chathead__n">'+H(tname)+'</span>'+
           '<span class="chathead__p">'+H(tsub)+'</span>'+
         '</span></button>'+
+      /* второй вход в блокировку: закрыться от собеседника логично прямо из разговора,
+         а не через его профиль. В общем чате встречи такой кнопки нет — там собеседник
+         не один */
+      ((!isGroup&&u)?'<button class="iconbtn chathead__act" data-act="user-menu" data-id="'+H(u.id)+
+        '" aria-label="Ещё" title="Ещё">'+icon('dots')+'</button>':'')+
     '</div>';
 
   /* День назван разделителем, поэтому в самом пузырьке остаётся только время: раньше
@@ -5720,6 +6106,10 @@ function viewThread(id){
       var sep='', dl=dayLabel(m.created_at);
       if(dl!==cday){cday=dl; sep='<div class="daysep">'+H(dl)+'</div>'}
       if(m.sys){prevAuthor=null; return sep+'<div class="chatnote">'+H(m.text)+'</div>'}
+      /* Реплика заблокированного в общем чате не исчезает бесследно, а сворачивается:
+         пустота на её месте читалась бы как сбой разговора, а так видно, что реплика была
+         и что скрыли её вы */
+      if(!out&&blockedWith(m.author_id)){prevAuthor=null; return sep+'<div class="chatnote">Сообщение скрыто</div>'}
       if(sep)prevAuthor=m.author_id;
       return sep+'<div class="msg msg--'+(out?'out':'in')+'">'+
         (au?'<button class="msg__a" data-act="user" data-id="'+H(au.id)+'" data-pinctx="'+H(t.pin_id)+'">'+H(au.name)+'</button>':'')+
@@ -6382,9 +6772,29 @@ function onAction(act,el,e){
     case 'publish': publish(); break;
     case 'addphoto': pickPhoto(); break;
     case 'rmphoto': ui.draft.photos.splice(parseInt(el.getAttribute('data-i'),10),1); render(); break;
+    case 'remind':
+      var ru=me();
+      if(ru){
+        ru.reminders=ru.reminders||{};
+        if(ru.reminders[id]){delete ru.reminders[id]; save(); render(); toast('Напоминание выключено')}
+        else {ru.reminders[id]=1; save(); render(); toast('Напомним за час до начала')}
+      }
+      break;
     case 'join':
       var p=pin(id);
       if(p.participant_limit&&joinedOf(id).length>=p.participant_limit){toast('Мест больше нет');break}
+      /* Возвращение после потерянного места — оживление прежней записи, а не новая:
+         второй отклик того же человека на тот же пин сделал бы его участником дважды.
+         Подтверждением считаем само возвращение — иначе ближайший обход отберёт место
+         снова, за то же молчание */
+      var back=myResponse(id);
+      if(back&&back.status==='released'){
+        back.status='joined'; back.confirmed_at=now();
+        delete back.released_at; delete back.reminded_at;
+        joinNote(groupAdd(p,db.currentUserId),db.currentUserId);
+        save(); render(); toast('Вы снова в списке участников');
+        break;
+      }
       /* вход свободный: намерение подтверждается не на входе, а перед самой встречей.
          Заявки — исключение, которое автор включает сам */
       if(p.approval){
@@ -6475,11 +6885,39 @@ function onAction(act,el,e){
       var mmr=myResponse(id), items=[{act:'share',icon:'share',label:'Поделиться',id:id}];
       if(own)items.push({act:'edit-pin',icon:'pencil',label:'Редактировать',id:id});
       else{
-        if(mp&&isAct(mp)&&mp.status==='active'&&mmr&&mmr.status!=='interested')
+        if(mp&&isAct(mp)&&mp.status==='active'&&isJoined(mmr))
           items.push({act:'leave',icon:'exit',label:'Не пойду',id:id});
         items.push({act:'report',icon:'flag',label:'Пожаловаться',id:id});
       }
       menuDialog(el,items);
+      break;
+    case 'user-menu':
+      menuDialog(el,[{act:'block',icon:'shield',label:'Заблокировать',id:id}]);
+      break;
+    case 'block':
+      closeModal();
+      var bu=user(id); if(!bu)break;
+      confirmDialog('Заблокировать соседа?',
+        'Его события скроются у вас, ваши — у него, личная переписка закроется. В общих чатах встреч вы оба останетесь, но его реплики скроются. Сосед об этом не узнает',
+        'Заблокировать',true,function(){
+          var bm=me(); bm.blocked=bm.blocked||{}; bm.blocked[id]=1;
+          /* Если блокировали прямо из разговора, в нём оставаться нельзя: переписка закрыта,
+             а открытый экран показывал бы её как ни в чём не бывало и принимал бы ввод */
+          if(ui.panel&&ui.panel.type==='thread'){
+            var bt=null;
+            for(var bi=0;bi<db.threads.length;bi++)if(db.threads[bi].id===ui.panel.id)bt=db.threads[bi];
+            if(bt&&threadKind(bt)==='direct'&&bt.users.indexOf(id)>=0)openPanel({type:'chats'});
+          }
+          save(); render(); toast('Сосед заблокирован','Вернуть',function(){
+            var b2=me(); if(b2&&b2.blocked)delete b2.blocked[id];
+            save(); render();
+          },'undo');
+        });
+      break;
+    case 'unblock':
+      var um=me();
+      if(um&&um.blocked)delete um.blocked[id];
+      save(); render(); toast('Сосед разблокирован');
       break;
     case 'edit-pin':
       closeModal();
@@ -6539,8 +6977,16 @@ function onAction(act,el,e){
       var nr=null;
       for(var ni=0;ni<db.responses.length;ni++)if(db.responses[ni].id===id)nr=db.responses[ni];
       if(nr){
-        db.responses=db.responses.filter(function(r){return r.id!==nr.id});
-        save(); render(); toast('Место освободилось для другого соседа')}
+        /* Возвращаем на прежнее место, а не в конец: порядок откликов значит очерёдность,
+           и вернувшийся первым откликнувшийся не должен оказаться последним */
+        var nix=db.responses.indexOf(nr);
+        db.responses.splice(nix,1);
+        db.held=[{kind:'response',index:nix,obj:nr}];
+        save(); render();
+        holdAction('Место освободилось для другого соседа',
+          function(){db.held=[]; save()},
+          function(){db.responses.splice(Math.min(nix,db.responses.length),0,nr); db.held=[]; save(); render()});
+      }
       break;
     case 'toggle-geo':
       var gm=me(); if(!gm)break;
@@ -6571,6 +7017,7 @@ function onAction(act,el,e){
 
     case 'people': openPanel({type:'people',id:id,prev:ui.panel}); break;
     case 'open-archive': openPanel({type:'archive',prev:ui.panel}); break;
+    case 'open-mine': openPanel({type:'mine',id:id,prev:ui.panel}); break;
     case 'settings': openPanel({type:'settings'}); break;
     case 'pin-expand': ui.pinShut=false; render(); break;
     case 'open-sys':
@@ -6593,6 +7040,9 @@ function onAction(act,el,e){
 
 document.addEventListener('click',function(e){
   var el;
+  /* стрелка полосы с прокруткой: обработчик один на все полосы, включая те, которых
+     ещё нет */
+  if((el=e.target.closest('.hscroll__arr'))){hscrollPage(el.parentNode,el.getAttribute('data-hscroll'));return}
   if((el=e.target.closest('[data-act]'))){onAction(el.getAttribute('data-act'),el,e);return}
   /* очистка поиска: полный render() здесь нельзя — поле потеряет фокус */
   if(e.target.closest('#searchClear')){
@@ -6656,9 +7106,21 @@ document.addEventListener('click',function(e){
   }
   if((el=e.target.closest('[data-tab]'))){
     var pv=el.getAttribute('data-tab');
-    var PT=['active','archive'];
-    tabSwitch(function(){ui.profileTab=pv},PT.indexOf(pv)>PT.indexOf(ui.profileTab)?1:-1);
+    var PT=['own','join'];
+    tabSwitch(function(){ui.mineTab=pv},PT.indexOf(pv)>PT.indexOf(ui.mineTab)?1:-1);
     return;
+  }
+  if((el=e.target.closest('[data-minesort]'))){ui.mineSort=el.getAttribute('data-minesort');render();return}
+  /* Снять все категории нельзя: пустой экран не сообщает ничего, кроме того, что человек
+     сам себе всё выключил. Последняя снятая возвращает набор целиком — то же правило,
+     что в фильтре района */
+  if((el=e.target.closest('[data-minecat]'))){
+    var mk=el.getAttribute('data-minecat');
+    ui.mineCats=ui.mineCats||{};
+    ui.mineCats[mk]=!mineCatOn(mk);
+    var any=false; for(var kk in PIN_TYPES)if(mineCatOn(kk))any=true;
+    if(!any)ui.mineCats=null;
+    render(); return;
   }
   if((el=e.target.closest('[data-msgtab]'))){
     var mv=el.getAttribute('data-msgtab');
@@ -7192,7 +7654,7 @@ document.addEventListener('pointerdown',function(e){
   var isPin=!!pinSheetEl();
   var peek=isPin?PIN_PEEK:HOME_PEEK;
   homeDrag={y:e.clientY,moved:0,pin:isPin,open:isPin?!ui.pinShut:ui.homeOpen,
-    max:Math.max(HOME_TOP,window.innerHeight-66-peek)};
+    max:Math.max(HOME_TOP,window.innerHeight-railH()-peek)};
   /* тянуть начинают за ручку, а палец тут же уходит с неё вниз — без захвата указателя
      события перестают приходить и шторка застревает. В поле ввода жест не перехватываем,
      иначе в нём нельзя выделить текст */
@@ -7210,8 +7672,7 @@ document.addEventListener('pointermove',function(e){
   var base=homeDrag.open?(homeDrag.pin&&ui.pinFull?PIN_FULL_TOP:HOME_TOP):homeDrag.max;
   /* из свёрнутой карточки тянут дальше вниз — она уезжает за край и закрывается */
   var lo=homeDrag.pin?window.innerHeight:homeDrag.max;
-  /* карточке разрешена полоса в 24 пикселя сверху: там её третье положение, и за эту же
-     полосу её оттуда вытаскивают */
+  /* верхняя остановка карточки — самый край экрана: третье положение стало полноэкранным */
   var hi=homeDrag.pin?PIN_FULL_TOP:HOME_TOP;
   pn.style.top=Math.max(hi,Math.min(lo,base+dy))+'px';
 });
@@ -7285,11 +7746,21 @@ function osFlash(el){
 document.addEventListener('scroll',function(e){
   if(e.target&&e.target.nodeType===1)osFlash(e.target);
 },true);
+/* Щипок двумя пальцами вне карты. Просьбу «не масштабировать» в голове страницы Safari
+   с десятой версии намеренно игнорирует — чтобы никто не мог запретить человеку приблизить
+   мелкий текст, — и отключить это можно только перехватом самого жеста. На продукте я бы
+   так не делал; здесь прототип, который показывают как приложение, и системное увеличение
+   в настройках телефона остаётся на месте.
+   Карту не исключаем: у неё щипок свой, на событиях указателя, и эти события отдельные —
+   запрет жеста их не отменяет */
+["gesturestart","gesturechange","gestureend"].forEach(function(t){
+  document.addEventListener(t,function(e){e.preventDefault()},{passive:false});
+});
 /* Тот же перехват для краёв ряда вкладок: один слушатель на всё приложение, узлы меняются
    сколько угодно — он найдёт ряд по цели события */
 document.addEventListener('scroll',function(e){
   var el=e.target;
-  if(el&&el.nodeType===1&&el.classList&&el.classList.contains('tabs'))tabEdges(el);
+  if(el&&el.nodeType===1&&el.parentNode&&el.parentNode.classList&&el.parentNode.classList.contains('hscroll'))hscrollEdges(el);
 },true);
 /* Шапка списка уходит вместе с содержимым, а не прячется рывком в начале прокрутки:
    пока вы листаете вниз, она поднимается ровно на столько, на сколько уехал список,
@@ -7346,7 +7817,7 @@ document.addEventListener('pointerup',function(){
 
 db=loadDB();
 if(!db){db=seedDB();save()}
-else {migrateCoords(); migrateDemo(); reanchorDemo();}
+else {migrateCoords(); migrateDemo(); reanchorDemo(); flushHeldStored();}
 if(db.currentUserId&&user(db.currentUserId))startApp();
 else renderOnboard();
 
