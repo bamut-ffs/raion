@@ -332,6 +332,44 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .stage{flex:1;position:relative;min-width:0;overflow:hidden;background:var(--ground)}
 .map{position:absolute;inset:0;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .map.is-drag{cursor:grabbing}
+/* Настоящая карта лежит ПОВЕРХ нарисованной, а не под ней: нарисованная осталась в файле
+   и работает как запасная. Там, где движок или тайлы не доедут (в артефакте их блокирует
+   CSP), приложение выглядит ровно как раньше и ничего не теряет */
+.glmap{position:absolute;inset:0;z-index:0}
+/* Движок не поднялся: вместо выдуманного города — прямой ответ. Раньше здесь рисовалась
+   запасная карта, и человек видел кварталы, которых не существует */
+.mapfail{
+  position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;
+  background:var(--ground);color:var(--ink-3);
+}
+.mapfail svg{width:26px;height:26px;opacity:.5}
+.mapfail b{color:var(--ink-2);font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600}
+.mapfail p{margin:0;font-size:var(--f-s10);line-height:var(--l-s10);max-width:34ch}
+/* Минимум из стилей MapLibre: подключить их файл нельзя — CSP пускает только Google Fonts.
+   Всё остальное в его таблице — про контролы, которых у нас нет */
+/* Позицию здесь не задаём намеренно. В своей таблице MapLibre ставит контейнеру
+   position:relative, и это правило перебивало наш absolute: контейнер схлопывался
+   в нулевую высоту, а движок делал холст своей запасной высоты в 300 пикселей —
+   карта рисовалась полосой сверху */
+.maplibregl-map{overflow:hidden;-webkit-tap-highlight-color:transparent}
+.maplibregl-canvas-container,.maplibregl-canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.maplibregl-canvas-container.maplibregl-interactive{cursor:grab}
+.maplibregl-canvas-container.maplibregl-interactive:active,.map.is-drag .maplibregl-canvas-container{cursor:grabbing}
+.maplibregl-control-container{display:none}
+/* Шкала масштаба и подпись источника — про одно и то же, про саму карту, и живут одним
+   углом. Порознь они стояли в одной точке и налезали друг на друга */
+.mapmeta{
+  position:absolute;right:16px;bottom:16px;z-index:6;pointer-events:none;
+  display:flex;flex-direction:column;align-items:flex-end;gap:4px;
+}
+/* Подпись источника — требование лицензии, а не украшение: она остаётся и там, где шкала
+   спрятана, и поэтому на телефоне поднимается над свёрнутой шторкой, а не уходит под неё */
+.mapcredit{
+  font-size:var(--f-xs10);line-height:var(--l-xs10);color:var(--ink-3);
+  padding:2px 6px;border-radius:var(--r-s);
+  background:color-mix(in srgb,var(--surface) 82%,transparent);
+}
 /* только сам холст карты: слой меток лежит внутри .map, и раньше это правило растягивало
    и значки в метках — значок метро схлопывался в ноль, а иконки в пинах распирало на всю каплю */
 .map>svg{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -378,6 +416,19 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   border:1px dashed color-mix(in srgb,var(--offer) 55%,transparent);pointer-events:none;
 }
 /* у пропажи круг означает не сдвиг точки, а заявленную зону поиска — и цвет у него свой */
+/* Точка «вы»: брендовый кружок в белой обводке — тот же приём, что у аватара на обложке,
+   и то же значение «это про вас». Круг точности рисуется только когда он крупнее самой
+   точки: маленький круг вокруг точки читался бы как вторая обводка */
+.mepoint{
+  position:absolute;left:0;top:0;width:16px;height:16px;border-radius:50%;
+  transform:translate(-50%,-50%);background:var(--brand);
+  box-shadow:0 0 0 3px #fff,0 1px 4px rgba(0,0,0,.3);
+}
+.meacc{
+  position:absolute;left:0;top:0;border-radius:50%;transform:translate(-50%,-50%);
+  background:color-mix(in srgb,var(--brand) 14%,transparent);
+  border:1px solid color-mix(in srgb,var(--brand) 42%,transparent);pointer-events:none;
+}
 .halo--find{
   background:color-mix(in srgb,var(--find) 14%,transparent);
   border-color:color-mix(in srgb,var(--find) 55%,transparent);
@@ -445,7 +496,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .zoomctl button:hover{background:var(--surface-2);color:var(--ink)}
 .zoomctl svg{width:16px;height:16px}
 .scalebar{
-  position:absolute;right:16px;bottom:16px;font-size:var(--f-xs10);line-height:var(--l-xs10);color:var(--ink-2);z-index:4;
+  font-size:var(--f-xs10);line-height:var(--l-xs10);color:var(--ink-2);
   display:flex;flex-direction:column;align-items:flex-end;gap:3px;padding:6px 8px;border-radius:var(--r-s);
   background:color-mix(in srgb,var(--surface) 82%,transparent);border:1px solid var(--line);
 }
@@ -1395,6 +1446,17 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* под домашней шторкой затемняем только карту: дом — состояние просмотра, и уходить
    из него в чаты одним касанием человек вправе, поэтому таббар остаётся живым */
 .sheet-scrim--home{bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px))}
+/* Карта уехала в сторону — предлагаем перенести охват сюда. Само по себе панорамирование
+   охват не меняет: список прыгал бы под рукой, и человек не смог бы просто посмотреть
+   соседний район. Поэтому движение показывает предложение, а решение остаётся за ним */
+.searchhere{
+  position:absolute;left:50%;top:66px;transform:translateX(-50%);z-index:7;
+  display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;
+  background:var(--ink);color:var(--ground);border:none;
+  font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;white-space:nowrap;
+  box-shadow:var(--shadow-2);
+}
+.searchhere:hover{opacity:.9}
 /* плашка с расстоянием на шаге выбора места — тёмная, как всплывающие сообщения */
 /* Плашка занимает тот же слот, что кнопка охвата, и уходит тем же движением. Видна она
    только пока шторка внизу и вы целитесь: как только шторка поднялась, станция
@@ -1624,6 +1686,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      свёрнутой шторки (76 над таббаром в 66): (52 + 100dvh - 142) / 2 */
   .zoomctl{top:calc(50dvh - 45px)}
   .scalebar{display:none}
+  /* над таббаром и свёрнутой домашней шторкой: 66 + 70 + отступ */
+  .mapmeta{bottom:calc(66px + var(--home-peek) + 8px)}
 }
 </style>
 <style>/* Собственные стили каталога. Всё с приставкой ds-, чтобы не столкнуться с продуктовыми */
@@ -2087,6 +2151,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.14";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.18";</script>
 </body>
 </html>
