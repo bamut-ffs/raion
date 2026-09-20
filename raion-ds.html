@@ -394,9 +394,6 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .marker:hover .pin,.pin:focus-visible{transform:translate(-50%,-100%) rotate(-45deg) scale(1.12)}
 .marker.is-sel .pin{transform:translate(-50%,-100%) rotate(-45deg) scale(1.28)}
 .marker.is-sel{z-index:5}
-/* пины вне выбранной станции приглушены: карта сшита из нескольких станций, а список —
-   про одну. Кликабельными остаются, чтобы соседний пин можно было открыть */
-.marker.is-dim .pin,.marker.is-dim .halo,.marker.is-dim .pin__label,.marker.is-dim .cluster{opacity:.35}
 /* Пока открыта карточка, остальные булавки гаснут — выбранная и так крупнее, но на плотной
    карте одного размера мало. Глубина другая, чем у «вне охвата»: два разных смысла не должны
    выглядеть одинаково */
@@ -445,18 +442,6 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .cluster__mix i{width:6px;height:6px;border-radius:50%;display:block;box-shadow:0 0 0 1.5px var(--surface)}
 /* метка метро — экранного фиксированного размера (не масштабируется с картой),
    размер подобран под то, как она выглядела бы на масштабе ~130 м, некликабельна */
-/* кружок, белая обводка и буква приходят из самого значка, поэтому ни фона, ни тени,
-   ни скругления здесь больше не нужно — только размер и цвет линии */
-.metrodot{pointer-events:none;display:block;width:24px;height:24px;transform:translate(-50%,-50%)}
-/* плашка станции на дальнем зуме: подложка в цвет линии, значок сливается с ней и держится
-   белой обводкой, число белое */
-.stationbadge{
-  pointer-events:auto;display:flex;align-items:center;gap:7px;padding:3px 13px 3px 3px;
-  border-radius:999px;color:#fff;box-shadow:var(--shadow-2);transform:translate(-50%,-50%);
-  font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;
-}
-.stationbadge svg{width:26px;height:26px;flex:none}
-.stationbadge:hover{opacity:.9}
 /* прицел выбора точки: неподвижен, карта ездит под ним. .pin внутри позиционирует себя тем же
    transform, что и обычные маркеры (тычет вниз). По вертикали прицел ставит скрипт — на телефоне
    он смещён вверх, потому что низ экрана занимает шторка */
@@ -2155,6 +2140,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.18.3";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.19.0";</script>
 </body>
 </html>

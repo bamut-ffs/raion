@@ -401,9 +401,6 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .marker:hover .pin,.pin:focus-visible{transform:translate(-50%,-100%) rotate(-45deg) scale(1.12)}
 .marker.is-sel .pin{transform:translate(-50%,-100%) rotate(-45deg) scale(1.28)}
 .marker.is-sel{z-index:5}
-/* пины вне выбранной станции приглушены: карта сшита из нескольких станций, а список —
-   про одну. Кликабельными остаются, чтобы соседний пин можно было открыть */
-.marker.is-dim .pin,.marker.is-dim .halo,.marker.is-dim .pin__label,.marker.is-dim .cluster{opacity:.35}
 /* Пока открыта карточка, остальные булавки гаснут — выбранная и так крупнее, но на плотной
    карте одного размера мало. Глубина другая, чем у «вне охвата»: два разных смысла не должны
    выглядеть одинаково */
@@ -452,18 +449,6 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .cluster__mix i{width:6px;height:6px;border-radius:50%;display:block;box-shadow:0 0 0 1.5px var(--surface)}
 /* метка метро — экранного фиксированного размера (не масштабируется с картой),
    размер подобран под то, как она выглядела бы на масштабе ~130 м, некликабельна */
-/* кружок, белая обводка и буква приходят из самого значка, поэтому ни фона, ни тени,
-   ни скругления здесь больше не нужно — только размер и цвет линии */
-.metrodot{pointer-events:none;display:block;width:24px;height:24px;transform:translate(-50%,-50%)}
-/* плашка станции на дальнем зуме: подложка в цвет линии, значок сливается с ней и держится
-   белой обводкой, число белое */
-.stationbadge{
-  pointer-events:auto;display:flex;align-items:center;gap:7px;padding:3px 13px 3px 3px;
-  border-radius:999px;color:#fff;box-shadow:var(--shadow-2);transform:translate(-50%,-50%);
-  font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;
-}
-.stationbadge svg{width:26px;height:26px;flex:none}
-.stationbadge:hover{opacity:.9}
 /* прицел выбора точки: неподвижен, карта ездит под ним. .pin внутри позиционирует себя тем же
    transform, что и обычные маркеры (тычет вниз). По вертикали прицел ставит скрипт — на телефоне
    он смещён вверх, потому что низ экрана занимает шторка */
@@ -1816,7 +1801,6 @@ svg{width:16px;height:16px}
           <button id="zoomFit" aria-label="Моё место"><svg aria-hidden="true"><use href="#i-geo"/></svg></button>
         </div>
       </div>
-      <button class="searchhere" id="searchHere" hidden>Искать здесь</button>
       <div class="pickinfo" id="pickInfo" hidden></div>
       <div class="pick-center" id="pickCenter" hidden aria-hidden="true">
         <span class="pin pin--pick"><b>?</b></span>
@@ -2436,7 +2420,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.18.3';
+var VERSION='3.19.0';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
 var UPDATED='20 сентября 2026';
@@ -2889,7 +2873,7 @@ function seedSystem(who){
   if(ap){
     db.messages.push({id:uid('msg'),thread_id:st.id,author_id:null,mine_seed:true,
       title:'Заявку приняли',
-      text:'вы в списке участников, '+district(ap.district_id).name,
+      text:'вы в списке участников, '+district(landmarkOf(ap)).name,
       act:'open-pin',obj:ap.id,label:'Открыть',created_at:t-26*HOUR});
   }
   var br=db.pins.filter(function(p){return p.author_id===who&&p.seed_tag==='byreq'})[0];
@@ -2902,18 +2886,14 @@ function seedSystem(who){
   }
   var u=user(who);
   if(u&&u.lost_alerts===false)return;
-  var mine=(u&&u.district_id)||'d_chisty';
   db.pins.filter(function(p){
     if(p.type!=='lost_found'||p.subtype!=='lost'||p.status!=='active'||p.author_id===who)return false;
-    /* задета ли ваша станция зоной поиска, а не совпадает ли она с ближайшей к пину */
-    return p.x==null
-      ? p.district_id===mine
-      : districtsInRadius(p.x,p.y,(p.area_radius||0)/METERS_PER_UNIT).indexOf(mine)>=0;
+    return lostReachesHome(p,u);
   }).slice(0,2).forEach(function(p,i){
     var au=user(p.author_id);
     db.messages.push({id:uid('msg'),thread_id:st.id,author_id:null,mine_seed:true,
       title:'Рядом пропажа',
-      text:'ищет '+(au?au.name:'сосед')+', '+district(p.district_id).name,
+      text:'ищет '+(au?au.name:'сосед')+', '+district(landmarkOf(p)).name,
       act:'open-pin',obj:p.id,label:'Посмотреть',created_at:t-(i+1)*40*MIN});
   });
   /* приветствие раньше всех: следующая добавленная запись его уже не обгонит */
@@ -2929,7 +2909,7 @@ function seedSystem(who){
 function migrateCoords(){
   var changed=false;
   db.pins.forEach(function(p){
-    if(p.world)return;
+    if(p.world||!p.district_id)return;
     var xy=seedXY(p.district_id,p.x,p.y);
     setPlaceXY(p,xy.x,xy.y);
     if(p.exact_x!=null){var e=seedXY(p.district_id,p.exact_x,p.exact_y); setExact(p,e.x,e.y)}
@@ -2951,7 +2931,9 @@ function migrateArea(){
     if(u.district_id&&!known[u.district_id]){u.district_id=home.id; moved=true}
   });
   db.pins.forEach(function(p){
-    if(known[p.district_id])return;
+    /* у событий, созданных после перехода на вычисляемый ориентир, поля нет вовсе —
+       переносить нечего, место у них своё */
+    if(!p.district_id||known[p.district_id])return;
     /* сдвиг от старого ориентира сохраняем, чтобы событие не село в ту же точку,
        что и все остальные переехавшие */
     if(p.x!=null)setPlaceXY(p,home.sx+((p.x%600)-300),home.sy+((p.y%600)-300));
@@ -3311,18 +3293,6 @@ function districtOf(x,y){
   return best;
 }
 function districtAtWorldPoint(wx,wy){return districtOf(wx,wy)}
-/* Зона поиска у пропажи — круг, и он спокойно накрывает несколько станций. Оповещение
-   должно уходить всем, кого он задел, а не одной ближайшей: станция считается от точки
-   пина, а не от того, кто ищет */
-function districtsInRadius(x,y,r){
-  var out=[];
-  DISTRICTS.forEach(function(d){
-    var dx=d.sx-x, dy=d.sy-y;
-    if(Math.sqrt(dx*dx+dy*dy)<=(r||0)+1)out.push(d.id);
-  });
-  if(!out.length)out.push(districtOf(x,y));
-  return out;
-}
 function metroRef(districtId){
   var d=district(districtId);
   return {x:d.sx,y:d.sy,name:d.name,metro:true};
@@ -3385,11 +3355,6 @@ function applyView(){
   if(pcEl&&!pcEl.hidden){pcEl.style.top=pickCenterY()+'px'; pcEl.style.left=viewCX()+'px'}
   updateDraftFromCenter();
   renderMarkers(); updateScalebar();
-  /* Карта снова участвует в охвате, но не молча. Прежняя механика переназначала охват
-     сама и дважды давала сбои: открытие второй колонки меняет «центр видимой полосы»
-     и само перебрасывало список на соседнюю станцию. Теперь движение только предлагает —
-     решение за человеком, и случайный сдвиг ничего не портит */
-  syncSearchHere();
 }
 function updateDistrictLabel(){
   var d=district(ui.districtId);
@@ -3628,7 +3593,11 @@ function glOffset(sx,sy){
 }
 function syncFromGL(){
   if(!glMap)return;
-  view.k=Math.pow(2,glMap.getZoom()-GEO_Z);
+  /* На единицу нашей сетки приходится вдвое больше пикселей, чем даёт простое сравнение
+     номеров зума: сетка считана по тайлу в 256 пикселей, движок рисует по 512. От этого
+     числа зависят круги неопределённости и круг точности геолокации — они рисовались
+     вдвое меньше, чем означали */
+  view.k=Math.pow(2,glMap.getZoom()-GEO_Z+1);
   var c=glMap.getCenter(), cw=latLonToWorld(c.lat,c.lng);
   view.tx=view.W/2-cw[0]*view.k;
   view.ty=view.Ht/2-cw[1]*view.k;
@@ -3651,11 +3620,20 @@ function workAreaGeoJSON(){
    без движка (в артефакте его блокирует CSP) приложение возвращается к нарисованной
    карте и к ним же. Подмена вместо ветвлений внутри — чтобы в каждой функции жила
    одна механика, а не две, разделённые «если» */
+/* Смещение к центру свободной полосы отдаём движку, а не пересчитываем сами. Считали мы
+   его через view.k — «сколько пикселей в единице мира», — а эта величина была вдвое меньше
+   настоящей: наша сетка построена на тайле в 256 пикселей, векторный движок работает на
+   512, и при одном и том же номере зума его мир вдвое крупнее. Смещение выходило двойным,
+   и открытая карточка ставила свой пин не в середину свободной полосы, а ровно на ширину
+   панели правее. По вертикали ошибки не было видно: там смещение нулевое, а ноль не
+   удваивается — отсюда и странность «по вертикали центр соблюдён, по горизонтали нет».
+   У движка это штатный параметр offset в экранных пикселях, и никакого пересчёта не нужно */
 function glGoto(x,y,zoom,animate,sx,sy){
-  var zz=(zoom==null?glMap.getZoom():zoom), k=Math.pow(2,zz-GEO_Z), off=glOffset(sx,sy);
-  var o={center:glCenter(x-off[0]/k, y-off[1]/k)};
-  if(zoom!=null)o.zoom=zz;
-  if(animate){o.duration=320; glMap.easeTo(o)} else { glMap.jumpTo(o); syncFromGL() }
+  var o={center:glCenter(x,y), offset:glOffset(sx,sy), duration:animate?320:0};
+  if(zoom!=null)o.zoom=zoom;
+  if(!animate)o.animate=false;
+  glMap.easeTo(o);
+  if(!animate)syncFromGL();
 }
 var GL_ZOOM=15.2;
 /* Куда зум едет сейчас. Без этого каждое следующее нажатие на «+» отсчитывало от текущего
@@ -3730,12 +3708,11 @@ function initGL(){
   glMap.on('error',function(){});
   glMap.on('move',syncFromGL);
   glMap.on('movestart',function(){peekSheet(true)});
-  glMap.on('moveend',function(){peekSheet(false); glZoomTo=null});
-  /* «Карта уехала» поднимает только протяжка. Отдаление центр не двигает: человек
-     отошёл посмотреть шире, а не выбрал другое место, и предлагать ему перенести охват
-     в этот момент — значит отвечать на вопрос, которого он не задавал */
-  glMap.on('drag',markMapMoved);
+  glMap.on('moveend',function(){peekSheet(false); glZoomTo=null; markMapMoved()});
+  /* Выдачу меняет любое движение кадра, а не только протяжка: отдаление тоже показывает
+     другое место — просто более широкое */
   glMap.on('dragend',markMapMoved);
+  glMap.on('zoomend',markMapMoved);
   /* Мышь после протяжки всегда выдаёт click, и он уходил в «тап мимо карточки»:
      шторка закрывалась посреди панорамы. Тот же приём, что был у самописной карты */
   glMap.on('dragend',function(){
@@ -3814,12 +3791,42 @@ function hiddenForMe(p){
    его собственного места решает её сам, без выбора набора, — и заодно возвращает смысл
    панорамированию: «здесь» это точка, а множество точек ничего не значит.
    Радиус меряем минутами пешком, а не километрами: приложение везде говорит минутами */
-var SCOPE_MIN=20;
-var SCOPE_STEPS=[10,20,40];
-function minutesToUnits(min){return (min*WALK_MPM/WALK_DETOUR)/METERS_PER_UNIT}
-function unitsToMinutes(u){return Math.round(u*METERS_PER_UNIT*WALK_DETOUR/WALK_MPM)}
-function scopeUnits(){return ui.scope?ui.scope.r:minutesToUnits(SCOPE_MIN)}
-function isCity(){return !ui.scope}
+/* Охват — то, что сейчас в кадре карты. Прежняя модель требовала выбрать место до того,
+   как посмотреть: сначала ориентир из списка, потом радиус. В настоящем городе список
+   ориентиров бесконечен, и выбор из него стоил дороже самого просмотра. Кадр снимает выбор
+   целиком: подвинул карту — увидел, что здесь; приблизил — сузил. Ни одного нажатия, и
+   правило одинаково работает в Москве, в райцентре и в деревне.
+   Отдельной кнопки «искать здесь» больше нет: список идёт за картой сам, и спрашивать
+   разрешения не на что */
+function viewRect(){return {l:mapInsetLeft(), t:0, r:view.W, b:view.Ht}}
+function inView(x,y){
+  if(x==null)return false;
+  var s=toScreen(x,y), q=viewRect();
+  return s[0]>=q.l&&s[0]<=q.r&&s[1]>=q.t&&s[1]<=q.b;
+}
+/* Центр кадра — не центр экрана: на десктопе левую часть карты закрывает панель */
+function viewCenterPoint(){var q=viewRect(); return toWorld((q.l+q.r)/2,(q.t+q.b)/2)}
+/* Радиус остался, но стал необязательным фильтром и меряется от человека, а не от кадра.
+   Это разные вопросы: кадр отвечает «где я смотрю», радиус — «не дальше чем». Мерили бы
+   оба от карты — вышло бы два ответа на один вопрос, и они бы разошлись.
+   Без геолокации точка отсчёта — дом; нет и его — фильтр недоступен */
+var RADIUS_STEPS=[500,1000,2000];
+function radiusRef(){
+  if(geoOn())return meRef();
+  /* Без геолокации считаем от дома. Дом известен всегда: человек назвал свой район при
+     регистрации, и даже без точной точки у района есть центр. Поэтому фильтр не пропадает
+     с экрана — пропадала бы только внятность, если бы мы молчали, от чего меряем */
+  var hp=homePoint();
+  return (hp&&hp.x!=null)?hp:null;
+}
+function radiusFromText(){return geoOn()?'Не дальше от вас':'Не дальше от дома'}
+function radiusOK(p){
+  if(!ui.radius)return true;
+  var r=radiusRef();
+  if(!r)return true;
+  if(p.x==null)return false;
+  return Math.sqrt(Math.pow(p.x-r.x,2)+Math.pow(p.y-r.y,2))<=ui.radius/METERS_PER_UNIT;
+}
 /* Число рядом с ориентиром обещает «столько будет, если выбрать его», поэтому считается
    тем же радиусом, что стоит сейчас. Раньше здесь была константа в двадцать минут: человек
    ставил десять, а строка продолжала показывать двадцатиминутное число и обманывала */
@@ -3831,15 +3838,24 @@ function isCity(){return !ui.scope}
    Теперь сумма по плашкам равна числу событий, и приблизившись к ориентиру человек находит
    ровно то, что плашка обещала */
 function nearStation(p,id){
-  if(p.x==null)return p.district_id===id;
+  if(p.x==null)return landmarkOf(p)===id;
   return nearestStation(p.x,p.y)===id;
 }
+/* Ориентир события не хранится, а считается от его точки. Хранился он с тех пор, когда
+   город был выдуманным: поле в базе говорило то же, что и координаты, — две правды об
+   одном факте, и при переносе события они расходились. Теперь правда одна — место,
+   а ориентир у него всегда ближайший. Поле осталось только у события без точки: там
+   координат нет вовсе, и назвать место больше нечем */
+function landmarkOf(p){
+  if(p&&p.x!=null)return districtOf(p.x,p.y);
+  return (p&&p.district_id)||ui.districtId;
+}
 function inScope(p){
-  if(isCity())return true;
-  /* пин без своей точки относится к ориентиру, поэтому сравниваем по нему */
-  if(p.x==null)return ui.scope.st?p.district_id===ui.scope.st:false;
-  var dx=p.x-ui.scope.cx, dy=p.y-ui.scope.cy;
-  return Math.sqrt(dx*dx+dy*dy)<=ui.scope.r;
+  if(!radiusOK(p))return false;
+  /* пин без точки на карте не стоит и в кадр попасть не может сам: показываем его,
+     пока в кадре его ориентир — иначе пропажа «не знаю где» пропала бы отовсюду */
+  if(p.x==null){var d=district(landmarkOf(p)); return inView(d.sx,d.sy)}
+  return inView(p.x,p.y);
 }
 /* ближайший ориентир к точке — им подписывается охват, выбранный движением карты */
 function nearestStation(x,y){
@@ -3850,34 +3866,29 @@ function nearestStation(x,y){
   }
   return best;
 }
-function primaryStation(){return (ui.scope&&ui.scope.st)||ui.districtId}
-/* Якорь — точка, от которой считается «карта уехала». Он совпадает с центром охвата,
-   а в режиме всего города — с тем местом, где человек оказался, когда город включил */
-function setScopeAt(x,y,r,st){
-  ui.scope={cx:x,cy:y,r:r||scopeUnits(),st:st===undefined?nearestStation(x,y):st};
-  if(ui.scope.st)ui.districtId=ui.scope.st;
-  ui.anchor={x:x,y:y};
-  ui.mapMoved=false;
+/* Ориентир, которым подписан кадр, — ближайший к его центру */
+function primaryStation(){var c=viewCenterPoint(); return nearestStation(c[0],c[1])}
+function viewCenterWorld(){return viewCenterPoint()}
+/* Список идёт за картой, поэтому её движение — это смена выдачи, а не повод спросить.
+   Перерисовываем список по остановке жеста, а не каждый кадр: строк бывает сотня,
+   и перекладывать их посреди панорамы значит отдать плавность движения ни за что.
+   Отпечаток кадра сравниваем перед перерисовкой: перерисовка панели сама меняет ширину
+   видимой полосы карты, движок отвечает событием движения, и без этой проверки они
+   принялись бы будить друг друга по кругу */
+var viewSettle=null, viewSig='';
+function viewSignature(){
+  var q=viewRect(), a=toWorld(q.l,q.t), b=toWorld(q.r,q.b);
+  return Math.round(a[0])+','+Math.round(a[1])+','+Math.round(b[0])+','+Math.round(b[1]);
 }
-/* центр видимой полосы карты: на десктопе часть её закрыта панелью, и середина экрана
-   не равна середине карты */
-function viewCenterWorld(){return toWorld(viewCX(),view.Ht/2)}
-function movedFromAnchor(){
-  if(!ui.anchor)return false;
-  var c=viewCenterWorld(), dx=c[0]-ui.anchor.x, dy=c[1]-ui.anchor.y;
-  return Math.sqrt(dx*dx+dy*dy)>scopeUnits()*0.45;
-}
-/* «Карта уехала» считается только по жесту, а не по положению камеры. Разница в том,
-   что камера уезжает и сама: панель или карточка открывается слева, видимая полоса карты
-   сужается, её середина переползает — и предложение «искать здесь» всплывало само,
-   уже на первом экране, хотя человек ничего не трогал. Теперь его поднимает рука */
 function markMapMoved(){
-  ui.mapMoved=movedFromAnchor();
-  syncSearchHere();
-}
-function syncSearchHere(){
-  var sh=$('#searchHere');
-  if(sh)sh.hidden=!(ui.mapMoved&&!ui.picking&&!ui.draft);
+  if(viewSettle)clearTimeout(viewSettle);
+  viewSettle=setTimeout(function(){
+    viewSettle=null;
+    var sig=viewSignature();
+    if(sig===viewSig)return;
+    viewSig=sig;
+    renderPanelOnly();
+  },140);
 }
 /* Точка «дома»: примерное место жительства, намеренно не адрес. Вместе с точкой храним
    и ориентир — иначе возврат домой подписывался тем ориентиром, который человек выбрал
@@ -3894,16 +3905,13 @@ function homePoint(){
   var d=district((m&&m.district_id)||'d_chisty');
   return {x:d.sx,y:d.sy,st:(m&&m.district_id)||'d_chisty'};
 }
-function setScopeStation(id){
-  var d=district(id);
-  setScopeAt(d.sx,d.sy,scopeUnits(),id);
+/* Выбор ориентира из списка больше ничего не «выбирает»: он переносит туда карту,
+   а список сам догоняет её. Одно действие вместо двух — и то же самое делает рука,
+   когда человек просто тащит карту пальцем */
+function goToStation(id){
+  ui.districtId=id;
+  flyToStation(id);
 }
-function setCityScope(){ui.scope=null; ui.anchor=null; ui.mapMoved=false}
-function setScopeMinutes(min){
-  if(!ui.scope)return;
-  ui.scope.r=minutesToUnits(min);
-}
-function scopeMinutes(){return unitsToMinutes(scopeUnits())}
 /* счётчик у станции считает по тому же радиусу, что и охват, поэтому один пин может
    считаться у двух соседних станций и сумма по станциям больше общегородской */
 function pinsOfDistrict(id,opts){
@@ -3913,15 +3921,63 @@ function pinsOfDistrict(id,opts){
     if(!opts.any&&p.status!=='active')return false;
     if(hiddenForMe(p))return false;
     if(opts.filtered&&!ui.filters[p.type])return false;
+    /* число у ориентира считается по тем же правилам, по которым живёт список: включённый
+       фильтр расстояния должен убавлять и его, иначе строка обещает пять, а показывает ноль */
+    if(opts.filtered&&!radiusOK(p))return false;
     return true;
   });
 }
 function pinGlyph(p){return ptype(p).glyph}
 
-/* мировые координаты станций метро текущего вида — метки рисуются маркерами (экранный
-   фиксированный размер), а не частью масштабируемого SVG-мира */
-function metroPoints(){
-  return DISTRICTS.map(function(d){return {id:d.id,wx:d.sx,wy:d.sy,lineColor:d.lineColor}});
+/* Подписи расставляются по столкновениям, как на любой карте: подпись рисуется, если её
+   прямоугольник не задел уже нарисованные, иначе молчит и ждёт приближения. Порог зума,
+   стоявший здесь раньше, решал ту же задачу грубее — на плотном месте все подписи
+   появлялись разом и ложились друг на друга.
+   Порядок обхода и есть приоритет, и берём мы его у сортировки списка: стоит «рядом» —
+   подписаны ближайшие, «скоро» — ближайшие по времени, «новые» — свежие. Тогда карта
+   и список говорят одно и то же, и подписаны ровно те события, что сейчас наверху списка.
+   Второй строки у подписи нет: у трёх видов событий она была бы разной, и ряд подписей
+   перестал бы читаться как ряд. К тому же вторая строка вдвое увеличивает прямоугольник,
+   а чем он больше, тем меньше подписей помещается — мы платили бы местом соседей */
+var labelPrev={};
+function placeLabels(singles,out){
+  if(!singles.length){labelPrev={}; return}
+  var q=viewRect();
+  /* Раз показанная подпись идёт в очереди первой. Без этого порядок пересчитывался заново
+     на каждом кадре, соседи менялись местами у самой границы, и подписи мигали */
+  var rank={};
+  singles.forEach(function(e){rank[e.p.id]=labelSortKey(e.p)});
+  var order=singles.slice().sort(function(a,b){
+    if(a.sel!==b.sel)return a.sel?-1:1;
+    var pa=labelPrev[a.p.id]?0:1, pb=labelPrev[b.p.id]?0:1;
+    if(pa!==pb)return pa-pb;
+    return rank[a.p.id]-rank[b.p.id];
+  });
+  /* места самих булавок заняты заранее: подпись не должна лечь на соседнюю метку */
+  var boxes=singles.map(function(e){
+    return {l:e.s[0]-17,t:e.s[1]-19,r:e.s[0]+17,b:e.s[1]+17};
+  });
+  var shown={};
+  order.forEach(function(e){
+    var w=Math.min(168,Math.max(44,e.p.title.length*6.4+12)), h=18, top=e.s[1]+20;
+    var box={l:e.s[0]-w/2,t:top,r:e.s[0]+w/2,b:top+h};
+    /* обрезанная краем подпись читается как чужая — за кадр не выпускаем */
+    if(box.l<q.l+2||box.r>q.r-2||box.b>q.b-2)return;
+    for(var i=0;i<boxes.length;i++){
+      var o=boxes[i];
+      if(box.l<o.r&&box.r>o.l&&box.t<o.b&&box.b>o.t)return;
+    }
+    boxes.push(box); shown[e.p.id]=1;
+    /* подпись вставляется перед закрывающим тегом метки, которую мы сами и собрали */
+    out[e.idx]=out[e.idx].slice(0,-6)+'<span class="pin__label">'+H(e.p.title)+'</span></div>';
+  });
+  labelPrev=shown;
+}
+/* тот же ключ, которым отсортирован список: одно значение — один порядок */
+function labelSortKey(p){
+  if(ui.feedSort==='near'){var u=pinDistUnits(p); return u==null?1e12:u}
+  if(ui.feedSort==='soon')return soonKey(p)*1e12+(isAct(p)?p.starts_at:-p.created_at);
+  return -p.created_at;
 }
 function renderMarkers(){
   /* Режим прицела выводится, а не хранится, и до сих пор пересчитывался в renderPanel —
@@ -3931,13 +3987,16 @@ function renderMarkers(){
      всегда говорят об одном */
   syncPicking();
   var list=[];
-  /* На дальнем зуме отдельные пины сливаются и попасть в нужный невозможно — вместо них
-     показываем по одной плашке на станцию со счётчиком. Порог совпадает с приближением,
-     на которое карта встаёт при выборе станции: выбрали станцию — сразу видите её пины */
-  var far=view.k<view.kFit*2;
-  /* город один, поэтому на карте разом видны пины всех станций; чужие приглушаются ниже */
-  if(!far)db.pins.forEach(function(p){
+  /* Плашек со счётчиками у ориентиров больше нет, и события показываются на любом
+     приближении. Плашки решали задачу «на дальнем зуме в пин не попасть», но ценой того,
+     что событий на карте не было видно вовсе: человек отдалялся и оставался с числом 22
+     вместо двадцати двух пинов. С этой задачей справляются кластеры — у них то же число,
+     но оно стоит там, где события, и распадается приближением.
+     Заодно ушёл сам список ориентиров как способ выбирать место: место выбирает карта */
+  db.pins.forEach(function(p){
     if(p.status!=='active'||hiddenForMe(p)||!ui.filters[p.type])return;
+    /* карта и список показывают одно и то же: фильтр расстояния действует и здесь */
+    if(!radiusOK(p))return;
     /* находка без указанного места на карте не живёт: она есть в списках и в оповещении */
     if(p.x==null)return;
     list.push({p:p,wx:p.x,wy:p.y});
@@ -3952,7 +4011,7 @@ function renderMarkers(){
      других в соседних — отсюда мигание. Расстояние монотонно по зуму: приближаясь, пины
      только расходятся, поэтому кластер может распасться, но не собраться обратно.
      От сдвига карты оно не зависит вовсе. Пинов на экране десятки, квадрат по ним дёшев */
-  var CL=70, out=[], halos=[], groups=[], taken={};
+  var CL=70, out=[], halos=[], groups=[], taken={}, singles=[];
   var pts=list.map(function(item){return {p:item.p,s:toScreen(item.wx,item.wy)}});
   pts.forEach(function(a,i){
     if(taken[i])return;
@@ -3974,8 +4033,9 @@ function renderMarkers(){
     if(arr.length===1){
       var p=arr[0].p, s=arr[0].s, mine=p.author_id===db.currentUserId;
       var sel=ui.panel&&ui.panel.type==='pin'&&ui.panel.id===p.id;
-      var dim=!inScope(p);
-      var html='<div class="marker'+(sel?' is-sel':'')+(dim?' is-dim':'')+'" style="transform:translate('+s[0].toFixed(1)+'px,'+s[1].toFixed(1)+'px)">';
+      /* Приглушённых меток больше нет: приглушение означало «этот пин не в выбранном
+         охвате», а охват теперь и есть кадр — всё, что видно, в нём по определению */
+      var html='<div class="marker'+(sel?' is-sel':'')+'" style="transform:translate('+s[0].toFixed(1)+'px,'+s[1].toFixed(1)+'px)">';
       /* Круг неопределённости показываем только у открытой карточки: на общей карте он
          отвечает на вопрос, которого там не задают, а соседние пины красит. Рисуется своим
          слоем ниже — иначе даже единственный круг закрыл бы пины вокруг */
@@ -3986,17 +4046,15 @@ function renderMarkers(){
           '<span class="halo'+(isLF(p)?' halo--find':'')+'" style="width:'+(rad*2).toFixed(0)+'px;height:'+(rad*2).toFixed(0)+'px"></span></div>');
       }
       html+='<button class="pin pin--'+ptype(p).cls+(mine?' pin--mine':'')+'" data-pin="'+p.id+'" title="'+H(p.title)+'" aria-label="'+H(p.title)+'">'+icon(pinGlyph(p))+'</button>';
-      if(sel||view.k>view.kFit*2.2)html+='<span class="pin__label">'+H(p.title)+'</span>';
       html+='</div>';
+      singles.push({p:p,s:s,sel:sel,idx:out.length});
       out.push(html);
     }else{
-      var sx=0,sy=0,hasA=false,hasO=false,mine=false;
-      /* смешанный кластер у шва не гасим: он наполовину «свой» */
-      arr.forEach(function(o){sx+=o.s[0];sy+=o.s[1];if(o.p.type==='activity')hasA=true;else hasO=true;
-        if(inScope(o.p))mine=true});
+      var sx=0,sy=0,hasA=false,hasO=false;
+      arr.forEach(function(o){sx+=o.s[0];sy+=o.s[1];if(o.p.type==='activity')hasA=true;else hasO=true});
       sx/=arr.length; sy/=arr.length;
       var mix='<span class="cluster__mix">'+(hasA?'<i style="background:var(--act)"></i>':'')+(hasO?'<i style="background:var(--offer)"></i>':'')+'</span>';
-      out.push('<div class="marker'+(mine?'':' is-dim')+'" style="transform:translate('+sx.toFixed(1)+'px,'+sy.toFixed(1)+'px)">'+
+      out.push('<div class="marker" style="transform:translate('+sx.toFixed(1)+'px,'+sy.toFixed(1)+'px)">'+
         '<button class="cluster" data-cluster="'+sx.toFixed(0)+','+sy.toFixed(0)+
           '" data-cluster-ids="'+arr.map(function(o){return o.p.id}).join(',')+
           '" aria-label="'+arr.length+' событий рядом, приблизить">'+
@@ -4026,17 +4084,7 @@ function renderMarkers(){
         : '<span class="pin pin--pick"><b>?</b></span>')+
       '<span class="pin__label">Ваша точка</span></div>');
   }
-  metroPoints().forEach(function(mp){
-    var s=toScreen(mp.wx,mp.wy);
-    if(s[0]<-30||s[1]<-30||s[0]>view.W+30||s[1]>view.Ht+30)return;
-    var n=far?pinsOfDistrict(mp.id,{filtered:true}).length:0;
-    out.push('<div class="marker" style="transform:translate('+s[0].toFixed(1)+'px,'+s[1].toFixed(1)+'px)">'+
-      (n
-        ? '<button class="stationbadge" data-station="'+mp.id+'" style="background:'+mp.lineColor+'" aria-label="'+H(district(mp.id).name)+', '+n+'">'+
-          '<svg aria-hidden="true" style="color:'+mp.lineColor+'"><use href="#i-metro"/></svg><b>'+n+'</b></button>'
-        : '<svg class="metrodot" aria-hidden="true" style="color:'+(mp.lineColor||'var(--ink)')+'"><use href="#i-metro"/></svg>')+
-      '</div>');
-  });
+  placeLabels(singles,out);
   /* Где вы. Круг показывает заявленную браузером точность как есть: во дворе и в подвале
      она бывает в сотни метров, и честный круг говорит об этом лучше, чем уверенная точка
      не в том месте. Точка рисуется последней — она поверх событий, а не под ними */
@@ -4090,7 +4138,11 @@ var ui={
      у района быть не может */
 
   /* первая станция набора: по ней центрируется карта и к ней относят пин без своей точки */
-  districtId:'d_chisty', feedSort:'time', draft:null, picking:false,
+  /* Сортировка по умолчанию зависит от того, есть ли точка отсчёта: с геолокацией «рядом»
+     отвечает на вопрос, который человек и задаёт, без неё расстояние считать не от чего
+     и честнее показать свежее. Как только человек выбрал сам — решает он, и умолчание
+     больше не вмешивается */
+  districtId:'d_chisty', feedSort:'time', sortTouched:false, radius:null, draft:null, picking:false,
   /* роль внутри экрана своих событий, порядок и собственный фильтр типов */
   mineTab:'own', mineSort:null, mineCats:null, mineQuery:'', userTab:'active', typing:false, panelCollapsed:false, searchQuery:'',
   /* вкладка сообщений живёт только в памяти сеанса: вернувшись, человек всегда видит «Все»,
@@ -4407,13 +4459,18 @@ function renderShell(){
 
 function render(){
   sweep();
+  syncDefaultSort();
   renderShell();
   renderMarkers();
   renderPanel();
-  /* Предложение «искать здесь» снимается не только движением карты, но и любым действием,
-     которое переставило охват: нажали её саму, выбрали ориентир, вернулись к своему месту.
-     applyView сюда не попадает — камера при этом не трогается, — поэтому спрашиваем прямо */
-  syncSearchHere();
+}
+/* Движение карты меняет выдачу, но не состояние приложения: метки уже перерисованы
+   каждым кадром, обновить надо список и число над ним. Метки здесь не трогаем — иначе
+   после каждого жеста слой мигал бы вторым перерисовыванием поверх первого */
+function renderPanelOnly(){
+  if(ui.typing)return;
+  renderShell();
+  renderPanel();
 }
 
 /* ============ 7.5 точка отсчёта расстояния ============ */
@@ -4422,6 +4479,13 @@ function hashStr(s){var h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>
    независимо от того, где вы сейчас и какой охват выбран, и одинаково работает в районном
    списке и в общегородском — общей точки отсчёта для города не существует */
 function geoOn(){var m=me();return !!(m&&m.geo&&geoFix)}
+/* Умолчание применяется при каждой смене доступа к месту, а не один раз на старте:
+   геолокацию включают и выключают посреди работы, и список должен отвечать на тот вопрос,
+   на который в этот момент есть чем ответить */
+function syncDefaultSort(){
+  if(ui.sortTouched)return;
+  ui.feedSort=geoOn()?'near':'time';
+}
 /* Последнее известное место: широта, долгота и заявленная точность в метрах. Живёт в памяти
    сеанса, а не в базе — координаты человека это не то, что стоит хранить дольше, чем нужно
    для показа. Обновляется слежением, пока тумблер включён */
@@ -4461,29 +4525,29 @@ function geoStop(){
 }
 function pinDistUnits(p){
   if(!p||p.x==null)return null;
-  var r=geoOn()?meRef():metroRef(p.district_id);
+  var r=geoOn()?meRef():metroRef(landmarkOf(p));
   return Math.sqrt(Math.pow(p.x-r.x,2)+Math.pow(p.y-r.y,2));
 }
-/* Точка отсчёта подписывается всегда. Без подписи «7 минут пешком» читается как «от меня» —
-   это единственная интерпретация, которая приходит человеку в голову, и она была бы ложной */
+/* Точка отсчёта подписывается всегда. Без подписи «350 м» читается как «от меня» —
+   это единственная интерпретация, которая приходит человеку в голову, и она была бы ложной.
+   Значка пешехода здесь больше нет: он обещал, что идти придётся пешком */
 function distChipHTML(p,u,showStation){
   if(u==null)return '';
-  var pd=district(p.district_id);
-  var dot='';
-  if(geoOn())return icon('walk')+H(walkText(p,u))+' от вас';
+  if(geoOn())return H(pinDistText(p,u))+' от вас';
   /* стрелка вместо предлога: она короче слова «до» и прямо говорит, что число — путь
-     к названной станции, а не расстояние от читателя */
-  return icon('walk')+H(walkText(p,u))+(showStation?' → '+stationTag(p.district_id):'');
+     к названному ориентиру, а не расстояние от читателя */
+  return H(pinDistText(p,u))+(showStation?' → '+stationTag(landmarkOf(p)):'');
 }
-/* Время пешком информативнее метров: человек планирует минутами. Прямую линию умножаем на
-   коэффициент обхода — ходят по улицам, а не насквозь, — и делим на скорость шага */
-var WALK_DETOUR=1.3, WALK_MPM=83;
-function walkMin(m){return Math.max(1,Math.round(m*WALK_DETOUR/WALK_MPM))}
-var NICE_MIN=[1,2,3,5,7,10,15,20,30,45,60];
-function niceUpMin(m){
-  for(var i=0;i<NICE_MIN.length;i++)if(m<=NICE_MIN[i])return NICE_MIN[i]+' мин';
-  return 'больше часа';
-}
+/* Расстояние вместо времени. Минуты приложение считало само: прямую линию умножало на
+   коэффициент петляния и делило на скорость шага — три допущения, из которых человеку
+   не видно ни одного, и проверить число нечем. Метры проверяются глазом по самой карте.
+   Главное же: время привязано к способу передвижения, а расстояние нет. Две станции метро
+   это не «сорок минут», это три километра, и человек сам решает, идти ему или ехать.
+   Называя минуты, мы молча решали за него, что он идёт пешком, — а в городе, где до парка
+   десять минут на автобусе, это враньё.
+   Метровый набор — distText, niceUp, approxDistText — был в приложении с самого начала
+   и работал в форме создания: одно и то же расстояние называлось метрами на одном экране
+   и минутами на другом. Теперь оно называется одинаково везде */
 /* пин без точки не участвует в сортировке по близости — уводим его в конец списка,
    иначе он оказался бы первым как «нулевое расстояние» */
 function distKey(p){return p._d==null?Infinity:p._d}
@@ -4500,11 +4564,6 @@ function bySoon(a,b){
   if(ka===1)return b.starts_at-a.starts_at;
   return b.created_at-a.created_at;
 }
-function walkText(p,u){
-  var m=u*METERS_PER_UNIT;
-  return (p&&p.type==='need_offer')?'<'+niceUpMin(walkMin(m+FUZZ_M)):'~'+walkMin(m)+' мин';
-}
-
 /* ============ 8. лента ============ */
 function feedList(){
   var list=db.pins.filter(function(p){
@@ -4559,16 +4618,15 @@ function pinOpen(id){
 }
 function feedCard(p,withDist){
   var act=p.type==='activity';
-  var pd=district(p.district_id);
 
-  /* при выбранной станции значок и название метро в каждой карточке повторяли бы шапку
-     списка — оставляем их только в общегородском охвате, где станция у каждого пина своя */
-  var showStation=(isCity()||!ui.scope.st);
+  /* Ориентир стоит в каждой карточке: выбранного больше нет, и повторять нечего.
+     Зато в кадре их всегда несколько, и «где это» — настоящий вопрос */
+  var showStation=true;
   var closed=(p.status!=='active');
   /* В архиве расстояние молчит: идти уже некуда. Станция остаётся — где это было,
      факт осмысленный */
   var distPart=(withDist&&!closed&&p._d!=null)?distChipHTML(p,p._d,false):'';
-  var stPart=(showStation&&!geoOn())?stationTag(p.district_id):'';
+  var stPart=(showStation&&!geoOn())?stationTag(landmarkOf(p)):'';
   /* «Участники 8/10» — одна форма на все места. Точка здесь не нужна: рядом с дробью
      два разделителя подряд, и непонятно, какой главный. В остальных местах («Откликнулись · 2»)
      она остаётся — там после неё голое число, и точка спасает от склонения
@@ -4626,25 +4684,11 @@ function feedCard(p,withDist){
   '</button>';
 }
 /* Домашний экран: одна поверхность вместо трёх — списка района в панели, «Ленты» на телефоне
-   и отдельного поиска. Строка поиска закреплена сверху, охват переключается между районом
-   и городом. Расстояние и сортировка по близости есть только в районном охвате: у общего
-   городского списка нет точки, от которой их честно считать. */
+   и отдельного поиска. Строка поиска закреплена сверху, а что в списке — решает карта:
+   в нём ровно то, что сейчас в её кадре */
 function homeList(){
   var q=(ui.searchQuery||'').trim().toLowerCase();
-  var list;
-  if(isCity()){
-    list=db.pins.filter(function(p){return p.status==='active'&&!hiddenForMe(p)&&ui.filters[p.type]});
-    /* расстояние считается от пина до его собственной станции, поэтому оно осмысленно
-       и в городском списке — там просто у каждого пина станция своя */
-    list.forEach(function(p){p._d=pinDistUnits(p)});
-    if(ui.feedSort==='near')list.sort(function(a,b){return distKey(a)-distKey(b)});
-    /* «скоро начнётся»: встречи по дате старта, остальное под ними по свежести —
-       у вещи старта нет, и притворяться, что есть, нечестно */
-    else if(ui.feedSort==='soon')list.sort(bySoon);
-    else list.sort(function(a,b){return b.created_at-a.created_at});
-  }else{
-    list=feedList();
-  }
+  var list=feedList();
   if(q)list=list.filter(function(p){
     return p.title.toLowerCase().indexOf(q)>=0||p.description.toLowerCase().indexOf(q)>=0;
   });
@@ -4681,10 +4725,22 @@ function viewArchive(){
         '<p>Сюда попадают закрытые события: встречи, которые прошли, и вещи, которые нашли хозяев</p></div>');
   /* станция в подзаголовке идёт с кружком линии — так же, как в чипах карточек
      и на кнопке охвата; у «Весь город» и у набора станций кружка нет, там линия не одна */
-  return {title:'Архив района',sub:scopeName(),subHTML:scopeSubHTML(),back:true,body:body};
+  return {title:'Архив',sub:scopeName(),subHTML:scopeSubHTML(),back:true,body:body};
+}
+/* Ближайшее к кадру событие из тех, что в кадр не попали. Пустой кадр иначе не отличить
+   от пустого района: человек не знает, здесь тихо или он смотрит не туда, и возит карту
+   вслепую. Расстояние меряем от центра кадра — от того места, куда он смотрит */
+function nearestOutside(){
+  var c=viewCenterPoint(), best=null, bd=Infinity;
+  db.pins.forEach(function(p){
+    if(p.status!=='active'||hiddenForMe(p)||!ui.filters[p.type]||p.x==null)return;
+    var d=Math.sqrt(Math.pow(p.x-c[0],2)+Math.pow(p.y-c[1],2));
+    if(d<bd){bd=d;best=p}
+  });
+  return best?{p:best,u:bd}:null;
 }
 function homeResultsHTML(){
-  var inDistrict=!isCity(), q=(ui.searchQuery||'').trim();
+  var q=(ui.searchQuery||'').trim();
   var list=homeList();
   /* счётчик и есть кнопка выбора станции: охват, станция и число пинов — один ответ на один
      вопрос «что я сейчас смотрю». Поэтому отдельная кнопка района над картой и переключатель
@@ -4707,16 +4763,7 @@ function homeResultsHTML(){
     body='<div class="feedlist">'+
       list.map(function(p){return feedCard(p,true)}).join('')+'</div>';
   }else{
-    /* тупика быть не должно: если в районе пусто, а по городу есть — сразу предлагаем расширить охват */
-    var cityN=0;
-    if(inDistrict&&q){
-      var ql=q.toLowerCase();
-      cityN=db.pins.filter(function(p){
-        return p.status==='active'&&!hiddenForMe(p)&&ui.filters[p.type]&&
-          (p.title.toLowerCase().indexOf(ql)>=0||p.description.toLowerCase().indexOf(ql)>=0);
-      }).length;
-    }
-    /* снятые все категории — не пустота района, а ваш собственный выбор, и говорить
+    /* снятые все категории — не пустота места, а ваш собственный выбор, и говорить
        о нём надо иначе: пустой список тут ничего не сообщает, кроме того, что человек
        сам себе всё выключил */
     if(!anyCat()){
@@ -4725,13 +4772,27 @@ function homeResultsHTML(){
         '<p>Сняты все категории событий — карта и список пусты, пока не выбрана хотя бы одна</p>'+
         '<button class="btn btn--brand btn--sm" data-act="cats-all">Показать все</button>'+
       '</div>';
+    }else if(ui.radius){
+      /* пусто из-за расстояния — это не пустота места, а ваша же настройка,
+         и снять её должно быть проще, чем догадаться, что виновата она */
+      body='<div class="empty">'+icon('filter')+
+        '<b>Ничего не нашлось ближе '+H(niceUp(ui.radius))+'</b>'+
+        '<p>'+(geoOn()?'Считаем от вашего места':'Считаем от вашего дома')+
+          ' — снимите ограничение по расстоянию или подвиньте карту</p>'+
+        '<button class="btn btn--brand btn--sm" data-radius="0">Показать на любом расстоянии</button>'+
+      '</div>';
     }else{
+    /* Тупика быть не должно: если в кадре пусто, говорим, где ближайшее, и отвозим туда.
+       Это и есть ответ на вопрос «насколько далеко ближайшее» — тот самый, ради которого
+       человек иначе возит карту наугад */
+    var no=q?null:nearestOutside();
     body='<div class="empty">'+icon(q?'search':'list')+
-      '<b>'+(q?'Ничего не нашлось':'Здесь пока пусто')+'</b>'+
+      '<b>'+(q?'Ничего не нашлось':'В этом месте пусто')+'</b>'+
       '<p>'+(q?'Попробуйте другое слово или проверьте фильтры категорий'
-              :(chronicleText()||'Нет активных событий с выбранными фильтрами'))+'</p>'+
-      (cityN?'<button class="btn btn--line btn--sm" data-scope="city">Найти по городу · '+cityN+'</button>'
-            :(q?'':'<button class="btn btn--primary btn--sm" data-nav="create">'+icon('plus')+'Создать событие</button>'))+
+              :(no?'Ближайшее событие — '+H(distText(no.u))+' отсюда'
+                  :(chronicleText()||'Нет активных событий с выбранными фильтрами')))+'</p>'+
+      (no?'<button class="btn btn--line btn--sm" data-goto-pin="'+H(no.p.id)+'">Показать ближайшее</button>'
+         :(q?'':'<button class="btn btn--primary btn--sm" data-nav="create">'+icon('plus')+'Создать событие</button>'))+
     '</div>';
     }
   }
@@ -5137,11 +5198,11 @@ function renderPanel(){
      внутри неё, скрылось бы вместе с ней. Наружу торчит он, а не обложка — название и
      станция это ровно то, по чему пин узнают, не раскрывая */
   if(pinSheet){
-    var pp=pin(main.id), ppd=pp&&district(pp.district_id);
+    var pp=pin(main.id);
     if(pp)head='<div class="pinpeek"><span class="sheet-grip" data-grip="1" aria-hidden="true"></span>'+
       '<button class="pinpeek__b" data-act="pin-expand">'+
         '<span class="pinpeek__t"><span class="pinpeek__n">'+H(pp.title)+'</span>'+
-        '<span class="pinpeek__s">'+stationTag(pp.district_id)+'</span></span>'+icon('chev-up')+'</button></div>'+head;
+        '<span class="pinpeek__s">'+stationTag(landmarkOf(pp))+'</span></span>'+icon('chev-up')+'</button></div>'+head;
   }
   el.innerHTML=head+
     (v.top?'<div class="panel__top'+(v.topFlush?' panel__top--flush':'')+'">'+v.top+'</div>':'')+
@@ -5182,7 +5243,6 @@ function viewPin(id){
   if(!p)return {title:'Событие не найдено',body:'<div class="empty">'+icon('pin')+'<b>Событие удалено</b></div>'};
   var au=user(p.author_id), act=p.type==='activity', mine=p.author_id===db.currentUserId;
   var rs=responsesOf(p.id), mr=myResponse(p.id);
-  var pd=district(p.district_id);
   var dist=pinDistUnits(p);
 
   /* Своей кнопки «назад» у обложки больше нет: она появилась в девятой волне, когда у панели
@@ -5197,7 +5257,7 @@ function viewPin(id){
     (photoOf(p)?'<img src="'+photoOf(p)+'" alt="">':'<span class="cover__glyph">'+icon(pinGlyph(p))+'</span>')+
   '</div>';
 
-  var metroDot=stationTag(p.district_id);
+  var metroDot=stationTag(landmarkOf(p));
   /* В архиве расстояние молчит — идти некуда; станция остаётся */
   var geoChip=closed?metroDot:(dist==null?metroDot:distChipHTML(p,dist,true));
   /* Тип и подтип — один чип. Тип называется парой («Услуги и вещи», «Находки и пропажи»),
@@ -5696,16 +5756,16 @@ function viewCreate(){
     var curSt=d.district_id||ui.districtId;
     var pq=(d.stQ||'').trim().toLowerCase();
     body+='<div class="pad stack">'+
-      '<div class="field"><label>Станция</label>'+
+      '<div class="field"><label>Ориентир</label>'+
         '<div class="searchfield">'+
           (d.stOpen?icon('search','searchfield__ic')
                    :'<i class="searchfield__dot" style="background:'+district(curSt).lineColor+'"></i>')+
-          '<input class="input" id="placeStInput" data-place-open="1" autocomplete="off" placeholder="Найти станцию" value="'+
+          '<input class="input" id="placeStInput" data-place-open="1" autocomplete="off" placeholder="Найти ориентир" value="'+
             H(d.stOpen?(d.stQ||''):district(curSt).name)+'">'+
         '</div>'+
         '<span class="hint">'+(d.outArea
           ? 'Событие можно создать только внутри рабочей области — она обведена на карте пунктиром'
-          : 'Подведите карту под прицел или выберите станцию')+'</span>'+
+          : 'Подведите карту под прицел или выберите ориентир')+'</span>'+
       '</div></div>';
     if(d.stOpen){
       var plist=DISTRICTS.filter(function(x){
@@ -5718,12 +5778,12 @@ function viewCreate(){
             '<span style="flex:1;min-width:0"><b>'+H(x.name)+'</b><span>'+H(x.sub)+'</span></span>'+
           '</button>';
         }).join('')
-         :'<div class="empty">'+icon('search')+'<b>Станция не нашлась</b></div>')+
-        /* точка у станции приблизительная по сути, и об этом надо сказать до публикации.
+         :'<div class="empty">'+icon('search')+'<b>Ничего не нашлось</b></div>')+
+        /* точка у ориентира приблизительная по сути, и об этом надо сказать до публикации.
            У встречи это важнее всех: участникам нужен адрес, а его тут не будет */
         (d.placeSt?'<div class="pad"><div class="demo-note" style="margin:0">'+icon('info')+'<span>'+
-          (act?'Точка встанет рядом со станцией — точное место встречи напишите в описании'
-              :'Точка встанет рядом со станцией, примерно')+'</span></div></div>':'')+
+          (act?'Точка встанет рядом с ориентиром — точное место встречи напишите в описании'
+              :'Точка встанет рядом с ориентиром, примерно')+'</span></div></div>':'')+
       '</div>';
     }
     foot='<button class="btn btn--primary" data-act="step" data-step="2"'+((d.x==null||d.outArea)?' disabled':'')+'>Место выбрано'+icon('chev-right')+'</button>';
@@ -5815,7 +5875,7 @@ function draftFromPin(p){
     subtype:p.subtype||'give_away',lfsub:p.subtype||'found',
     radius:p.area_radius||400,noPlace:p.x==null,
     repeat:p.repeat||'none',term:p.term||'30d',
-    x:p.x,y:p.y,district_id:p.district_id};
+    x:p.x,y:p.y,district_id:landmarkOf(p)};
 }
 function editValid(){
   var d=ui.draft; if(!d||!d.editId)return false;
@@ -6354,6 +6414,27 @@ function viewUser(id,pinctx){
 /* спрятаны под шестерню в шапке профиля: сам профиль стал коротким, а настройки живут
    отдельным экраном с такой же узкой шапкой «назад», как у переписки */
 function alertsOn(){var m=me();return !m||m.lost_alerts!==false}
+/* Насколько далеко от дома пропажа считается соседской. Раньше это решал ориентир: пропажа
+   приходила, если её станция совпадала с вашей. В настоящем городе станция — случайная
+   величина: дом стоит между двумя, и половина соседних улиц оказывалась «не вашей».
+   Расстояние от дома отвечает на тот же вопрос честнее и работает там, где станций нет.
+   Спрашивать об этом на входе не стали: оповещения включены в радиусе по умолчанию,
+   а число ищут тогда, когда оно понадобилось, — то есть здесь */
+var ALERT_STEPS=[500,1000,2000,5000];
+function alertRadius(){var m=me();return (m&&m.alert_radius)||1000}
+function lostReachesHome(p,u){
+  u=u||me();
+  var hp=(u&&u.home_point&&typeof u.home_point.x==='number')?u.home_point
+       :(u&&u.district_id?district(u.district_id):null);
+  if(!hp)return false;
+  var hx=(hp.x!=null?hp.x:hp.sx), hy=(hp.y!=null?hp.y:hp.sy);
+  /* у пропажи без точки места нет — остаётся ориентир, названный автором */
+  if(p.x==null)return p.district_id===(u&&u.district_id);
+  var d=Math.sqrt(Math.pow(p.x-hx,2)+Math.pow(p.y-hy,2))*METERS_PER_UNIT;
+  /* зона поиска складывается с вашим радиусом: пропажа «где-то в круге» задевает вас,
+     если круги пересеклись, а не если совпали центры */
+  return d-(p.area_radius||0)<=((u&&u.alert_radius)||1000);
+}
 /* Три положения, а не выключатель: если телефон в тёмном режиме, приложение уже тёмное,
    и тумблер «Тёмная тема» стоял бы в «выкл», говоря неправду. CSS к трём состояниям
    готова с самого начала — голый :root светлый, media-запрос тёмный по системе,
@@ -6406,6 +6487,12 @@ function viewSettings(){
       '<b>Оповещения о пропажах</b>'+
       '<span>Соседи иногда теряют ключи и животных. Находки приходят тихо, строкой в сообщениях, а пропажи — сразу.</span>'+
     '</span><button class="switch'+(alertsOn()?' is-on':'')+'" data-act="toggle-alerts" role="switch" aria-checked="'+(alertsOn()?'true':'false')+'" aria-label="Оповещения о пропажах"><i></i></button></div>'+
+    /* радиус показывается только при включённых оповещениях: у выключенных он настраивал бы
+       то, чего не происходит */
+    (alertsOn()?'<div class="field"><label>Не дальше от дома</label><div class="segctl">'+
+      ALERT_STEPS.map(function(m){
+        return '<button class="'+(alertRadius()===m?'is-on':'')+'" data-alert-radius="'+m+'">'+H(niceUp(m))+'</button>';
+      }).join('')+'</div></div>':'')+
   '</div>'+
   '<div class="divider divider--lg"></div>'+
   '<div class="pad stack">'+
@@ -6788,12 +6875,13 @@ function toggleCat(k){
 }
 function anyCat(){for(var t in PIN_TYPES)if(ui.filters[t])return true; return false}
 function allCat(){for(var t in PIN_TYPES)if(!ui.filters[t])return false; return true}
-/* сброс возвращает экран «Что показывать» в исходное: все категории, весь город, пустой поиск */
+/* сброс возвращает экран «Что показывать» в исходное: все категории, любое расстояние,
+   пустой поиск. Место сюда не входит — его задаёт карта, а не фильтр */
 function resetFilters(){
   for(var t in PIN_TYPES)ui.filters[t]=true;
-  setCityScope(); ui.stQuery='';
+  ui.radius=null; ui.stQuery='';
 }
-function filtersDirty(){return !allCat()||!isCity()||!!(ui.stQuery||'').trim()}
+function filtersDirty(){return !allCat()||!!ui.radius||!!(ui.stQuery||'').trim()}
 /* кружки категорий: залитый — показывается, контурный — выключена */
 function catDotsHTML(){
   var out='';
@@ -6813,36 +6901,15 @@ function lineDot(id){
 function stationTag(id){
   return '<span class="stn">'+lineDot(id)+H(district(id).name)+'</span>';
 }
-/* Несколько станций пишем как «Добрынинская и ещё 3»: первая названа, чтобы человек узнал
-   свою, остальные — точками в цвет их линий */
-function scopeName(){
-  if(isCity())return 'Весь город';
-  if(ui.scope.st)return district(ui.scope.st).name;
-  return scopeMinutes()+' мин пешком';
-}
-/* то же название, но с кружком линии, когда станция одна: в подзаголовке раздела она
-   стояла голым текстом, хотя в чипах и на кнопке охвата давно ходит с кружком */
-function scopeSubHTML(){
-  if(isCity()||!ui.scope.st)return '';
-  return stationTag(ui.scope.st);
-}
-/* Одна станция — точка и название. Две — название первой и «и ещё 1» с точкой второй.
-   Три и больше — число станций и точки, по одной на линию: при большом выборе названия
-   всё равно не помещались, а цвета линий обрезались на краю кнопки */
-function lineDotsHTML(ids){
-  var seen={}, out='';
-  ids.forEach(function(id){
-    var c=district(id).lineColor;
-    if(seen[c])return;
-    seen[c]=1; out+='<i class="linedot" style="background:'+c+'"></i>';
-  });
-  return out;
-}
+/* Кадр подписывается ближайшим к его центру ориентиром. Это не выбор и ни на что не влияет —
+   это ответ на вопрос «куда я смотрю», и человек читает его, а не назначает */
+function scopeName(){return district(primaryStation()).name}
+function scopeSubHTML(){return stationTag(primaryStation())}
+/* Радиус в подписи появляется, только когда он включён: выключенный он молчал бы числом
+   о том, чего нет */
 function scopeStHTML(){
-  if(isCity())return 'Весь город';
-  if(ui.scope.st)return '<span class="stn">'+lineDot(ui.scope.st)+H(district(ui.scope.st).name)+'</span>'+
-    '<span class="scopebtn__more">'+scopeMinutes()+' мин</span>';
-  return '<span class="scopebtn__more">'+scopeMinutes()+' мин пешком</span>';
+  return stationTag(primaryStation())+
+    (ui.radius?'<span class="scopebtn__more">'+H(niceUp(ui.radius))+'</span>':'');
 }
 function scopeBtnHTML(){
   var n=homeList().length;
@@ -6875,31 +6942,30 @@ function viewScope(){
   /* Галки нет: выбранное говорят и чипы сверху, и заливка строки — третий знак лишний.
      Строка ведёт себя как карточка списка, теми же заливкой и расходящимися линиями */
   function row(d){
-    var n=pinsOfDistrict(d.id,{filtered:1}).length, on=(!isCity()&&ui.scope.st===d.id);
-    return '<button class="districtrow'+(on?' is-on':'')+'" data-station-toggle="'+d.id+'">'+
+    var n=pinsOfDistrict(d.id,{filtered:1}).length;
+    return '<button class="districtrow" data-station-toggle="'+d.id+'">'+
       '<svg class="metro" aria-hidden="true" style="color:'+d.lineColor+'"><use href="#i-metro"/></svg>'+
       '<span style="flex:1;min-width:0"><b>'+H(d.name)+'</b><span>'+H(d.sub)+'</span></span>'+
       /* число тегом: слово повторялось в каждой из девяти строк подряд, а смысл
          держится колонкой — все числа в одном месте на экране «Фильтры» */
       '<span class="cnt"><span class="tag">'+n+'</span></span></button>';
   }
-  /* Поле поиска стоит над чипами: иначе оно ездило вниз, когда чипы переносились на новую
-     строку. «Весь город» — не чип, а текстовая кнопка: рядом с выбранными станциями он
-     неизбежно читался как ещё одна выбранная */
-  /* Радиус — единственная настройка места, которую нельзя показать движением карты,
-     поэтому он живёт здесь. Меряем минутами пешком: приложение везде говорит минутами,
-     и километры заставили бы человека пересчитывать в голове */
-  var rad=isCity()?''
-    : '<div class="pad" style="padding-bottom:12px"><div class="segctl">'+
-      SCOPE_STEPS.map(function(m){
-        return '<button class="'+(scopeMinutes()===m?'is-on':'')+'" data-radius="'+m+'">'+m+' мин</button>';
-      }).join('')+'</div></div>';
-  var picked=!isCity()
-    ? rad+'<div class="stclear"><button class="linkbtn" data-scope="city">Показать весь город</button></div>'
-    : '<div class="stclear"><span class="hint">Показан весь город — выберите место ниже</span></div>';
+  /* Расстояние — единственная настройка места, которую нельзя задать движением карты:
+     кадр отвечает на «где я смотрю», а этот фильтр на «не дальше чем от меня». Поэтому он
+     необязательный и по умолчанию выключен — место задаёт карта, а не число.
+     Без геолокации считается от дома; нет и его — выбирать нечего */
+  var rad=radiusRef()
+    ? '<div class="pad stack" style="padding-bottom:12px">'+
+      '<div class="field"><label>'+radiusFromText()+'</label><div class="segctl">'+
+      '<button class="'+(ui.radius?'':'is-on')+'" data-radius="0">Любое</button>'+
+      RADIUS_STEPS.map(function(m){
+        return '<button class="'+(ui.radius===m?'is-on':'')+'" data-radius="'+m+'">'+H(niceUp(m))+'</button>';
+      }).join('')+'</div></div></div>'
+    : '';
+  var picked=rad;
   var tools='<div class="stools"><div class="searchfield" style="flex:1">'+
     icon('search','searchfield__ic')+
-    '<input class="input" id="stInput" placeholder="Найти станцию" value="'+H(ui.stQuery||'')+'" autocomplete="off">'+
+    '<input class="input" id="stInput" placeholder="Найти ориентир" value="'+H(ui.stQuery||'')+'" autocomplete="off">'+
     (q?'<button class="searchfield__clear" data-act="st-clear" type="button" aria-label="Очистить">'+icon('close')+'</button>':'')+
   '</div></div>';
   var list=DISTRICTS.filter(function(d){
@@ -6924,7 +6990,7 @@ function viewScope(){
      как и стояло: ниже их оно ездило бы вниз при каждом переносе строки */
   var body=seg+'<div class="feedhead">'+tools+'</div>'+picked+
     (list.length?list.map(row).join('')
-      :'<div class="empty">'+icon('search')+'<b>Станция не нашлась</b></div>')+
+      :'<div class="empty">'+icon('search')+'<b>Ничего не нашлось</b></div>')+
     (isDesktopPanel()?'':'<div class="stdone__gap"></div>');
   /* сброс гаснет, когда сбрасывать нечего: все категории, весь город, пустой поиск */
   var act=filtersDirty()
@@ -7162,8 +7228,11 @@ function openPin(id,origin){
      подпись над картой и счётчики — и фон под шторкой менялся, хотя фильтр оставался прежним */
   openPanel({type:'pin',id:id,origin:origin||null});
   if(p.x==null)return;
-  var s=toScreen(p.x,p.y);
-  if(s[0]<mapInsetLeft()+60||s[1]<60||s[0]>view.W-60||s[1]>view.Ht-60)centerOnSmooth(p.x,p.y);
+  /* Пин встаёт посередине свободной части карты всегда, а не только когда он уехал за край.
+     Прежнее условие оставляло его там, где он оказался: открытая карточка сдвигает полосу
+     карты, и пин, который был по центру экрана, съезжал под панель — а человек уверен,
+     что смотрит на то, что открыл */
+  centerOnSmooth(p.x,p.y);
 }
 /* Один выбор файла на два случая: снимок события и аватар. Разница в том, что аватар
    режется в квадрат по центру и жмётся сильнее — он живёт кружком в тридцать пикселей,
@@ -7211,8 +7280,10 @@ function publish(){
     return;
   }
   var noPlace=(d.type==='lost_found'&&!!d.noPlace);
-  var pdid=noPlace?ui.districtId:(d.district_id||ui.districtId);
-  var p={id:uid('pin'),type:d.type,author_id:db.currentUserId,district_id:pdid,
+  /* Ориентир записываем только событию без точки: у остальных он считается от места,
+     и хранить его значило бы завести вторую правду об одном факте */
+  var p={id:uid('pin'),type:d.type,author_id:db.currentUserId,
+    district_id:noPlace?(d.district_id||ui.districtId):undefined,
     title:d.title.trim(),description:d.description.trim(),photos:d.photos.slice(),
     status:'active',created_at:now()};
   setPlaceXY(p,noPlace?null:Math.round(d.x),noPlace?null:Math.round(d.y));
@@ -7745,34 +7816,11 @@ document.addEventListener('click',function(e){
     var sr=$('#searchResults'); if(sr)sr.innerHTML=homeResultsHTML();
     return;
   }
-  if((el=e.target.closest('[data-station]'))){
-    var sid=el.getAttribute('data-station');
-    /* Значок станции — пресет фильтра: настроен заранее, применяется нажатием. Никакого
-       отдельного экрана: список меняется на месте, а на телефоне вместе с этим
-       раскрывается шторка — иначе событий без точки, ради которых всё и затевалось,
-       по-прежнему не увидеть.
-       Молчаливым изменение при этом не остаётся: тост называет результат и предлагает
-       вернуть прежний набор станций вместе с камерой */
-    var prevSt=ui.scope?{cx:ui.scope.cx,cy:ui.scope.cy,r:ui.scope.r,st:ui.scope.st}:null;
-    var prevCam={k:view.k,tx:view.tx,ty:view.ty};
-    setScopeStation(sid); ui.homeOpen=true; render(); flyToStation(sid);
-    /* Пересказывать нечего: станция стоит в кнопке охвата под тостом, число событий там же,
-       и станция в этом сценарии всегда одна. Остаётся действие */
-    toast('','Вернуть',function(){
-      ui.scope=prevSt; render();
-      view.k=prevCam.k; view.tx=prevCam.tx; view.ty=prevCam.ty; applyView();
-    },'undo');
-    return;
-  }
-  /* строка в списке ставит охват на эту станцию; повторное нажатие снимает его на весь город */
+  /* строка в списке переносит карту к ориентиру — выдача догоняет её сама */
   if((el=e.target.closest('[data-station-toggle]'))){
-    var tid=el.getAttribute('data-station-toggle');
-    if(!isCity()&&ui.scope.st===tid)setCityScope();
-    else{
-      setScopeStation(tid);
-    }
+    goToStation(el.getAttribute('data-station-toggle'));
+    if(!isDesktopPanel())closePanel();
     render();
-    if(ix<0)flyToStation(tid);
     return;
   }
   if((el=e.target.closest('[data-pin]'))){openPin(el.getAttribute('data-pin'),pinOrigin(el));return}
@@ -7822,7 +7870,7 @@ document.addEventListener('click',function(e){
     tabSwitch(function(){ui.msgTab=mv},mi(mv)>mi(ui.msgTab)?1:-1);
     return;
   }
-  if((el=e.target.closest('[data-sort]'))){ui.feedSort=el.getAttribute('data-sort');render();return}
+  if((el=e.target.closest('[data-sort]'))){ui.feedSort=el.getAttribute('data-sort');ui.sortTouched=true;render();return}
 
   /* Прежний обработчик вёл по имени в личную переписку — и в самой переписке не делал
      ничего, потому что открывал ту же. Имя ведёт в профиль, как и было решено; писать
@@ -7871,11 +7919,20 @@ document.addEventListener('click',function(e){
   if((el=e.target.closest('[data-theme-set]'))){setTheme(el.getAttribute('data-theme-set'));render();return}
   if((el=e.target.closest('[data-cat]'))){toggleCat(el.getAttribute('data-cat'));render();return}
   if((el=e.target.closest('[data-radius]'))){
-    setScopeMinutes(parseInt(el.getAttribute('data-radius'),10)); render(); return;
-  }
-  if((el=e.target.closest('[data-scope]'))){
-    if(el.getAttribute('data-scope')==='city')setCityScope();
+    var rv=parseInt(el.getAttribute('data-radius'),10)||0;
+    ui.radius=(rv&&ui.radius!==rv)?rv:null;
     render(); return;
+  }
+  if((el=e.target.closest('[data-alert-radius]'))){
+    var mA=me();
+    if(mA){mA.alert_radius=parseInt(el.getAttribute('data-alert-radius'),10)||1000; save(); render()}
+    return;
+  }
+  /* «Показать ближайшее» из пустого кадра: везём карту к событию и открываем его карточку */
+  if((el=e.target.closest('[data-goto-pin]'))){
+    var gp=pin(el.getAttribute('data-goto-pin'));
+    if(gp)openPin(gp.id,pinOrigin(el));
+    return;
   }
   if((el=e.target.closest('[data-nav]'))){
     var n=el.getAttribute('data-nav');
@@ -7912,26 +7969,10 @@ document.addEventListener('click',function(e){
 
   if(e.target.closest('#zoomIn')){zoomAtSmooth(1.4,viewCX(),view.Ht/2);return}
   if(e.target.closest('#zoomOut')){zoomAtSmooth(1/1.4,viewCX(),view.Ht/2);return}
-  if(e.target.closest('#searchHere')){
-    var c=viewCenterWorld();
-    setScopeAt(c[0],c[1]);
-    render();
-    return;
-  }
-  /* Прицел на карте всегда обещал «моё место», а делал «показать весь район» — значок врал.
-     Теперь он делает обещанное: возвращает и камеру, и охват к дому */
+  /* Прицел возвращает карту к вашему месту, а список приезжает за ней */
   if(e.target.closest('#zoomFit')){
-    /* Если место известно — едем к нему. Это то, что обещает значок прицела; дом остаётся
-       запасным ответом для случая, когда доступа нет */
-    if(geoOn()){
-      var mr=meRef();
-      setScopeAt(mr.x,mr.y,scopeUnits(),nearestStation(mr.x,mr.y));
-      render(); centerOnSmooth(mr.x,mr.y);
-      return;
-    }
-    var hp=homePoint();
-    setScopeAt(hp.x,hp.y,scopeUnits(),hp.st||nearestStation(hp.x,hp.y));
-    render(); centerOnSmooth(hp.x,hp.y);
+    var to=geoOn()?meRef():homePoint();
+    centerOnSmooth(to.x,to.y);
     return;
   }
   /* тап мимо развёрнутого дома сворачивает его обратно к строке поиска */
@@ -8299,7 +8340,7 @@ function startApp(){
   selfCheck();
   cacheDom();
   var m=me();
-  setScopeStation((m&&m.district_id)||'d_chisty');
+  ui.districtId=(m&&m.district_id)||'d_chisty';
   drawMap(); bindMap(); render();
   /* Кадр ставим второй раз, уже после render: он открывает панель, и левая часть карты
      уходит под неё. Первый fit целился в середину пустого экрана, и район оказывался
