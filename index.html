@@ -345,7 +345,11 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .glmap{position:absolute;inset:0;z-index:0}
 /* Минимум из стилей MapLibre: подключить их файл нельзя — CSP пускает только Google Fonts.
    Всё остальное в его таблице — про контролы, которых у нас нет */
-.maplibregl-map{position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent}
+/* Позицию здесь не задаём намеренно. В своей таблице MapLibre ставит контейнеру
+   position:relative, и это правило перебивало наш absolute: контейнер схлопывался
+   в нулевую высоту, а движок делал холст своей запасной высоты в 300 пикселей —
+   карта рисовалась полосой сверху */
+.maplibregl-map{overflow:hidden;-webkit-tap-highlight-color:transparent}
 .maplibregl-canvas-container,.maplibregl-canvas{position:absolute;top:0;left:0;width:100%;height:100%}
 .maplibregl-canvas-container.maplibregl-interactive{cursor:grab}
 .maplibregl-canvas-container.maplibregl-interactive:active,.map.is-drag .maplibregl-canvas-container{cursor:grabbing}
@@ -3714,7 +3718,10 @@ function initGL(){
     glMap.addLayer({id:'workarea',type:'line',source:'workarea',
       layout:{'line-cap':'round'},
       paint:{'line-color':'#8e8e93','line-width':1.5,'line-dasharray':[4,4],'line-opacity':0.9}});
-    syncFromGL(); render();
+    /* подпись источника — требование лицензии, поэтому показывается ровно тогда,
+       когда на экране появились его данные, и не раньше */
+    var cr=$('#mapCredit'); if(cr)cr.hidden=false;
+    glMap.resize(); syncFromGL(); render();
   });
   return true;
 }
