@@ -3311,8 +3311,7 @@ function applyView(){
      сама и дважды давала сбои: открытие второй колонки меняет «центр видимой полосы»
      и само перебрасывало список на соседнюю станцию. Теперь движение только предлагает —
      решение за человеком, и случайный сдвиг ничего не портит */
-  var sh=$('#searchHere');
-  if(sh)sh.hidden=!(!ui.picking&&!ui.draft&&movedFromAnchor());
+  syncSearchHere();
 }
 function updateDistrictLabel(){
   var d=district(ui.districtId);
@@ -3354,6 +3353,7 @@ function stepZoomAnim(){
   applyView();
   if(done){
     zoomAnim.id=null; zoomAnim.target=null;
+    markMapMoved();
     /* Разлёт булавок можно играть только в тишине — пока приближение идёт, слой меток
        перерисовывается каждый кадр и любой начатый переход умирает вместе с узлом.
        Тишина наступает здесь */
@@ -3516,6 +3516,7 @@ function setScopeAt(x,y,r,st){
   ui.scope={cx:x,cy:y,r:r||scopeUnits(),st:st===undefined?nearestStation(x,y):st};
   if(ui.scope.st)ui.districtId=ui.scope.st;
   ui.anchor={x:x,y:y};
+  ui.mapMoved=false;
 }
 /* центр видимой полосы карты: на десктопе часть её закрыта панелью, и середина экрана
    не равна середине карты */
@@ -3524,6 +3525,18 @@ function movedFromAnchor(){
   if(!ui.anchor)return false;
   var c=viewCenterWorld(), dx=c[0]-ui.anchor.x, dy=c[1]-ui.anchor.y;
   return Math.sqrt(dx*dx+dy*dy)>scopeUnits()*0.45;
+}
+/* «Карта уехала» считается только по жесту, а не по положению камеры. Разница в том,
+   что камера уезжает и сама: панель или карточка открывается слева, видимая полоса карты
+   сужается, её середина переползает — и предложение «искать здесь» всплывало само,
+   уже на первом экране, хотя человек ничего не трогал. Теперь его поднимает рука */
+function markMapMoved(){
+  ui.mapMoved=movedFromAnchor();
+  syncSearchHere();
+}
+function syncSearchHere(){
+  var sh=$('#searchHere');
+  if(sh)sh.hidden=!(ui.mapMoved&&!ui.picking&&!ui.draft);
 }
 /* точка «дома»: примерное место жительства, намеренно не адрес */
 function homePoint(){
@@ -3536,7 +3549,7 @@ function setScopeStation(id){
   var d=district(id);
   setScopeAt(d.sx,d.sy,scopeUnits(),id);
 }
-function setCityScope(){ui.scope=null; ui.anchor=null}
+function setCityScope(){ui.scope=null; ui.anchor=null; ui.mapMoved=false}
 function setScopeMinutes(min){
   if(!ui.scope)return;
   ui.scope.r=minutesToUnits(min);
@@ -3709,7 +3722,7 @@ var ui={
   /* Охват — набор станций, а не одна. Человек живёт между станциями: до одной три квартала,
      до другой один, и рядом бывает станция чужой ветки. Выбирая одну, он терял соседние.
      Пустой набор означает весь город */
-  scope:null, anchor:null, homeOpen:false,
+  scope:null, anchor:null, mapMoved:false, homeOpen:false,
   /* «сейчас» или «было»: летопись — не отдельный экран и не профиль района, а то же
      содержимое списка с другим значением времени. У архива нет автора, поэтому и профиля
      у района быть не может */
@@ -7642,7 +7655,7 @@ function bindMap(){
       var r=mapEl.getBoundingClientRect();
       var mx=(p0.x+p1.x)/2-r.left, my=(p0.y+p1.y)/2-r.top;
       view.k=k; view.tx=mx-pinch.wx*view.k; view.ty=my-pinch.wy*view.k;
-      applyView();
+      applyView(); markMapMoved();
       return;
     }
     if(!drag||e.pointerId!==drag.id)return;
@@ -7656,7 +7669,7 @@ function bindMap(){
       mapEl.classList.add('is-drag');
     }
     view.tx=drag.tx+dx; view.ty=drag.ty+dy;
-    applyView();
+    applyView(); markMapMoved();
   });
   mapEl.addEventListener('pointerup',function(e){
     delete pts[e.pointerId];
@@ -7867,6 +7880,10 @@ function startApp(){
   var m=me();
   setScopeStation((m&&m.district_id)||'d_sokol');
   drawMap(); bindMap(); render();
+  /* Кадр ставим второй раз, уже после render: он открывает панель, и левая часть карты
+     уходит под неё. Первый fit целился в середину пустого экрана, и район оказывался
+     наполовину закрыт — приложение открывалось не на том месте, про которое рассказывает */
+  fitOnStation(primaryStation());
   if(window.ResizeObserver){
     new ResizeObserver(function(){
       measure(); clampView(); applyView();
