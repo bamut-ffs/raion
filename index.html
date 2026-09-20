@@ -3485,13 +3485,14 @@ function minutesToUnits(min){return (min*WALK_MPM/WALK_DETOUR)/METERS_PER_UNIT}
 function unitsToMinutes(u){return Math.round(u*METERS_PER_UNIT*WALK_DETOUR/WALK_MPM)}
 function scopeUnits(){return ui.scope?ui.scope.r:minutesToUnits(SCOPE_MIN)}
 function isCity(){return !ui.scope}
-/* станция «в охвате», если её круг пересекается с нашим: список станций показывает,
-   сколько событий рядом с каждой, и считает по тому же правилу, что и сам охват */
+/* Число рядом с ориентиром обещает «столько будет, если выбрать его», поэтому считается
+   тем же радиусом, что стоит сейчас. Раньше здесь была константа в двадцать минут: человек
+   ставил десять, а строка продолжала показывать двадцатиминутное число и обманывала */
 function nearStation(p,id){
   var d=district(id);
   if(p.x==null)return p.district_id===id;
   var dx=p.x-d.sx, dy=p.y-d.sy;
-  return Math.sqrt(dx*dx+dy*dy)<=minutesToUnits(SCOPE_MIN);
+  return Math.sqrt(dx*dx+dy*dy)<=scopeUnits();
 }
 function inScope(p){
   if(isCity())return true;
