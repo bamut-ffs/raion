@@ -3538,12 +3538,17 @@ function syncSearchHere(){
   var sh=$('#searchHere');
   if(sh)sh.hidden=!(ui.mapMoved&&!ui.picking&&!ui.draft);
 }
-/* точка «дома»: примерное место жительства, намеренно не адрес */
+/* Точка «дома»: примерное место жительства, намеренно не адрес. Вместе с точкой храним
+   и ориентир — иначе возврат домой подписывался тем ориентиром, который человек выбрал
+   в фильтре минуту назад: список уже дома, а на плашке чужая станция */
 function homePoint(){
   var m=me();
-  if(m&&m.home_point)return m.home_point;
+  /* у старых записей ориентира дома нет — выводим его из самой точки, а не из district_id:
+     тот у них успел стать «куда смотрю» и домой уже не показывает */
+  if(m&&m.home_point)return {x:m.home_point.x,y:m.home_point.y,
+    st:m.home_st||nearestStation(m.home_point.x,m.home_point.y)};
   var d=district((m&&m.district_id)||'d_sokol');
-  return {x:d.sx,y:d.sy};
+  return {x:d.sx,y:d.sy,st:(m&&m.district_id)||'d_sokol'};
 }
 function setScopeStation(id){
   var d=district(id);
@@ -7365,7 +7370,6 @@ document.addEventListener('click',function(e){
     if(!isCity()&&ui.scope.st===tid)setCityScope();
     else{
       setScopeStation(tid);
-      var m2=me(); if(m2){m2.district_id=tid;save()}
     }
     render();
     if(ix<0)flyToStation(tid);
@@ -7508,15 +7512,14 @@ document.addEventListener('click',function(e){
   if(e.target.closest('#searchHere')){
     var c=viewCenterWorld();
     setScopeAt(c[0],c[1]);
-    var m3=me(); if(m3&&ui.scope.st){m3.district_id=ui.scope.st;save()}
     render();
     return;
   }
   /* Прицел на карте всегда обещал «моё место», а делал «показать весь район» — значок врал.
      Теперь он делает обещанное: возвращает и камеру, и охват к дому */
   if(e.target.closest('#zoomFit')){
-    var hp=homePoint(), mh=me();
-    setScopeAt(hp.x,hp.y,scopeUnits(),(mh&&mh.district_id)||nearestStation(hp.x,hp.y));
+    var hp=homePoint();
+    setScopeAt(hp.x,hp.y,scopeUnits(),hp.st||nearestStation(hp.x,hp.y));
     render(); centerOnSmooth(hp.x,hp.y);
     return;
   }
@@ -7806,7 +7809,7 @@ document.addEventListener('click',function(e){
 function finishOnboard(){
   var od=district(onb.district);
   var u={id:uid('u'),name:onb.name.trim(),phone:onb.phone.trim(),district_id:onb.district,demo:false,joined_at:now(),
-    home_point:{x:od.sx,y:od.sy}};
+    home_point:{x:od.sx,y:od.sy},home_st:onb.district};
   db.users.push(u); db.currentUserId=u.id; save();
   seedMyPins(u.id);
   closeModal(); startApp();
@@ -7816,7 +7819,7 @@ function finishOnboard(){
 function skipOnboard(){
   var sd=district('d_sokol');
   var u={id:uid('u'),name:'Сергей Тесто',phone:'+7 900 000-00-00',district_id:'d_sokol',demo:false,joined_at:now(),
-    home_point:{x:sd.sx,y:sd.sy}};
+    home_point:{x:sd.sx,y:sd.sy},home_st:'d_sokol'};
   db.users.push(u); db.currentUserId=u.id; seedMyPins(u.id); save();
   closeModal(); startApp();
   toast('Демо-вход — только для отладки, без телефона и района');
