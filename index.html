@@ -3657,6 +3657,9 @@ function glGoto(x,y,zoom,animate,sx,sy){
   if(animate){o.duration=320; glMap.easeTo(o)} else { glMap.jumpTo(o); syncFromGL() }
 }
 var GL_ZOOM=15.2;
+/* Куда зум едет сейчас. Без этого каждое следующее нажатие на «+» отсчитывало от текущего
+   кадра ещё идущей анимации, и из пяти быстрых нажатий доезжало полтора */
+var glZoomTo=null;
 function useGLCamera(){
   /* нарисованный мир спрятан — двигать его больше незачем */
   worldEl=null;
@@ -3672,8 +3675,9 @@ function useGLCamera(){
     glMap.jumpTo({zoom:glMap.getZoom()+Math.log(factor)/Math.LN2,around:glMap.unproject([cx,cy])});
   };
   zoomAtSmooth=function(factor,cx,cy){
-    glMap.easeTo({zoom:glMap.getZoom()+Math.log(factor)/Math.LN2,
-      around:glMap.unproject([cx,cy]),duration:220});
+    var base=(glZoomTo==null?glMap.getZoom():glZoomTo);
+    glZoomTo=Math.max(3,Math.min(19,base+Math.log(factor)/Math.LN2));
+    glMap.easeTo({zoom:glZoomTo,around:glMap.unproject([cx,cy]),duration:220});
   };
   /* Шкала считается по широте самой камеры, а не по нашей средней: карта теперь ездит
      по всей планете, и на широте Ставрополя метр в пикселе другой */
@@ -3704,8 +3708,12 @@ function initGL(){
   glMap.on('error',function(){});
   glMap.on('move',syncFromGL);
   glMap.on('movestart',function(){peekSheet(true)});
-  glMap.on('moveend',function(){peekSheet(false); markMapMoved()});
+  glMap.on('moveend',function(){peekSheet(false); glZoomTo=null});
+  /* «Карта уехала» поднимает только протяжка. Отдаление центр не двигает: человек
+     отошёл посмотреть шире, а не выбрал другое место, и предлагать ему перенести охват
+     в этот момент — значит отвечать на вопрос, которого он не задавал */
   glMap.on('drag',markMapMoved);
+  glMap.on('dragend',markMapMoved);
   /* Мышь после протяжки всегда выдаёт click, и он уходил в «тап мимо карточки»:
      шторка закрывалась посреди панорамы. Тот же приём, что был у самописной карты */
   glMap.on('dragend',function(){
