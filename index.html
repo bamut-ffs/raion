@@ -2436,7 +2436,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.18.2';
+var VERSION='3.18.3';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
 var UPDATED='20 сентября 2026';
@@ -2458,11 +2458,21 @@ function noStorage(){
    области: стоило её сдвинуть — и все сохранённые события переезжали вместе с ней, потому
    что число осталось прежним, а точка отсчёта другая. Этот переезд мы только что и делали
    руками. С градусами область можно двигать сколько угодно */
+/* Рабочие координаты кладём скрытым от перечисления полем. JSON.stringify такие поля
+   не видит, и в хранилище они не попадают сами собой — без фильтра по имени, который
+   не знает, чьё поле выбрасывает. Первый такой фильтр заодно стёр домашнюю точку человека
+   (она лежит как home_point:{x,y}), и карта перестала строиться вовсе: центр приходил
+   как NaN, движок падал на старте, а приложение честно показывало «карта не загрузилась».
+   Чинить точечно нельзя — надо, чтобы такая ошибка не могла повториться */
+function hide(p,k,v){
+  try{ Object.defineProperty(p,k,{value:v,writable:true,enumerable:false,configurable:true}) }
+  catch(e){ p[k]=v }
+}
 function setPlace(p,lat,lon){
-  if(lat==null){p.lat=null; p.lon=null; p.x=null; p.y=null; return p}
+  if(lat==null){p.lat=null; p.lon=null; hide(p,'x',null); hide(p,'y',null); return p}
   p.lat=lat; p.lon=lon;
   var w=latLonToWorld(lat,lon);
-  p.x=w[0]; p.y=w[1];
+  hide(p,'x',w[0]); hide(p,'y',w[1]);
   return p;
 }
 function setPlaceXY(p,x,y){
@@ -2473,9 +2483,9 @@ function setPlaceXY(p,x,y){
 /* Точная точка вещи — та, что до смещения на ~70 метров. Она тоже место, а не число,
    и живёт по тем же правилам */
 function setExact(p,x,y){
-  if(x==null){p.exact_lat=null; p.exact_lon=null; p.exact_x=null; p.exact_y=null; return p}
+  if(x==null){p.exact_lat=null; p.exact_lon=null; hide(p,'exact_x',null); hide(p,'exact_y',null); return p}
   var ll=worldToLatLon(x,y);
-  p.exact_lat=ll[0]; p.exact_lon=ll[1]; p.exact_x=x; p.exact_y=y;
+  p.exact_lat=ll[0]; p.exact_lon=ll[1]; hide(p,'exact_x',x); hide(p,'exact_y',y);
   return p;
 }
 /* Восстановление рабочих координат после чтения из хранилища и одноразовый перевод старых
@@ -2483,23 +2493,17 @@ function setExact(p,x,y){
 function geoPins(){
   var changed=false;
   db.pins.forEach(function(p){
-    if(p.lat!=null){var w=latLonToWorld(p.lat,p.lon); p.x=w[0]; p.y=w[1]}
-    else if(p.x!=null){var ll=worldToLatLon(p.x,p.y); p.lat=ll[0]; p.lon=ll[1]; changed=true}
-    else {p.lat=null; p.lon=null}
-    if(p.exact_lat!=null){var we=latLonToWorld(p.exact_lat,p.exact_lon); p.exact_x=we[0]; p.exact_y=we[1]}
-    else if(p.exact_x!=null){var le=worldToLatLon(p.exact_x,p.exact_y); p.exact_lat=le[0]; p.exact_lon=le[1]; changed=true}
+    if(p.lat!=null)setPlace(p,p.lat,p.lon);
+    else if(p.x!=null){setPlaceXY(p,p.x,p.y); changed=true}
+    else setPlace(p,null,null);
+    if(p.exact_lat!=null){var we=latLonToWorld(p.exact_lat,p.exact_lon); hide(p,'exact_x',we[0]); hide(p,'exact_y',we[1])}
+    else if(p.exact_x!=null){setExact(p,p.exact_x,p.exact_y); changed=true}
   });
   if(changed)save();
 }
 function save(){
   if(!storageOK)return;
-  try{
-    /* производные координаты в хранилище не уезжают: запись их рядом с местом означала бы
-       две истины об одном факте — ровно то, от чего мы уходим */
-    localStorage.setItem(KEY,JSON.stringify(db,function(k,v){
-      return (k==='x'||k==='y'||k==='exact_x'||k==='exact_y')?undefined:v;
-    }));
-  }
+  try{ localStorage.setItem(KEY,JSON.stringify(db)); }
   catch(e){
     if(e&&(e.name==='QuotaExceededError'||e.code===22))
       toast('Не удалось сохранить: в браузере кончилось место. Удалите фотографии из своих событий');
@@ -3882,8 +3886,11 @@ function homePoint(){
   var m=me();
   /* у старых записей ориентира дома нет — выводим его из самой точки, а не из district_id:
      тот у них успел стать «куда смотрю» и домой уже не показывает */
-  if(m&&m.home_point)return {x:m.home_point.x,y:m.home_point.y,
-    st:m.home_st||nearestStation(m.home_point.x,m.home_point.y)};
+  /* Домашняя точка могла остаться пустой после той самой ошибки с фильтром: объект есть,
+     чисел в нём нет. Проверяем не наличие объекта, а наличие числа */
+  if(m&&m.home_point&&typeof m.home_point.x==='number'&&typeof m.home_point.y==='number')
+    return {x:m.home_point.x,y:m.home_point.y,
+      st:m.home_st||nearestStation(m.home_point.x,m.home_point.y)};
   var d=district((m&&m.district_id)||'d_chisty');
   return {x:d.sx,y:d.sy,st:(m&&m.district_id)||'d_chisty'};
 }
