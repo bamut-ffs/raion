@@ -349,12 +349,18 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   /* Стандартные тайлы OSM цветные, а интерфейс монохромный, и цветными у нас остаются
      только сами пины. Обесцвечиваем и высветляем: карта должна быть фоном, а не картинкой */
   filter:grayscale(1) contrast(.86) brightness(1.1);}
-/* Подпись источника — требование лицензии, а не украшение, поэтому она не прячется
-   и не уезжает под панель; шкала масштаба стоит рядом и знает про неё */
-.mapcredit{
+/* Шкала масштаба и подпись источника — про одно и то же, про саму карту, и живут одним
+   углом. Порознь они стояли в одной точке и налезали друг на друга */
+.mapmeta{
   position:absolute;right:16px;bottom:16px;z-index:6;pointer-events:none;
-  font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3);
-  background:rgba(255,255,255,.72);padding:2px 6px;border-radius:4px;
+  display:flex;flex-direction:column;align-items:flex-end;gap:4px;
+}
+/* Подпись источника — требование лицензии, а не украшение: она остаётся и там, где шкала
+   спрятана, и поэтому на телефоне поднимается над свёрнутой шторкой, а не уходит под неё */
+.mapcredit{
+  font-size:var(--f-xs10);line-height:var(--l-xs10);color:var(--ink-3);
+  padding:2px 6px;border-radius:var(--r-s);
+  background:color-mix(in srgb,var(--surface) 82%,transparent);
 }
 /* только сам холст карты: слой меток лежит внутри .map, и раньше это правило растягивало
    и значки в метках — значок метро схлопывался в ноль, а иконки в пинах распирало на всю каплю */
@@ -469,7 +475,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .zoomctl button:hover{background:var(--surface-2);color:var(--ink)}
 .zoomctl svg{width:16px;height:16px}
 .scalebar{
-  position:absolute;right:16px;bottom:16px;font-size:var(--f-xs10);line-height:var(--l-xs10);color:var(--ink-2);z-index:4;
+  font-size:var(--f-xs10);line-height:var(--l-xs10);color:var(--ink-2);
   display:flex;flex-direction:column;align-items:flex-end;gap:3px;padding:6px 8px;border-radius:var(--r-s);
   background:color-mix(in srgb,var(--surface) 82%,transparent);border:1px solid var(--line);
 }
@@ -1659,6 +1665,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      свёрнутой шторки (76 над таббаром в 66): (52 + 100dvh - 142) / 2 */
   .zoomctl{top:calc(50dvh - 45px)}
   .scalebar{display:none}
+  /* над таббаром и свёрнутой домашней шторкой: 66 + 70 + отступ */
+  .mapmeta{bottom:calc(66px + var(--home-peek) + 8px)}
 }
 </style>
 
@@ -1761,10 +1769,12 @@ svg{width:16px;height:16px}
 
       </div>
 
-      <div class="mapcredit" id="mapCredit" hidden>© OpenStreetMap</div>
+      <div class="mapmeta">
       <div class="scalebar" id="scalebar" aria-hidden="true">
         <span class="mono" id="scaleTxt">200 м</span>
         <span class="scalebar__line" id="scaleLine" style="width:64px"></span>
+      </div>
+      <div class="mapcredit" id="mapCredit" hidden>© OpenStreetMap</div>
       </div>
       <div class="zoomctl">
         <div class="card-float zoomctl__group">
