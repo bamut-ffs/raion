@@ -7,3 +7,10 @@
 !index.html
 !raion-ds.html
 !raion-tz-v02.html
+
+# Приложение на домашнем экране: без манифеста Хром делает ярлык во вкладке,
+# без значков — не предлагает установку вовсе
+!manifest.webmanifest
+!icon-192.png
+!icon-512.png
+!apple-touch-icon.png

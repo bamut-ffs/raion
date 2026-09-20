@@ -2,11 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Район">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Каталог элементов интерфейса «Района»: токены, компоненты во всех состояниях, правила проекта.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
@@ -81,21 +77,17 @@
   --shadow-2:0 2px 4px rgba(0,0,0,.07),0 10px 28px rgba(0,0,0,.13);
   --shadow-3:0 4px 8px rgba(0,0,0,.09),0 24px 60px rgba(0,0,0,.22);
   --r-s:6px; --r-m:10px; --r-l:16px; --panel-w:380px; --panel-b-w:340px; --home-peek:70px;
-  /* Безопасные зоны телефона. В обычной вкладке браузера они равны нулю: верх экрана
-     занимает панель Safari, и страница под остров не заходит в принципе. Настоящие
-     значения появляются, когда страницу добавили на домашний экран — тогда приложение
-     занимает весь экран, и остров сверху с полосой жестов снизу становятся нашей заботой.
-     Держим их переменными, а не пишем env() по месту: прибавлять их приходится в семи
-     местах внутри calc(), и читается это тяжело */
-  /* В исходнике они нули, и это не заглушка: артефакт оборачивает страницу своим каркасом,
-     который сам добавляет корню отступы на безопасные зоны. Возьми мы env() и здесь —
-     отступ на телефоне удвоился бы. На GitHub Pages обёртки нет, и там настоящие значения
-     подставляет сборка (собрать.js) — вместе с головой страницы, которой здесь тоже нет */
-  --top-safe:0px;
-  --bot-safe:0px;
-  /* высота таббара вместе с полосой жестов: от неё отсчитываются нижние края всех шторок,
-     и пока это было числом 66, полоса жестов ложилась поверх кнопок */
-  --rail-h:calc(66px + var(--bot-safe));
+  /* Безопасные зоны телефона переменными не держим, и это выстраданное правило.
+     Вебкит не умеет подставлять env() из пользовательской переменной внутрь calc():
+     подстановка отдаёт недействительное значение, и браузер выбрасывает всё объявление
+     целиком. На айфоне это выглядело так: панель охвата вставала под часы, у таббара
+     отваливались и высота, и нижнее поле. Поэтому env(safe-area-inset-*) пишется прямо
+     в тех местах, где нужен, — многословно, зато ни одно правило не может молча отвалиться.
+     Работают эти числа только в приложении на домашнем экране: в обычной вкладке верх
+     экрана принадлежит браузеру, и env() там возвращает нули */
+  /* высота таббара без полосы жестов: сама полоса прибавляется по месту,
+     потому что она и есть env() */
+  --rail-h:66px;
   /* высота верхней полосы экрана: одна на шапку с заголовком и на ряд вкладок, иначе
      в двух колонках рядом стоят две шапки разной высоты и списки под ними разъезжаются */
   --head-h:56px;
@@ -226,6 +218,11 @@
 
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
+/* Артефакт оборачивает страницу своим каркасом и сам добавляет корню отступы
+   на безопасные зоны. Приложению это не нужно: оно считает зоны само и в нужных местах,
+   а двойной отступ на телефоне съедал бы полсотни пикселей сверху. На GitHub Pages
+   отступа и так нет, правило там ничего не меняет */
+:root{padding:0}
 html,body{height:100%}
 body{
   margin:0;background:var(--ground);color:var(--ink);
@@ -311,6 +308,14 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .avatar svg{display:block;width:100%;height:100%}
 .avatar--s{width:24px;height:24px;font-size:10px}
 .avatar--l{width:42px;height:42px;font-size:15px}
+/* Снимок в форме правки показан кружком того же вида, что увидят соседи, — только крупно:
+   кадрирования у нас нет, и человек должен сразу видеть, что попало в кадр */
+.avatar--xl{width:96px;height:96px;font-size:34px}
+.mephoto{position:relative;width:96px;margin:0 auto}
+.mephoto__b{position:absolute;right:-2px;bottom:-2px;width:32px;height:32px;border-radius:50%;
+  display:grid;place-items:center;background:var(--brand);color:#fff;box-shadow:0 0 0 3px var(--surface)}
+.mephoto__b:hover{opacity:.9}
+.mephoto__b svg{width:16px;height:16px}
 
 /* ---------- stage ---------- */
 .work{flex:1;display:flex;min-width:0;position:relative}
@@ -416,7 +421,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 
 /* ---------- toolbar ---------- */
 .toolbar{
-  position:absolute;left:16px;right:16px;top:calc(14px + var(--top-safe));display:flex;gap:12px;align-items:flex-start;
+  position:absolute;left:16px;right:16px;top:calc(14px + env(safe-area-inset-top,0px));display:flex;gap:12px;align-items:flex-start;
   justify-content:flex-end;
   pointer-events:none;flex-wrap:wrap;z-index:6;
 }
@@ -593,15 +598,6 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Строки в столбик, кружок и подпись в строку. Выбранная — белая плашка с тенью на серой
    дорожке: так сразу видно, что выбрано, и контрол читается как один предмет, а не как
    продолжение списка станций под ним. Кегль тот же, что у названия станции */
-/* Ряд переключателей типа над списком своих событий: по виду это те же кнопки, что
-   в строке сортировки рядом, а цветная точка перед словом говорит, что тут категории,
-   а не порядок */
-.catrow{display:flex;align-items:center;gap:8px;padding:12px 16px;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior-x:contain}
-.catrow button{flex:none;display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:7px;
-  font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;color:var(--ink-3);white-space:nowrap}
-.catrow button:hover{color:var(--ink)}
-.catrow button.is-on{background:var(--surface-3);color:var(--ink);font-weight:600}
-.catrow i{width:10px;height:10px;border-radius:50%;flex:none;border:2px solid transparent;display:block}
 .segctl--cat{flex-direction:column}
 .segctl--cat button{
   flex:none;flex-direction:row;gap:6px;padding:10px 12px;white-space:normal;text-align:left;
@@ -1169,6 +1165,32 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .tabs button.tab--act{--tab-line:var(--act)}
 .tabs button.tab--offer{--tab-line:var(--offer)}
 .tabs button.tab--find{--tab-line:var(--find)}
+/* Ряд контролов над списком своих дел. Каждый открывает свой выбор, поэтому выглядят
+   они одинаково и говорят одним языком с кнопкой охвата над картой: подложка, шеврон
+   вниз, текст второстепенным цветом. Это не чип (чип называет объект) и не тег
+   (тег говорит о состоянии) — это кнопка, за которой список */
+.ctlrow{display:flex;align-items:center;gap:8px;padding:12px 16px;
+  overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior-x:contain;
+  border-bottom:1px solid var(--line)}
+.ctl{flex:none;display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:var(--r-m);
+  background:var(--surface-2);color:var(--ink-2);
+  font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;white-space:nowrap}
+.ctl:hover{background:var(--surface-3);color:var(--ink)}
+.ctl svg{width:14px;height:14px;color:var(--ink-3);flex:none}
+/* у кнопки типов вместо слова три кружка, и поля ей нужны ровные со всех сторон */
+.ctl--dots{padding:7px 8px}
+/* счёт включённых типов появляется только когда что-то выключено: три залитых круга
+   и так значат «показано всё» */
+.ctl__n{font-variant-numeric:tabular-nums}
+.ctl--dots .catdots{--btn-bg:var(--surface-2)}
+.ctl--dots:hover .catdots{--btn-bg:var(--surface-3)}
+/* Выбор внутри всплывающего списка. Пункт с галкой — тот же .menu__i, но галка стоит
+   справа и занимает место всегда, иначе строки прыгают при переключении */
+.menu__i .menu__on{margin-left:auto;width:16px;height:16px;flex:none;color:var(--brand-icon);opacity:0}
+.menu__i.is-on .menu__on{opacity:1}
+.menu__i.is-on{font-weight:600;color:var(--ink)}
+/* кружок типа в списке — тот же размер, что в ряду контролов */
+.menu__i .catdot{width:14px;height:14px;border-radius:50%;flex:none;border:2px solid transparent;display:block}
 .listrow{position:relative;display:flex;gap:12px;padding:16px;width:100%;align-items:center;text-align:left;transition:background .14s}
 .listrow__cover{width:50px;height:50px;border-radius:var(--r-s);flex:none;object-fit:cover;display:grid;place-items:center}
 /* Личную переписку от общего чата по обложке не отличить: событие одно, фотография одна
@@ -1208,9 +1230,6 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* время в строке чата держится верхнего края: в профиле тот же блок носит шеврон,
    и его поднимать наверх не надо — поэтому модификатор, а не общее правило */
 .listrow__r--top{align-self:flex-start}
-/* число и шеврон в строке перехода стоят в строку: столбцом они читались бы как две
-   отдельные вещи, а это один ответ — «сколько там» и «туда» */
-.listrow__r--row{flex-direction:row;align-items:center;gap:8px}
 /* имя, время и точка в одной строке; название пина и текст ниже идут во всю ширину */
 .listrow__top{display:flex;align-items:baseline;gap:8px;min-width:0}
 .listrow__top .listrow__t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1237,7 +1256,11 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* Четыре яруса в одной карточке — чип, название, пояснение, время — при отступе в 8
    слипались в один ком. Между заголовком и текстом по правилу 12, остальное 8 */
 .sysmsg{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:var(--r-m);background:var(--surface);border:1px solid var(--line)}
-.sysmsg__t{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;margin-bottom:4px}
+/* Шаг по вертикали здесь ровный, 8 и 8, — осознанное отступление от лестницы, по которой
+   после заголовка идёт 12. В плотной карточке, где заголовок в строку, текст в две и время
+   в одну, ровный шаг читается лучше правильного. Исключение для этого элемента, а не отмена
+   правила */
+.sysmsg__t{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600}
 /* чип типа и шеврон — одной строкой: слева что это, справа что карточка ведёт дальше.
    В подвале шеврон стоял у времени, к которому отношения не имеет */
 .sysmsg__head{display:flex;align-items:center;gap:8px}
@@ -1246,17 +1269,25 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
    и есть вход, а кнопка «Открыть» говорила бы то же самое второй раз */
 .sysmsg--go{cursor:pointer}
 .sysmsg--go:hover{border-color:var(--line-2)}
-.sysmsg__go{margin-left:auto;width:16px;height:16px;color:var(--ink-3);flex:none;align-self:flex-start}
+.sysmsg__go{margin-left:auto;width:16px;height:16px;color:var(--ink-3);flex:none}
 .sysmsg__d{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
 .sysmsg__foot{display:flex;align-items:center;gap:8px}
 .sysmsg__foot .chip{margin-left:auto}
 .sysmsg .btn{width:auto;align-self:flex-start}
-.sysmsg .chip{align-self:flex-start}
+/* только прямым детям колонки: внутри шапки чип стоит в строке с шевроном, и прижатие
+   к верху разводило их центры на три пикселя — высоты-то разные */
+.sysmsg>.chip{align-self:flex-start}
 /* Непрочитанное отмечено заливкой: прежде залитыми были все карточки, и заливка ничего
    не сообщала — приходилось метить новое тёмной обводкой. Теперь прочитанное белое с рамкой,
    и залитая среди них ровно настолько заметна, насколько нужно. Рамка остаётся у всех,
    у новых она прозрачная: иначе карточки прыгали бы на два пикселя, когда канал прочитан */
 .sysmsg.is-new{background:var(--surface-2);border-color:transparent}
+/* На залитой карточке бледная заливка чипа лежит на другой бледной заливке, и граница
+   между ними читается как грязь, а не как край. Даём чипу обводку цветом его же текста.
+   Тенью, а не рамкой: рамка съела бы по пикселю поля с каждой стороны и сдвинула текст.
+   Служебной плашки с исходом это не касается — она белая на сером, ей края хватает */
+.sysmsg.is-new .chip--act,.sysmsg.is-new .chip--offer,.sysmsg.is-new .chip--find{
+  box-shadow:0 0 0 1px currentColor}
 /* Разделитель дня между сообщениями и метка «Новые» — один элемент: обе отвечают на вопрос
    «где я остановился». Раз день назван здесь, в самом сообщении остаётся только время */
 .daysep{text-align:center;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);padding:4px 0}
@@ -1363,14 +1394,14 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .sheet-scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:19;display:none}
 /* под домашней шторкой затемняем только карту: дом — состояние просмотра, и уходить
    из него в чаты одним касанием человек вправе, поэтому таббар остаётся живым */
-.sheet-scrim--home{bottom:var(--rail-h)}
+.sheet-scrim--home{bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px))}
 /* плашка с расстоянием на шаге выбора места — тёмная, как всплывающие сообщения */
 /* Плашка занимает тот же слот, что кнопка охвата, и уходит тем же движением. Видна она
    только пока шторка внизу и вы целитесь: как только шторка поднялась, станция
    и расстояние уже стоят в поле внутри неё, и плашка становится дублем */
 .pickinfo.is-away{opacity:0;transform:translateX(-50%) translateY(-160%) scale(.92)}
 .pickinfo{
-  position:absolute;left:50%;top:calc(16px + var(--top-safe));transform:translateX(-50%);z-index:7;
+  position:absolute;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:7;
   transition:transform .22s ease,opacity .22s ease;
   background:var(--ink);color:var(--ground);padding:8px 16px;border-radius:var(--r-m);
   font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;white-space:nowrap;box-shadow:var(--shadow-2);pointer-events:none;
@@ -1392,7 +1423,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* Тот же слот и то же движение, что у плашки расстояния и кнопки охвата. Снизу тост
    наезжал на плавающую кнопку в фильтрах, сверху ему никто не мешает */
 .toast{
-  position:fixed;left:50%;top:calc(16px + var(--top-safe));transform:translateX(-50%) translateY(-160%) scale(.92);
+  position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-160%) scale(.92);
   overflow:hidden;
   opacity:0;pointer-events:none;
   background:var(--ink);color:var(--ground);padding:12px 16px;border-radius:var(--r-m);
@@ -1411,7 +1442,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
    охвата, и уходят они одним движением. На десктопе верх занят шапками панелей, и тост
    падал на них — поэтому он живёт внизу и уходит к нижней границе тем же движением */
 @media (min-width:821px){
-  .toast{top:auto;bottom:calc(16px + var(--bot-safe));transform:translateX(-50%) translateY(160%) scale(.92)}
+  .toast{top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(160%) scale(.92)}
   .toast.is-on{transform:translateX(-50%) translateY(0) scale(1)}
 }
 .toast__a{color:var(--ground);font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
@@ -1435,9 +1466,9 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      в потоке, карта до него не доходила, и когда он уезжал на время жеста, снизу
      оставалась белая полоса. Он непрозрачный, поэтому в обычном виде ничего не изменилось */
   .rail{
-    position:absolute;left:0;right:0;bottom:0;width:auto;height:var(--rail-h);
+    position:absolute;left:0;right:0;bottom:0;width:auto;height:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));
     flex:none;flex-direction:row;justify-content:space-around;align-items:center;
-    border-right:none;border-top:1px solid var(--line);padding:8px 8px calc(8px + var(--bot-safe));
+    border-right:none;border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));
   }
   .rail .navbtn{width:auto;flex:1;padding:4px}
   .rail .brand,.rail__spacer{display:none}
@@ -1452,9 +1483,9 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   }
   /* «разделы» (чаты, профиль, поиск, переписка) — во весь экран над таббаром: он их навигация,
      поэтому таббар остаётся виден и затемнения под ними нет */
-  .panel.is-section{top:0;bottom:var(--rail-h);height:auto;max-height:none;border-radius:0;border-top:none;
+  .panel.is-section{top:0;bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));height:auto;max-height:none;border-radius:0;border-top:none;
     /* подложка доходит до физического верха экрана, а содержимое начинается под островом */
-    padding-top:var(--top-safe)}
+    padding-top:env(safe-area-inset-top,0px)}
   /* Переписка не раздел, а экран внутри него: выход даёт стрелка в шапке, а не таббар.
      И нижний край там принадлежит содержимому — внизу поле ввода, а с открытой клавиатурой
      полос становится три */
@@ -1480,7 +1511,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      не может его накрыть. Свёрнутая показывает ровно строку поиска, остальное обрезается.
      Развёрнутая встаёт по тому же правилу, что шторка создания — сто пикселей карты сверху */
   .panel.is-home,.panel.is-screen{
-    top:calc(100px + var(--top-safe));bottom:var(--rail-h);height:auto;max-height:none;
+    top:calc(100px + env(safe-area-inset-top,0px));bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));height:auto;max-height:none;
     border-radius:var(--r-l) var(--r-l) 0 0;border-top:1px solid var(--line);
     transition:top .24s ease;
   }
@@ -1498,7 +1529,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      возвращаем собственные касания — иначе тап уходит в жест */
   .panel.is-home .panel__top{touch-action:none}
   .panel.is-home .panel__top .searchfield{touch-action:auto}
-  .panel.is-home.is-shut{top:calc(100dvh - var(--rail-h) - var(--home-peek))}
+  .panel.is-home.is-shut{top:calc(100dvh - calc(var(--rail-h) + env(safe-area-inset-bottom,0px)) - var(--home-peek))}
   /* в свёрнутом виде своя линия под строкой поиска не нужна: она встала бы в пиксель
      от границы таббара и читалась как вторая полоса */
   .panel.is-home.is-shut .panel__top{border-bottom:none;
@@ -1525,11 +1556,11 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      негде было лежать; ручка переезжает внутрь, и полоска становится не нужна. Углы
      выпрямляем: на телефоне их скругляет сам экран, а в браузере шторка во весь экран
      и обязана быть прямоугольной */
-  .panel.is-pin.is-full{top:0;bottom:var(--rail-h);height:auto;max-height:none;min-height:0;
+  .panel.is-pin.is-full{top:0;bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));height:auto;max-height:none;min-height:0;
     border-radius:0;border-top:none}
-  .panel.is-pin.is-full .sheet-grip{display:flex;top:var(--top-safe)}
+  .panel.is-pin.is-full .sheet-grip{display:flex;top:env(safe-area-inset-top,0px)}
   /* кнопки шапки уходят ниже ручки и ниже острова: в этом положении над ними ничего нет */
-  .panel.is-pin.is-full .panelhead--over{padding-top:calc(var(--top-safe) + 22px)}
+  .panel.is-pin.is-full .panelhead--over{padding-top:calc(env(safe-area-inset-top,0px) + 22px)}
   /* Пол карточки: сверху остаётся полоска карты с булавкой и её окружением — карта здесь
      часть ответа, а не фон, — но не половина экрана пустоты, как было при 60dvh */
   .panel.is-pin:not(.is-shut):not(.is-full){min-height:calc(100dvh - 160px)}
@@ -1555,7 +1586,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .panel.is-swipe{padding-top:8px}
   .panel.is-pin{transition:top .24s ease,transform .22s ease}
   .panel.is-pin.is-shut{
-    top:calc(100dvh - var(--rail-h) - var(--pin-peek));bottom:var(--rail-h);height:auto;max-height:none;
+    top:calc(100dvh - calc(var(--rail-h) + env(safe-area-inset-bottom,0px)) - var(--pin-peek));bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));height:auto;max-height:none;
   }
   .panel.is-pin.is-shut .panel__body,.panel.is-pin.is-shut .panel__foot{display:none}
   .panel.is-pin.is-shut .panelhead--over{display:none}
@@ -1964,11 +1995,13 @@ body.ds-narrow .dsmain{max-width:400px}
         <button class="tab--find">Находки</button></span>
         <button class="hscroll__arr hscroll__arr--l"><svg><use href="#i-chev-left"/></svg></button>
         <button class="hscroll__arr hscroll__arr--r"><svg><use href="#i-chev-right"/></svg></button></span></div>
-    <div class="dsitem dsitem--flat"><span class="dsitem__n">Переключатели типа</span><span class="dsitem__c">.catrow — viewMine</span>
-      <span class="hscroll" style="display:block"><span class="catrow" style="display:flex">
-        <button class="is-on"><i style="border-color:var(--act);background:var(--act)"></i>Встречи</button>
-        <button><i style="border-color:var(--offer)"></i>Вещи и услуги</button>
-        <button><i style="border-color:var(--find)"></i>Находки</button></span></span></div>
+    <div class="dsitem dsitem--flat"><span class="dsitem__n">Ряд контролов</span><span class="dsitem__c">.ctlrow &gt; .ctl — viewMine</span>
+      <span class="hscroll" style="display:block"><span class="ctlrow" style="display:flex">
+        <button class="ctl ctl--dots"><span class="catdots"><i style="border-color:var(--act);background:var(--act)"></i>
+          <i style="border-color:var(--offer);background:var(--offer)"></i>
+          <i style="border-color:var(--find)"></i></span><svg><use href="#i-chev-down"/></svg></button>
+        <button class="ctl">Сначала ближайшие<svg><use href="#i-chev-down"/></svg></button>
+        <button class="ctl">За всё время<svg><use href="#i-chev-down"/></svg></button></span></span></div>
   </div>
 </section>
 
@@ -2054,6 +2087,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.13";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.14";</script>
 </body>
 </html>

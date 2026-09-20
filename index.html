@@ -7,6 +7,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Район">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png" type="image/png">
 <meta name="description" content="Карта района: соседи видят активности друг друга, отдают и просят вещи и услуги, публикуют находки и пропажи.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
@@ -81,21 +84,17 @@
   --shadow-2:0 2px 4px rgba(0,0,0,.07),0 10px 28px rgba(0,0,0,.13);
   --shadow-3:0 4px 8px rgba(0,0,0,.09),0 24px 60px rgba(0,0,0,.22);
   --r-s:6px; --r-m:10px; --r-l:16px; --panel-w:380px; --panel-b-w:340px; --home-peek:70px;
-  /* Безопасные зоны телефона. В обычной вкладке браузера они равны нулю: верх экрана
-     занимает панель Safari, и страница под остров не заходит в принципе. Настоящие
-     значения появляются, когда страницу добавили на домашний экран — тогда приложение
-     занимает весь экран, и остров сверху с полосой жестов снизу становятся нашей заботой.
-     Держим их переменными, а не пишем env() по месту: прибавлять их приходится в семи
-     местах внутри calc(), и читается это тяжело */
-  /* В исходнике они нули, и это не заглушка: артефакт оборачивает страницу своим каркасом,
-     который сам добавляет корню отступы на безопасные зоны. Возьми мы env() и здесь —
-     отступ на телефоне удвоился бы. На GitHub Pages обёртки нет, и там настоящие значения
-     подставляет сборка (собрать.js) — вместе с головой страницы, которой здесь тоже нет */
-  --top-safe:env(safe-area-inset-top,0px);
-  --bot-safe:env(safe-area-inset-bottom,0px);
-  /* высота таббара вместе с полосой жестов: от неё отсчитываются нижние края всех шторок,
-     и пока это было числом 66, полоса жестов ложилась поверх кнопок */
-  --rail-h:calc(66px + var(--bot-safe));
+  /* Безопасные зоны телефона переменными не держим, и это выстраданное правило.
+     Вебкит не умеет подставлять env() из пользовательской переменной внутрь calc():
+     подстановка отдаёт недействительное значение, и браузер выбрасывает всё объявление
+     целиком. На айфоне это выглядело так: панель охвата вставала под часы, у таббара
+     отваливались и высота, и нижнее поле. Поэтому env(safe-area-inset-*) пишется прямо
+     в тех местах, где нужен, — многословно, зато ни одно правило не может молча отвалиться.
+     Работают эти числа только в приложении на домашнем экране: в обычной вкладке верх
+     экрана принадлежит браузеру, и env() там возвращает нули */
+  /* высота таббара без полосы жестов: сама полоса прибавляется по месту,
+     потому что она и есть env() */
+  --rail-h:66px;
   /* высота верхней полосы экрана: одна на шапку с заголовком и на ряд вкладок, иначе
      в двух колонках рядом стоят две шапки разной высоты и списки под ними разъезжаются */
   --head-h:56px;
@@ -226,6 +225,11 @@
 
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
+/* Артефакт оборачивает страницу своим каркасом и сам добавляет корню отступы
+   на безопасные зоны. Приложению это не нужно: оно считает зоны само и в нужных местах,
+   а двойной отступ на телефоне съедал бы полсотни пикселей сверху. На GitHub Pages
+   отступа и так нет, правило там ничего не меняет */
+:root{padding:0}
 html,body{height:100%}
 body{
   margin:0;background:var(--ground);color:var(--ink);
@@ -311,6 +315,14 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .avatar svg{display:block;width:100%;height:100%}
 .avatar--s{width:24px;height:24px;font-size:10px}
 .avatar--l{width:42px;height:42px;font-size:15px}
+/* Снимок в форме правки показан кружком того же вида, что увидят соседи, — только крупно:
+   кадрирования у нас нет, и человек должен сразу видеть, что попало в кадр */
+.avatar--xl{width:96px;height:96px;font-size:34px}
+.mephoto{position:relative;width:96px;margin:0 auto}
+.mephoto__b{position:absolute;right:-2px;bottom:-2px;width:32px;height:32px;border-radius:50%;
+  display:grid;place-items:center;background:var(--brand);color:#fff;box-shadow:0 0 0 3px var(--surface)}
+.mephoto__b:hover{opacity:.9}
+.mephoto__b svg{width:16px;height:16px}
 
 /* ---------- stage ---------- */
 .work{flex:1;display:flex;min-width:0;position:relative}
@@ -416,7 +428,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 
 /* ---------- toolbar ---------- */
 .toolbar{
-  position:absolute;left:16px;right:16px;top:calc(14px + var(--top-safe));display:flex;gap:12px;align-items:flex-start;
+  position:absolute;left:16px;right:16px;top:calc(14px + env(safe-area-inset-top,0px));display:flex;gap:12px;align-items:flex-start;
   justify-content:flex-end;
   pointer-events:none;flex-wrap:wrap;z-index:6;
 }
@@ -593,15 +605,6 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Строки в столбик, кружок и подпись в строку. Выбранная — белая плашка с тенью на серой
    дорожке: так сразу видно, что выбрано, и контрол читается как один предмет, а не как
    продолжение списка станций под ним. Кегль тот же, что у названия станции */
-/* Ряд переключателей типа над списком своих событий: по виду это те же кнопки, что
-   в строке сортировки рядом, а цветная точка перед словом говорит, что тут категории,
-   а не порядок */
-.catrow{display:flex;align-items:center;gap:8px;padding:12px 16px;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior-x:contain}
-.catrow button{flex:none;display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:7px;
-  font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;color:var(--ink-3);white-space:nowrap}
-.catrow button:hover{color:var(--ink)}
-.catrow button.is-on{background:var(--surface-3);color:var(--ink);font-weight:600}
-.catrow i{width:10px;height:10px;border-radius:50%;flex:none;border:2px solid transparent;display:block}
 .segctl--cat{flex-direction:column}
 .segctl--cat button{
   flex:none;flex-direction:row;gap:6px;padding:10px 12px;white-space:normal;text-align:left;
@@ -1169,6 +1172,32 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .tabs button.tab--act{--tab-line:var(--act)}
 .tabs button.tab--offer{--tab-line:var(--offer)}
 .tabs button.tab--find{--tab-line:var(--find)}
+/* Ряд контролов над списком своих дел. Каждый открывает свой выбор, поэтому выглядят
+   они одинаково и говорят одним языком с кнопкой охвата над картой: подложка, шеврон
+   вниз, текст второстепенным цветом. Это не чип (чип называет объект) и не тег
+   (тег говорит о состоянии) — это кнопка, за которой список */
+.ctlrow{display:flex;align-items:center;gap:8px;padding:12px 16px;
+  overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior-x:contain;
+  border-bottom:1px solid var(--line)}
+.ctl{flex:none;display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:var(--r-m);
+  background:var(--surface-2);color:var(--ink-2);
+  font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;white-space:nowrap}
+.ctl:hover{background:var(--surface-3);color:var(--ink)}
+.ctl svg{width:14px;height:14px;color:var(--ink-3);flex:none}
+/* у кнопки типов вместо слова три кружка, и поля ей нужны ровные со всех сторон */
+.ctl--dots{padding:7px 8px}
+/* счёт включённых типов появляется только когда что-то выключено: три залитых круга
+   и так значат «показано всё» */
+.ctl__n{font-variant-numeric:tabular-nums}
+.ctl--dots .catdots{--btn-bg:var(--surface-2)}
+.ctl--dots:hover .catdots{--btn-bg:var(--surface-3)}
+/* Выбор внутри всплывающего списка. Пункт с галкой — тот же .menu__i, но галка стоит
+   справа и занимает место всегда, иначе строки прыгают при переключении */
+.menu__i .menu__on{margin-left:auto;width:16px;height:16px;flex:none;color:var(--brand-icon);opacity:0}
+.menu__i.is-on .menu__on{opacity:1}
+.menu__i.is-on{font-weight:600;color:var(--ink)}
+/* кружок типа в списке — тот же размер, что в ряду контролов */
+.menu__i .catdot{width:14px;height:14px;border-radius:50%;flex:none;border:2px solid transparent;display:block}
 .listrow{position:relative;display:flex;gap:12px;padding:16px;width:100%;align-items:center;text-align:left;transition:background .14s}
 .listrow__cover{width:50px;height:50px;border-radius:var(--r-s);flex:none;object-fit:cover;display:grid;place-items:center}
 /* Личную переписку от общего чата по обложке не отличить: событие одно, фотография одна
@@ -1208,9 +1237,6 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* время в строке чата держится верхнего края: в профиле тот же блок носит шеврон,
    и его поднимать наверх не надо — поэтому модификатор, а не общее правило */
 .listrow__r--top{align-self:flex-start}
-/* число и шеврон в строке перехода стоят в строку: столбцом они читались бы как две
-   отдельные вещи, а это один ответ — «сколько там» и «туда» */
-.listrow__r--row{flex-direction:row;align-items:center;gap:8px}
 /* имя, время и точка в одной строке; название пина и текст ниже идут во всю ширину */
 .listrow__top{display:flex;align-items:baseline;gap:8px;min-width:0}
 .listrow__top .listrow__t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1237,7 +1263,11 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* Четыре яруса в одной карточке — чип, название, пояснение, время — при отступе в 8
    слипались в один ком. Между заголовком и текстом по правилу 12, остальное 8 */
 .sysmsg{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:var(--r-m);background:var(--surface);border:1px solid var(--line)}
-.sysmsg__t{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;margin-bottom:4px}
+/* Шаг по вертикали здесь ровный, 8 и 8, — осознанное отступление от лестницы, по которой
+   после заголовка идёт 12. В плотной карточке, где заголовок в строку, текст в две и время
+   в одну, ровный шаг читается лучше правильного. Исключение для этого элемента, а не отмена
+   правила */
+.sysmsg__t{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600}
 /* чип типа и шеврон — одной строкой: слева что это, справа что карточка ведёт дальше.
    В подвале шеврон стоял у времени, к которому отношения не имеет */
 .sysmsg__head{display:flex;align-items:center;gap:8px}
@@ -1246,17 +1276,25 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
    и есть вход, а кнопка «Открыть» говорила бы то же самое второй раз */
 .sysmsg--go{cursor:pointer}
 .sysmsg--go:hover{border-color:var(--line-2)}
-.sysmsg__go{margin-left:auto;width:16px;height:16px;color:var(--ink-3);flex:none;align-self:flex-start}
+.sysmsg__go{margin-left:auto;width:16px;height:16px;color:var(--ink-3);flex:none}
 .sysmsg__d{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
 .sysmsg__foot{display:flex;align-items:center;gap:8px}
 .sysmsg__foot .chip{margin-left:auto}
 .sysmsg .btn{width:auto;align-self:flex-start}
-.sysmsg .chip{align-self:flex-start}
+/* только прямым детям колонки: внутри шапки чип стоит в строке с шевроном, и прижатие
+   к верху разводило их центры на три пикселя — высоты-то разные */
+.sysmsg>.chip{align-self:flex-start}
 /* Непрочитанное отмечено заливкой: прежде залитыми были все карточки, и заливка ничего
    не сообщала — приходилось метить новое тёмной обводкой. Теперь прочитанное белое с рамкой,
    и залитая среди них ровно настолько заметна, насколько нужно. Рамка остаётся у всех,
    у новых она прозрачная: иначе карточки прыгали бы на два пикселя, когда канал прочитан */
 .sysmsg.is-new{background:var(--surface-2);border-color:transparent}
+/* На залитой карточке бледная заливка чипа лежит на другой бледной заливке, и граница
+   между ними читается как грязь, а не как край. Даём чипу обводку цветом его же текста.
+   Тенью, а не рамкой: рамка съела бы по пикселю поля с каждой стороны и сдвинула текст.
+   Служебной плашки с исходом это не касается — она белая на сером, ей края хватает */
+.sysmsg.is-new .chip--act,.sysmsg.is-new .chip--offer,.sysmsg.is-new .chip--find{
+  box-shadow:0 0 0 1px currentColor}
 /* Разделитель дня между сообщениями и метка «Новые» — один элемент: обе отвечают на вопрос
    «где я остановился». Раз день назван здесь, в самом сообщении остаётся только время */
 .daysep{text-align:center;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);padding:4px 0}
@@ -1363,14 +1401,14 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .sheet-scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:19;display:none}
 /* под домашней шторкой затемняем только карту: дом — состояние просмотра, и уходить
    из него в чаты одним касанием человек вправе, поэтому таббар остаётся живым */
-.sheet-scrim--home{bottom:var(--rail-h)}
+.sheet-scrim--home{bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px))}
 /* плашка с расстоянием на шаге выбора места — тёмная, как всплывающие сообщения */
 /* Плашка занимает тот же слот, что кнопка охвата, и уходит тем же движением. Видна она
    только пока шторка внизу и вы целитесь: как только шторка поднялась, станция
    и расстояние уже стоят в поле внутри неё, и плашка становится дублем */
 .pickinfo.is-away{opacity:0;transform:translateX(-50%) translateY(-160%) scale(.92)}
 .pickinfo{
-  position:absolute;left:50%;top:calc(16px + var(--top-safe));transform:translateX(-50%);z-index:7;
+  position:absolute;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:7;
   transition:transform .22s ease,opacity .22s ease;
   background:var(--ink);color:var(--ground);padding:8px 16px;border-radius:var(--r-m);
   font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;white-space:nowrap;box-shadow:var(--shadow-2);pointer-events:none;
@@ -1392,7 +1430,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* Тот же слот и то же движение, что у плашки расстояния и кнопки охвата. Снизу тост
    наезжал на плавающую кнопку в фильтрах, сверху ему никто не мешает */
 .toast{
-  position:fixed;left:50%;top:calc(16px + var(--top-safe));transform:translateX(-50%) translateY(-160%) scale(.92);
+  position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-160%) scale(.92);
   overflow:hidden;
   opacity:0;pointer-events:none;
   background:var(--ink);color:var(--ground);padding:12px 16px;border-radius:var(--r-m);
@@ -1411,7 +1449,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
    охвата, и уходят они одним движением. На десктопе верх занят шапками панелей, и тост
    падал на них — поэтому он живёт внизу и уходит к нижней границе тем же движением */
 @media (min-width:821px){
-  .toast{top:auto;bottom:calc(16px + var(--bot-safe));transform:translateX(-50%) translateY(160%) scale(.92)}
+  .toast{top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(160%) scale(.92)}
   .toast.is-on{transform:translateX(-50%) translateY(0) scale(1)}
 }
 .toast__a{color:var(--ground);font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
@@ -1435,9 +1473,9 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      в потоке, карта до него не доходила, и когда он уезжал на время жеста, снизу
      оставалась белая полоса. Он непрозрачный, поэтому в обычном виде ничего не изменилось */
   .rail{
-    position:absolute;left:0;right:0;bottom:0;width:auto;height:var(--rail-h);
+    position:absolute;left:0;right:0;bottom:0;width:auto;height:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));
     flex:none;flex-direction:row;justify-content:space-around;align-items:center;
-    border-right:none;border-top:1px solid var(--line);padding:8px 8px calc(8px + var(--bot-safe));
+    border-right:none;border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));
   }
   .rail .navbtn{width:auto;flex:1;padding:4px}
   .rail .brand,.rail__spacer{display:none}
@@ -1452,9 +1490,9 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   }
   /* «разделы» (чаты, профиль, поиск, переписка) — во весь экран над таббаром: он их навигация,
      поэтому таббар остаётся виден и затемнения под ними нет */
-  .panel.is-section{top:0;bottom:var(--rail-h);height:auto;max-height:none;border-radius:0;border-top:none;
+  .panel.is-section{top:0;bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));height:auto;max-height:none;border-radius:0;border-top:none;
     /* подложка доходит до физического верха экрана, а содержимое начинается под островом */
-    padding-top:var(--top-safe)}
+    padding-top:env(safe-area-inset-top,0px)}
   /* Переписка не раздел, а экран внутри него: выход даёт стрелка в шапке, а не таббар.
      И нижний край там принадлежит содержимому — внизу поле ввода, а с открытой клавиатурой
      полос становится три */
@@ -1480,7 +1518,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      не может его накрыть. Свёрнутая показывает ровно строку поиска, остальное обрезается.
      Развёрнутая встаёт по тому же правилу, что шторка создания — сто пикселей карты сверху */
   .panel.is-home,.panel.is-screen{
-    top:calc(100px + var(--top-safe));bottom:var(--rail-h);height:auto;max-height:none;
+    top:calc(100px + env(safe-area-inset-top,0px));bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));height:auto;max-height:none;
     border-radius:var(--r-l) var(--r-l) 0 0;border-top:1px solid var(--line);
     transition:top .24s ease;
   }
@@ -1498,7 +1536,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      возвращаем собственные касания — иначе тап уходит в жест */
   .panel.is-home .panel__top{touch-action:none}
   .panel.is-home .panel__top .searchfield{touch-action:auto}
-  .panel.is-home.is-shut{top:calc(100dvh - var(--rail-h) - var(--home-peek))}
+  .panel.is-home.is-shut{top:calc(100dvh - calc(var(--rail-h) + env(safe-area-inset-bottom,0px)) - var(--home-peek))}
   /* в свёрнутом виде своя линия под строкой поиска не нужна: она встала бы в пиксель
      от границы таббара и читалась как вторая полоса */
   .panel.is-home.is-shut .panel__top{border-bottom:none;
@@ -1525,11 +1563,11 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      негде было лежать; ручка переезжает внутрь, и полоска становится не нужна. Углы
      выпрямляем: на телефоне их скругляет сам экран, а в браузере шторка во весь экран
      и обязана быть прямоугольной */
-  .panel.is-pin.is-full{top:0;bottom:var(--rail-h);height:auto;max-height:none;min-height:0;
+  .panel.is-pin.is-full{top:0;bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));height:auto;max-height:none;min-height:0;
     border-radius:0;border-top:none}
-  .panel.is-pin.is-full .sheet-grip{display:flex;top:var(--top-safe)}
+  .panel.is-pin.is-full .sheet-grip{display:flex;top:env(safe-area-inset-top,0px)}
   /* кнопки шапки уходят ниже ручки и ниже острова: в этом положении над ними ничего нет */
-  .panel.is-pin.is-full .panelhead--over{padding-top:calc(var(--top-safe) + 22px)}
+  .panel.is-pin.is-full .panelhead--over{padding-top:calc(env(safe-area-inset-top,0px) + 22px)}
   /* Пол карточки: сверху остаётся полоска карты с булавкой и её окружением — карта здесь
      часть ответа, а не фон, — но не половина экрана пустоты, как было при 60dvh */
   .panel.is-pin:not(.is-shut):not(.is-full){min-height:calc(100dvh - 160px)}
@@ -1555,7 +1593,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .panel.is-swipe{padding-top:8px}
   .panel.is-pin{transition:top .24s ease,transform .22s ease}
   .panel.is-pin.is-shut{
-    top:calc(100dvh - var(--rail-h) - var(--pin-peek));bottom:var(--rail-h);height:auto;max-height:none;
+    top:calc(100dvh - calc(var(--rail-h) + env(safe-area-inset-bottom,0px)) - var(--pin-peek));bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));height:auto;max-height:none;
   }
   .panel.is-pin.is-shut .panel__body,.panel.is-pin.is-shut .panel__foot{display:none}
   .panel.is-pin.is-shut .panelhead--over{display:none}
@@ -2011,18 +2049,35 @@ function avatarSVG(u,px){
   if(mouth===4)s+='<path d="M17.6 21.4c.8 1.4 4 1.4 4.8 0z" fill="#2b2b2b"/>';
   return s+'</svg>';
 }
+/* Имя хранится целиком, а показывается сокращённым: «Анна Ковалевская» → «Анна К.».
+   Первое слово — имя, первая буква последнего — инициал, поэтому «Иван Петрович Сидоров»
+   даёт «Иван С.», а не «Иван П.». Одно слово остаётся как есть — точке не за чем стоять.
+   Демо-набор уже хранит «Никита Р.», и правило на нём ничего не меняет: последнее слово
+   «Р.», первая буква «Р».
+   Полное имя видит только владелец — в своём профиле и в форме правки. Району всегда
+   уходит короткое */
+function shortName(u){
+  if(!u||!u.name)return '';
+  var p=String(u.name).trim().split(/\s+/);
+  if(p.length<2)return p[0]||'';
+  return p[0]+' '+p[p.length-1].charAt(0).toUpperCase()+'.';
+}
 function avatarHTML(u,cls){
   if(!u)return '';
-  /* настоящий портрет впереди нарисованного лица: он и есть человек, а рисунок — заглушка */
-  if(FACE_PHOTOS[u.id])return '<span class="avatar '+(cls||'')+'" title="'+H(u.name)+
+  /* Свой снимок впереди всего: его человек выбрал сам. Дальше вшитый портрет, лист
+     заглушек и нарисованное лицо — поэтому пустого аватара не бывает никогда, и удаление
+     снимка возвращает рисунок, а не дыру */
+  if(u.avatar)return '<span class="avatar '+(cls||'')+'" title="'+H(shortName(u))+
+    '" style="background-image:url('+u.avatar+');background-size:cover;background-position:center"></span>';
+  if(FACE_PHOTOS[u.id])return '<span class="avatar '+(cls||'')+'" title="'+H(shortName(u))+
     '" style="background-image:url('+FACE_PHOTOS[u.id]+');background-size:cover;background-position:center"></span>';
   var ph=facePhoto(u.id);
   /* масштаб чуть больше сетки: между клетками на листах есть белые промежутки,
      и без запаса они попадали бы в кадр по краям кружка */
-  if(ph)return '<span class="avatar '+(cls||'')+'" title="'+H(u.name)+'" style="background-image:url('+ph.url+
+  if(ph)return '<span class="avatar '+(cls||'')+'" title="'+H(shortName(u))+'" style="background-image:url('+ph.url+
     ');background-size:'+(FACE_COLS*108)+'% '+(FACE_ROWS*108)+'%;background-position:'+ph.x+'% '+ph.y+'%"></span>';
   var px=(cls&&cls.indexOf('avatar--l')>=0)?42:((cls&&cls.indexOf('avatar--s')>=0)?24:30);
-  return '<span class="avatar '+(cls||'')+'" title="'+H(u.name)+'">'+avatarSVG(u,px)+'</span>';
+  return '<span class="avatar '+(cls||'')+'" title="'+H(shortName(u))+'">'+avatarSVG(u,px)+'</span>';
 }
 function icon(name,cls){return '<svg class="'+(cls||'')+'" aria-hidden="true"><use href="#i-'+name+'"/></svg>'}
 /* Короткое слово не должно оставаться в конце строки одно. Правим готовую разметку, а не
@@ -2251,10 +2306,10 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.13';
+var VERSION='3.14';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
-var UPDATED='18 сентября 2026';
+var UPDATED='20 сентября 2026';
 var KEY='raion.v1';
 var db=null;
 
@@ -2488,7 +2543,7 @@ function seedGroup(who){
         if(th.users.indexOf(l[1])<0)th.users.push(l[1]);
         var u=user(l[1]);
         db.messages.push({id:uid('msg'),thread_id:th.id,author_id:null,sys:true,mine_seed:true,
-          text:(l[1]===who?'Вы':(u?u.name:'Сосед'))+' в списке участников',created_at:at});
+          text:(l[1]===who?'Вы':(u?shortName(u):'Сосед'))+' в списке участников',created_at:at});
         return;
       }
       if(th.users.indexOf(l[0])<0)th.users.push(l[0]);
@@ -3599,7 +3654,7 @@ var ui={
   /* первая станция набора: по ней центрируется карта и к ней относят пин без своей точки */
   districtId:'d_sokol', feedSort:'time', draft:null, picking:false,
   /* роль внутри экрана своих событий, порядок и собственный фильтр типов */
-  mineTab:'own', mineSort:null, mineCats:null, userTab:'active', typing:false, panelCollapsed:false, searchQuery:'',
+  mineTab:'own', mineSort:null, mineCats:null, mineQuery:'', userTab:'active', typing:false, panelCollapsed:false, searchQuery:'',
   /* вкладка сообщений живёт только в памяти сеанса: вернувшись, человек всегда видит «Все»,
      иначе вчерашний фильтр спрятал бы сегодняшнее сообщение */
   msgTab:'all',
@@ -3813,7 +3868,7 @@ function joinNote(t,userId){
   var u=user(userId);
   /* «присоединилась» требует знать род, а он у нас нигде не записан. «в списке участников»
      обходится без него и повторяет формулировку, которую человек уже видел в подсказке */
-  groupNote(t,(userId===db.currentUserId?'Вы':(u?u.name:'Сосед'))+' в списке участников');
+  groupNote(t,(userId===db.currentUserId?'Вы':(u?shortName(u):'Сосед'))+' в списке участников');
 }
 /* groupRemove больше нет: с тех пор как состав общего чата выводится из самого события,
    снятый отклик убирает человека и из разговора сам. Функция осталась бы притворством —
@@ -4430,7 +4485,9 @@ function panelSlide(el,dir,oldHTML,oldScroll){
 var tabState={map:null,chats:null,profile:null};
 function tabOf(p){
   var top=parentOf(p);
-  return top?(TOP_PANELS[top.type]?top.type:'map'):'map';
+  if(!top)return 'map';
+  if(TAB_HOME[top.type])return TAB_HOME[top.type];
+  return TOP_PANELS[top.type]?top.type:'map';
 }
 function tabSave(){
   if(ui.panel&&ui.panel.type==='create')return;
@@ -4445,7 +4502,14 @@ function isTwoCol(){return window.innerWidth>=1440}
    пополнять руками при каждом новом экране, и забытый тип забирал левую колонку, закрывая
    то, откуда его открыли. Теперь всё, что не пришло из таббара, вложенное по умолчанию */
 var TOP_PANELS={create:1,chats:1,profile:1};
-function isDetailPanel(p){return !!p&&!TOP_PANELS[p.type]}
+/* Два разных вопроса, которые раньше решал один список. Какой экран занимает первую
+   колонку — и какой пункт таббара подсвечен. «Текущие дела» и «Архив» должны занимать
+   первую колонку: из них открываются вложенные экраны, и им нужна вторая. Но в таббаре
+   это по-прежнему профиль — иначе, пока человек в своих делах, подсветка уезжала бы
+   на «Карту», потому что своего пункта у этого экрана нет */
+var MAIN_PANELS={create:1,chats:1,profile:1,mine:1};
+var TAB_HOME={mine:"profile"};
+function isDetailPanel(p){return !!p&&!MAIN_PANELS[p.type]}
 /* шаг назад по цепочке «откуда открыли»: им пользуется крестик второй колонки */
 function oneUp(p){
   if(!p)return null;
@@ -4466,7 +4530,7 @@ function oneUp(p){
     return {type:'chats'};
   }
   if(p.type==='scope')return p.prev||null;
-  if(p.type==='settings'||p.type==='mine')return {type:'profile'};
+  if(p.type==='settings'||p.type==='mine'||p.type==='me')return {type:'profile'};
   return p.prev||null;
 }
 /* что показывать в первой колонке: отматываем цепочку до списка. Одного шага мало —
@@ -4497,6 +4561,7 @@ function viewFor(p){
     case 'people': return viewPeople(p.id);
     case 'archive': return viewArchive();
     case 'mine': return viewMine(p.id);
+    case 'me': return viewMe();
     case 'settings': return viewSettings();
     case 'edit': return viewEdit(p.id);
   }
@@ -4746,7 +4811,7 @@ function viewPin(id){
         /* основная кнопка справа — правило проекта, и так же устроены модальные окна */
         '<span class="row">'+
           '<button class="btn btn--line btn--sm" data-act="confirm-no" data-id="'+mr.id+'">Не смогу</button>'+
-          '<button class="btn btn--primary btn--sm" data-act="confirm-go" data-id="'+mr.id+'">'+icon('check')+'Иду</button>'+
+          '<button class="btn btn--primary btn--sm" data-act="confirm-go" data-id="'+mr.id+'">'+'Иду'+icon('check')+'</button>'+
         '</span></div>');
     }
     var pend=pendingOf(p.id);
@@ -4762,7 +4827,7 @@ function viewPin(id){
           return '<div class="person">'+
             '<button class="person__who" data-act="user" data-id="'+H(r.user_id)+'">'+
               avatarHTML(u,'avatar--s')+
-              '<span class="person__n">'+H(u?u.name:'Сосед')+'</span>'+icon('chev-right')+
+              '<span class="person__n">'+H(u?shortName(u):'Сосед')+'</span>'+icon('chev-right')+
             '</button>'+
             '<span class="row" style="margin-left:auto;gap:8px">'+
               '<button class="btn btn--ghost btn--sm" data-act="accept" data-id="'+r.id+'">Принять</button>'+
@@ -4776,7 +4841,7 @@ function viewPin(id){
   }
 
   var author='<button class="author" data-act="user" data-id="'+H(p.author_id)+'">'+avatarHTML(au)+
-    '<div class="author__body"><div class="author__n">'+H(au?au.name:'Сосед')+'</div>'+
+    '<div class="author__body"><div class="author__n">'+H(au?shortName(au):'Сосед')+'</div>'+
     /* станция отсюда убрана — она стоит чипом строкой выше; вместо неё то, чего больше нигде
        нет, и что для разговора с незнакомцем важнее всего: как давно человек здесь.
        На своём пине вместо даты стоит принадлежность: про себя эта дата бесполезна */
@@ -4904,7 +4969,7 @@ function viewPeople(id){
     /* дата вместо глагола: «получил» и «получила» требуют знать род, которого мы не знаем */
     if(r.settled_at)tags+='<span class="tag">'+H(dateFull(r.settled_at))+'</span>';
     return '<button class="person" data-act="user" data-id="'+H(r.user_id)+'">'+avatarHTML(u,'avatar--s')+
-      '<span class="person__n">'+H(u?u.name:'Сосед')+'</span>'+
+      '<span class="person__n">'+H(u?shortName(u):'Сосед')+'</span>'+
       (tags?'<span class="person__tags">'+tags+'</span>':'')+
     '</button>';
   }
@@ -5455,7 +5520,8 @@ function viewProfile(){
   }
   var bell=bellHTML('');
   var head='<div class="pad profhead">'+
-    avatarHTML(m,'avatar--l')+
+    /* аватар и есть вход в правку: так это устроено везде, где профиль правят */
+    '<button data-act="open-me" aria-label="Изменить профиль" style="flex:none">'+avatarHTML(m,'avatar--l')+'</button>'+
     '<div style="flex:1;min-width:0"><div style="font-size:var(--f-h40);line-height:var(--l-h40);font-weight:600">'+H(m.name)+'</div>'+
     '<div style="font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)">'+H(m.phone||'без телефона')+'</div></div>'+
     '<span class="headacts">'+(isDesktopPanel()?bell:'')+
@@ -5473,15 +5539,29 @@ function viewProfile(){
        значит поставить между ними 48, а в лестнице такого шага нет */
     '<div class="eyebrow" style="padding:0 16px 8px">Ближайшее</div>'+mineRows(planned,m)
     : '';
+  /* Счётчик стоит у названия, а не у шеврона: это часть имени строки — «текущих дел
+     двенадцать», — а не второе действие справа. Плашка залитая, та же, что у счётчика
+     участников в шапке события: она переворачивается по теме сама.
+     Пустая строка не показывается вовсе: переход в пустой экран ничего не сообщает,
+     а появится он ровно тогда, когда будет что смотреть */
   function goRow(era,label,n){
+    if(!n)return '';
     return '<button class="listrow" data-act="open-mine" data-id="'+era+'">'+
-      '<span class="listrow__body"><span class="listrow__t">'+label+'</span></span>'+
-      '<span class="listrow__r listrow__r--row"><span class="tag">'+n+'</span>'+icon('chev-right')+'</span></button>';
+      '<span class="listrow__body"><span class="listrow__t">'+label+
+        '<span class="tag tag--solid" style="margin-left:8px">'+n+'</span></span></span>'+
+      '<span class="listrow__r">'+icon('chev-right')+'</span></button>';
   }
+  var rows=goRow('active','Текущие дела',active.length)+goRow('archive','Архив',archive.length);
+  /* Совсем пустой профиль: вместо двух отсутствующих строк одно состояние, которое называет
+     суть и даёт единственное действие. Слова другие, чем у пустого района: там «здесь пока
+     пусто» про район, здесь — про вас, и одинаковый текст слил бы два разных состояния */
+  if(!rows)rows='<div class="empty">'+icon('pin')+'<b>Ваших дел пока нет</b>'+
+    '<p>Проще всего познакомиться с районом с первого события: позвать соседей на прогулку '+
+    'или отдать то, что вам не нужно</p>'+
+    '<button class="btn btn--primary btn--sm" data-nav="create">'+icon('plus')+'Создать событие</button></div>';
   /* тот же блок фактов, что в профиле соседа: полоса состава дел, круг знакомств, свежесть */
   var body=head+profileFacts(m.id,true,my.length>0)+soon+
-    '<div class="divider divider--lg"></div>'+
-    goRow('active','Сейчас',active.length)+goRow('archive','Архив',archive.length);
+    '<div class="divider divider--lg"></div>'+rows;
 
   return {title:'Профиль',body:body,section:true,
     action:isDesktopPanel()?'':bellHTML('chathead__act')};
@@ -5494,57 +5574,114 @@ function viewProfile(){
    Фильтр здесь собственный, а не общий с картой: общий значил бы, что человек, сняв
    «встречи» в своих событиях, молча перефильтровал себе карту */
 function mineCatOn(k){return ui.mineCats?ui.mineCats[k]!==false:true}
-function viewMine(era){
+/* Отбор вынесен из отрисовки: по нему же работает ввод в строке поиска, который обновляет
+   один список, не перерисовывая панель, — иначе поле теряло бы курсор на каждой букве */
+function mineCompute(era){
   var m=me(), past=(era==='archive'), sp=mineSplit();
-  var list=(past?sp.archive:sp.active).filter(function(p){return mineCatOn(p.type)});
+  var q=(ui.mineQuery||'').trim().toLowerCase();
+  var list=(past?sp.archive:sp.active).filter(function(p){
+    if(!mineCatOn(p.type))return false;
+    return !q||p.title.toLowerCase().indexOf(q)>=0||p.description.toLowerCase().indexOf(q)>=0;
+  });
   var own=list.filter(function(p){return p.author_id===m.id});
   var join=list.filter(function(p){return p.author_id!==m.id});
-  var both=own.length&&join.length;
+  var both=!!(own.length&&join.length);
   if(!both)ui.mineTab=own.length?'own':'join';
-  var cur=(ui.mineTab==='join')?join:own;
+  var cur=((ui.mineTab==='join')?join:own).slice();
+  /* Порядок называется по ключу, а не по чувству: «сначала ближайшие» это starts_at,
+     «сначала новые» — когда событие появилось. В архиве ближайших не бывает, там пара
+     другая */
+  var sorts=past?[['late','Сначала недавние'],['early','Сначала давние']]
+                :[['soon','Сначала ближайшие'],['new','Сначала новые']];
+  var sort=ui.mineSort||(past?'late':'soon');
+  if(!sorts.some(function(s){return s[0]===sort}))sort=sorts[0][0];
+  if(sort==='soon')cur.sort(bySoon);
+  else if(sort==='new')cur.sort(function(a,b){return b.created_at-a.created_at});
+  else if(sort==='early')cur.sort(function(a,b){return (a.closed_at||a.created_at)-(b.closed_at||b.created_at)});
+  else cur.sort(function(a,b){return (b.closed_at||b.created_at)-(a.closed_at||a.created_at)});
+  return {m:m,past:past,q:q,own:own,join:join,both:both,cur:cur,
+    sorts:sorts,sort:sort,sortName:sorts.filter(function(s){return s[0]===sort})[0][1]};
+}
+function mineEmpty(c){
+  return '<div class="empty">'+icon(c.q?'search':(c.past?'archive':'pin'))+
+    '<b>'+(c.q?'Ничего не нашлось':(c.past?'В архиве пусто':'Здесь пока пусто'))+'</b>'+
+    '<p>'+(c.q?'Попробуйте другое слово или проверьте типы событий'
+            :(c.past?'Сюда попадают законченные дела: встречи, которые прошли, и вещи, которые нашли хозяев'
+                   :'События, которые вы создадите или к которым присоединитесь, появятся здесь'))+'</p></div>';
+}
+function viewMine(era){
+  var c=mineCompute(era);
+  var m=c.m, past=c.past, q=c.q, own=c.own, join=c.join, both=c.both, cur=c.cur;
 
   var tabs=both?'<div class="hscroll tabswrap"><div class="tabs">'+
     [['own','Ваши события',own.length],['join',past?'Участвовали':'Участвуете',join.length]]
     .map(function(t){return '<button data-tab="'+t[0]+'" class="'+(ui.mineTab===t[0]?'is-on':'')+'">'+t[1]+' '+t[2]+'</button>'}).join('')+
   '</div></div>':'';
 
-  /* Чипы типов стоят строкой, а не столбцом, как в фильтре района: там они главное
-     содержание экрана, здесь — управление над списком, и три строки съели бы первый экран.
-     Не помещаются — полоса прокручивается и показывает края со стрелками, для этого
-     общий элемент и заводили. Короткие названия по той же причине */
-  var chips='';
+  /* Ряд контролов вместо двух строк переключателей: три типа занимали целую строку,
+     а сортировка вторую. Теперь это однородный ряд кнопок, каждая открывает свой выбор, —
+     тот же приём, что в списке покупок у больших магазинов. Складывается в прокручиваемую
+     полосу: в архиве контролов трое, и на узкой панели они не помещаются */
+  /* Типы свёрнуты в три кружка — тот самый знак, что стоит на кнопке фильтра над картой
+     и означает ровно это: залитый круг показывается, контурный выключен. Знак человеку
+     уже знаком, остаётся дать по нему нажать */
+  var dots='<span class="catdots">', kn=0, kall=0;
   for(var k in PIN_TYPES){
-    var t=PIN_TYPES[k], on=mineCatOn(k), c='var(--'+t.cls+')';
-    chips+='<button class="'+(on?'is-on':'')+'" data-minecat="'+k+'">'+
-      '<i style="border-color:'+c+(on?';background:'+c:'')+'"></i>'+H(t.short)+'</button>';
+    /* имя переменной не случайно длиннее нужного: `var` живёт во всей функции, и короткое
+       `c` здесь затирало бы результат отбора, который лежит в `c` выше */
+    var kc='var(--'+PIN_TYPES[k].cls+')', kon=mineCatOn(k);
+    kall++; if(kon)kn++;
+    dots+='<i style="border-color:'+kc+(kon?';background:'+kc:'')+'"></i>';
   }
-  /* Порядок называется по ключу, а не по чувству: «сначала ближайшие» это starts_at,
-     «сначала новые» — когда событие появилось. В архиве ближайших не бывает, там пара
-     другая */
-  var sorts=past?[['late','недавние'],['early','давние']]:[['soon','ближайшие'],['new','новые']];
-  var sort=ui.mineSort||(past?'late':'soon');
-  if(!sorts.some(function(s){return s[0]===sort}))sort=sorts[0][0];
-  var bar='<div class="hscroll"><div class="catrow">'+chips+'</div></div>'+
-    '<div class="feed__sort" style="padding:0 16px 12px">'+
-    sorts.map(function(s){return '<button data-minesort="'+s[0]+'" class="'+(sort===s[0]?'is-on':'')+'">'+s[1]+'</button>'}).join('')+
-    '</div>';
-
-  cur=cur.slice();
-  if(sort==='soon')cur.sort(bySoon);
-  else if(sort==='new')cur.sort(function(a,b){return b.created_at-a.created_at});
-  else if(sort==='early')cur.sort(function(a,b){return (a.closed_at||a.created_at)-(b.closed_at||b.created_at)});
-  else cur.sort(function(a,b){return (b.closed_at||b.created_at)-(a.closed_at||a.created_at)});
+  /* Пока показаны все типы, кнопка молчит: три залитых круга и значат «всё». Стоит
+     что-то выключить — рядом появляется счёт. Именами включённых его не заменить:
+     «Вещи и услуги, находки» в ряду контролов не поместится, а числу место всегда одно
+     и то же, и грамматики у него нет */
+  dots+='</span>';
+  if(kn<kall)dots+='<span class="ctl__n">'+kn+' из '+kall+'</span>';
+  var bar='<div class="hscroll"><div class="ctlrow">'+
+    '<button class="ctl ctl--dots" data-act="mine-cats" aria-label="Типы событий">'+
+      dots+icon('chev-down')+'</button>'+
+    '<button class="ctl" data-act="mine-sort">'+H(c.sortName)+icon('chev-down')+'</button>'+
+  '</div></div>';
+  /* Поле поиска отдаём первой полосой панели: та же зона, та же высота и то же место,
+     что у поиска на карте и в сообщениях. Запрос свой — в приложении у каждого экрана
+     свой, общий текст между экранами был бы неожиданностью */
+  var head='<div class="searchfield">'+
+    '<svg class="searchfield__ic"><use href="#i-search"/></svg>'+
+    '<input class="input" id="mineSearch" data-mineq="1" placeholder="'+(past?'Поиск по архиву':'Поиск по вашим делам')+'" value="'+H(ui.mineQuery||'')+'">'+
+    (q?'<button class="searchfield__clear" data-act="mine-clear" aria-label="Очистить">'+icon('close')+'</button>':'')+
+  '</div>';
 
   var body=bar+tabs+'<div class="swrap"><div id="swArea">'+
-    (cur.length?mineRows(cur,m)
-      :'<div class="empty">'+icon(past?'archive':'pin')+'<b>'+(past?'В архиве пусто':'Здесь пока пусто')+'</b>'+
-       '<p>'+(past?'Сюда попадают законченные дела: встречи, которые прошли, и вещи, которые нашли хозяев'
-                 :'События, которые вы создадите или к которым присоединитесь, появятся здесь')+'</p></div>')+
+    (cur.length?mineRows(cur,m):mineEmpty(c))+
     '</div></div>';
-  return {title:past?'Архив':'Сейчас',back:true,body:body,
+  return {title:past?'Архив':'Текущие дела',back:true,top:head,body:body,
     after:function(){scrollTabIntoView($('#panel'))}};
 }
 
+/* ---- свой профиль: снимок и имя ---- */
+/* Вход — нажатие на собственный аватар. Раньше имя правилось кнопкой в настройках,
+   а снимок не правился никак: он был чем-то выданным человеку, а не выбранным им.
+   Телефон здесь показан, но не правится: это не поле, а удостоверение — он подтверждён
+   кодом, и смена телефона означает подтвердить заново, а не переписать строку */
+function viewMe(){
+  var m=me();
+  var body='<div class="pad stack">'+
+    '<div class="mephoto">'+avatarHTML(m,'avatar--xl')+
+      '<button class="mephoto__b" data-act="me-photo" aria-label="Выбрать снимок">'+icon('camera')+'</button>'+
+    '</div>'+
+    (m.avatar?'<div style="text-align:center"><button class="linkbtn" data-act="me-photo-off">Удалить снимок</button></div>':'')+
+    '<div class="field"><label for="meName">Имя и фамилия</label>'+
+      '<input class="input" id="meName" maxlength="40" value="'+H(m.name)+'">'+
+      '<span class="hint">Соседям покажем имя и первую букву фамилии — '+H(shortName(m))+'</span></div>'+
+    '<div class="field"><label>Телефон</label>'+
+      '<input class="input" value="'+H(m.phone||'')+'" disabled>'+
+      '<span class="hint">Телефон подтверждён кодом и в прототипе не меняется</span></div>'+
+  '</div>';
+  return {title:'Ваш профиль',back:true,body:body,
+    foot:'<button class="btn btn--primary" data-act="me-save">Сохранить</button>'};
+}
 /* ---- профиль соседа ---- */
 /* Счётчики считаются из причин закрытия и отдельного ввода не требуют. Оценок и отзывов
    здесь нет сознательно: оценка уместна там, где была сделка, а сосед, бесплатно отдавший
@@ -5639,7 +5776,7 @@ function profileFacts(id,self,hasPins){
        Имена вперёд, число в хвост, тем же приёмом, что у станций: «50 общих с вами»
        и три имени расходились между собой, стоило кругу стать больше трёх. Если в хвосте
        остался ровно один, называем его — «и ещё 1» не экономит ничего, а имя полезнее */
-    var mn=mutual.map(function(u){var uu=user(u);return uu?uu.name:'сосед'});
+    var mn=mutual.map(function(u){var uu=user(u);return uu?shortName(uu):'сосед'});
     var shown=mn.length>4?mn.slice(0,3):mn, restN=mn.length-shown.length;
     facts+='<div class="factrow">'+icon('people')+'<div><b>'+
       (self?'Вы пересекаетесь с ':'Пересекается с ')+met.length+' '+plural(met.length,'соседом','соседями','соседями')+'</b>'+
@@ -5678,7 +5815,7 @@ function viewUser(id,pinctx){
   var head='<div class="pad" style="display:flex;gap:12px;align-items:center;border-bottom:1px solid var(--line)">'+
     avatarHTML(u,'avatar--l')+
     '<div style="flex:1;min-width:0"><div style="font-size:var(--f-h40);line-height:var(--l-h40);font-weight:600">'+
-      H(u.name)+'</div>'+
+      H(shortName(u))+'</div>'+
     /* про себя дата присоединения бесполезна, поэтому на своём профиле под именем
        стоит принадлежность, а не она */
     '<div style="font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)">'+
@@ -5698,7 +5835,7 @@ function viewUser(id,pinctx){
   if(!self&&iBlocked(id)){
     /* У заблокированного показывать нечего: его события у вас скрыты, переписка закрыта.
        Экран остаётся ради одного действия — вернуть всё обратно */
-    return {title:H(u.name),fadeTitle:true,back:true,body:head+
+    return {title:H(shortName(u)),fadeTitle:true,back:true,body:head+
       '<div class="empty">'+icon('shield')+'<b>Сосед заблокирован</b>'+
       '<p>Его события скрыты у вас, ваши — у него, переписка закрыта. Он об этом не знает</p>'+
       '<button class="btn btn--line btn--sm" data-act="unblock" data-id="'+H(id)+'">Разблокировать</button></div>'};
@@ -5736,7 +5873,7 @@ function viewUser(id,pinctx){
         '<p>Здесь появятся события, которые сосед создаст</p></div>');
   /* Имя стоит в теле экрана крупно, поэтому в шапке оно дублировалось. Как и в карточке
      пина, оно проявляется только при прокрутке — в покое там одна стрелка */
-  return {title:H(u.name),fadeTitle:true,back:true,body:body};
+  return {title:H(shortName(u)),fadeTitle:true,back:true,body:body};
 }
 
 /* ---- настройки профиля ---- */
@@ -5777,7 +5914,7 @@ function viewSettings(){
     '<div class="eyebrow" style="padding:0 16px 8px">Заблокированные</div>'+
     bl.map(function(u){
       return '<div class="listrow">'+avatarHTML(u,'')+
-        '<span class="listrow__body"><span class="listrow__t">'+H(u.name)+'</span></span>'+
+        '<span class="listrow__body"><span class="listrow__t">'+H(shortName(u))+'</span></span>'+
         '<button class="btn btn--line btn--sm" data-act="unblock" data-id="'+H(u.id)+'">Разблокировать</button></div>';
     }).join(''):'';
   var theme='<div class="field"><label>Тема оформления</label><div class="segctl">'+
@@ -5799,7 +5936,6 @@ function viewSettings(){
   '<div class="divider divider--lg"></div>'+
   '<div class="pad stack">'+
     '<button class="btn btn--line" data-act="open-scope">'+icon('filter')+'Фильтры'+'</button>'+
-    '<button class="btn btn--line" data-act="rename">'+icon('user')+'Изменить имя'+'</button>'+
   '</div>'+
   blocked+
   '<div class="divider divider--lg"></div>'+
@@ -5903,7 +6039,7 @@ function threadRow(t){
        Но у одной находки чатов бывает несколько — по одному на соседа плюс общий, — и все
        они получали одну и ту же фотографию. Поэтому в личной переписке поверх обложки
        встаёт лицо собеседника; у общего чата его нет, и это отсутствие и есть признак */
-    title=(kind==='group')?groupName(pin(t.pin_id)):(u?u.name:'Сосед');
+    title=(kind==='group')?groupName(pin(t.pin_id)):(u?shortName(u):'Сосед');
     sub=p?p.title:'Событие удалено';
     cover='<span class="listrow__pic">'+(photoOf(p)
       ? '<img class="listrow__cover listrow__cover--lg" src="'+photoOf(p)+'" alt="">'
@@ -6002,7 +6138,7 @@ function sysBtn(m,op){
     var cr=myResponse(op.id);
     if(cr)return '<span class="row">'+
       '<button class="btn btn--line btn--sm" data-act="confirm-no" data-id="'+H(cr.id)+'">Не смогу</button>'+
-      '<button class="btn btn--primary btn--sm" data-act="confirm-go" data-id="'+H(cr.id)+'">'+icon('check')+'Иду</button>'+
+      '<button class="btn btn--primary btn--sm" data-act="confirm-go" data-id="'+H(cr.id)+'">'+'Иду'+icon('check')+'</button>'+
     '</span>';
   }
   /* «Открыть» и «Посмотреть» убраны: карточка ведёт в событие целиком, и кнопка говорила бы
@@ -6075,7 +6211,7 @@ function viewThread(id){
   var tname=p?p.title:'Событие удалено';
   var tsub=isGroup
     ? (groupName(p)+', '+mem+' '+plural(mem,'участник','участника','участников'))
-    : (u?u.name:'Сосед');
+    : (u?shortName(u):'Сосед');
   var hmain=(p?' data-pin="'+p.id+'"':'');
   var head='<div class="chathead">'+
       '<button class="iconbtn" data-act="back" aria-label="Назад">'+icon('back')+'</button>'+
@@ -6112,7 +6248,7 @@ function viewThread(id){
       if(!out&&blockedWith(m.author_id)){prevAuthor=null; return sep+'<div class="chatnote">Сообщение скрыто</div>'}
       if(sep)prevAuthor=m.author_id;
       return sep+'<div class="msg msg--'+(out?'out':'in')+'">'+
-        (au?'<button class="msg__a" data-act="user" data-id="'+H(au.id)+'" data-pinctx="'+H(t.pin_id)+'">'+H(au.name)+'</button>':'')+
+        (au?'<button class="msg__a" data-act="user" data-id="'+H(au.id)+'" data-pinctx="'+H(t.pin_id)+'">'+H(shortName(au))+'</button>':'')+
         H(m.text)+'<span class="msg__t">'+H(hhmm(m.created_at))+'</span></div>';
     }).join('')+(ui.typing===t.id?'<div class="typing"><i></i><i></i><i></i></div>':'')+'</div>'
     :'<div class="empty">'+icon('chat')+'<b>Напишите первым</b><p>'+
@@ -6447,12 +6583,24 @@ var pendingOk=null;
 function menuDialog(anchor,items){
   pendingOk=null;
   var r=anchor?anchor.getBoundingClientRect():null;
+  /* Список прижимается к тому краю кнопки, от которого ему есть куда расти. Пока меню
+     открывали только «три точки» в правом углу, хватало прижатия вправо; ряд контролов
+     стоит слева, и меню уезжало за край экрана */
   var pos=r
-    ? 'top:'+Math.round(r.bottom+6)+'px;right:'+Math.round(Math.max(8,window.innerWidth-r.right))+'px'
+    ? 'top:'+Math.round(r.bottom+6)+'px;'+(r.left<window.innerWidth/2
+        ? 'left:'+Math.round(Math.max(8,r.left))+'px'
+        : 'right:'+Math.round(Math.max(8,window.innerWidth-r.right))+'px')
     : 'top:64px;right:12px';
   setOverlay('<div class="scrim scrim--clear" data-act="scrim"><div class="menu" style="'+pos+'" role="menu">'+
     items.map(function(it){
-      return '<button class="menu__i" data-act="'+it.act+'" data-id="'+H(it.id||'')+'" role="menuitem">'+icon(it.icon)+H(it.label)+'</button>';
+      /* Три вида пункта: обычное действие со значком, выбор с галкой и переключатель типа
+         с цветным кружком. Общего у них поле, высота и наведение — различается только то,
+         что стоит по краям */
+      return '<button class="menu__i'+(it.on?' is-on':'')+'" data-act="'+it.act+'" data-id="'+H(it.id||'')+'" role="menuitem">'+
+        (it.dot?'<i class="catdot" style="border-color:'+it.dot+(it.on?';background:'+it.dot:'')+'"></i>':(it.icon?icon(it.icon):''))+
+        H(it.label)+
+        (it.check?'<span class="menu__on">'+icon('check')+'</span>':'')+
+      '</button>';
     }).join('')+
   '</div></div>');
 }
@@ -6509,7 +6657,7 @@ function autoReply(threadId){
     if(ui.panel&&ui.panel.type==='thread'&&ui.panel.id===threadId)t.seen_at=now();
     save(); render();
     /* «ответил вам» требует знать род соседа — имя его не выдаёт, и угадывать мы не станем */
-    if(!(ui.panel&&ui.panel.type==='thread'&&ui.panel.id===threadId))toast(u.name+': новое сообщение');
+    if(!(ui.panel&&ui.panel.type==='thread'&&ui.panel.id===threadId))toast(shortName(u)+': новое сообщение');
   },1800+Math.random()*900);
 }
 function sendMessage(){
@@ -6540,7 +6688,11 @@ function openPin(id,origin){
   var s=toScreen(p.x,p.y);
   if(s[0]<mapInsetLeft()+60||s[1]<60||s[0]>view.W-60||s[1]>view.Ht-60)centerOnSmooth(p.x,p.y);
 }
-function pickPhoto(){
+/* Один выбор файла на два случая: снимок события и аватар. Разница в том, что аватар
+   режется в квадрат по центру и жмётся сильнее — он живёт кружком в тридцать пикселей,
+   а вся база лежит в хранилище браузера, где место кончается */
+function pickPhoto(opts){
+  opts=opts||{};
   var inp=document.createElement('input');
   inp.type='file'; inp.accept='image/*';
   inp.onchange=function(){
@@ -6549,14 +6701,25 @@ function pickPhoto(){
     fr.onload=function(){
       var img=new Image();
       img.onload=function(){
-        var max=880, w=img.width, h=img.height;
-        var s=Math.min(1,max/Math.max(w,h));
-        var cv=document.createElement('canvas');
-        cv.width=Math.round(w*s); cv.height=Math.round(h*s);
-        cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
-        var data=cv.toDataURL('image/jpeg',0.72);
-        if(data.length>900000)data=cv.toDataURL('image/jpeg',0.55);
-        if(ui.draft){ui.draft.photos.push(data);render()}
+        var cv=document.createElement('canvas'), x=cv.getContext('2d'), data;
+        if(opts.square){
+          /* Обрезка по центру, без редактора кадра: редактор — это целый экран ради
+             кружка, который в списке тридцать пикселей. Зато результат показываем сразу
+             кружком в форме — видно ровно то, что увидят соседи */
+          var side=Math.min(img.width,img.height), sz=opts.square;
+          cv.width=cv.height=sz;
+          x.drawImage(img,(img.width-side)/2,(img.height-side)/2,side,side,0,0,sz,sz);
+          data=cv.toDataURL('image/jpeg',0.82);
+        }else{
+          var max=880, w=img.width, h=img.height;
+          var s=Math.min(1,max/Math.max(w,h));
+          cv.width=Math.round(w*s); cv.height=Math.round(h*s);
+          x.drawImage(img,0,0,cv.width,cv.height);
+          data=cv.toDataURL('image/jpeg',0.72);
+          if(data.length>900000)data=cv.toDataURL('image/jpeg',0.55);
+        }
+        if(opts.then)opts.then(data);
+        else if(ui.draft){ui.draft.photos.push(data);render()}
       };
       img.src=fr.result;
     };
@@ -6891,6 +7054,53 @@ function onAction(act,el,e){
       }
       menuDialog(el,items);
       break;
+    /* Списки выбора над своими делами. Типы не закрывают список при переключении:
+       выключить два типа подряд должно стоить одного открытия, поэтому после правки
+       список открывается заново у той же кнопки */
+    case 'open-me': openPanel({type:'me',prev:ui.panel}); break;
+    case 'me-photo':
+      pickPhoto({square:256,then:function(data){
+        var mm=me(); if(!mm)return;
+        mm.avatar=data; save(); render(); toast('Снимок обновлён');
+      }});
+      break;
+    case 'me-photo-off':
+      var mo=me(); if(mo){delete mo.avatar; save(); render(); toast('Снимок удалён')}
+      break;
+    case 'me-save':
+      var mn=$('#meName'), nv=mn?mn.value.trim():'';
+      if(!nv){toast('Как вас зовут?'); if(mn)mn.focus(); break}
+      var ms=me(); ms.name=nv; save();
+      openPanel({type:'profile'}); toast('Профиль сохранён');
+      break;
+    case 'mine-cats':
+      var mcItems=[];
+      for(var mk in PIN_TYPES)mcItems.push({act:'mine-cat',id:mk,label:PIN_TYPES[mk].short,
+        dot:'var(--'+PIN_TYPES[mk].cls+')',on:mineCatOn(mk),check:true});
+      menuDialog(el,mcItems);
+      break;
+    case 'mine-cat':
+      ui.mineCats=ui.mineCats||{};
+      ui.mineCats[id]=!mineCatOn(id);
+      /* Снять все нельзя: пустой экран не сообщает ничего, кроме того, что человек сам
+         себе всё выключил. Последний снятый возвращает набор целиком */
+      var anyCat2=false; for(var ck in PIN_TYPES)if(mineCatOn(ck))anyCat2=true;
+      if(!anyCat2)ui.mineCats=null;
+      render();
+      var backBtn=$('[data-act="mine-cats"]'); if(backBtn)onAction('mine-cats',backBtn,e);
+      break;
+    case 'mine-sort':
+      var msPast=ui.panel&&ui.panel.id==='archive';
+      var msList=msPast?[['late','Сначала недавние'],['early','Сначала давние']]
+                       :[['soon','Сначала ближайшие'],['new','Сначала новые']];
+      var msCur=ui.mineSort||(msPast?'late':'soon');
+      menuDialog(el,msList.map(function(o){return {act:'mine-sort-set',id:o[0],label:o[1],on:o[0]===msCur,check:true}}));
+      break;
+    case 'mine-sort-set': closeModal(); ui.mineSort=id; render(); break;
+    case 'mine-clear':
+      ui.mineQuery=''; render();
+      var mi=$('#mineSearch'); if(mi)mi.focus();
+      break;
     case 'user-menu':
       menuDialog(el,[{act:'block',icon:'shield',label:'Заблокировать',id:id}]);
       break;
@@ -7023,11 +7233,6 @@ function onAction(act,el,e){
     case 'open-sys':
       var stx=sysThread(true); save();
       openPanel({type:'thread',id:stx.id,from:'profile'});
-      break;
-    case 'rename':
-      promptDialog('Как вас зовут','Имя видят соседи в карточках событий и в переписке',me().name,'Сохранить',function(v){
-        if(v&&v.trim()){me().name=v.trim();save();render();toast('Имя обновлено')}
-      });
       break;
     case 'reset':
       confirmDialog('Сбросить прототип?','Ваш профиль, события и переписка будут удалены из браузера, а демо-данные вернутся в исходное состояние','Сбросить',true,function(){
@@ -7232,6 +7437,25 @@ document.addEventListener('change',function(e){
   ui.draft[f]=e.target.value; render();
 });
 document.addEventListener('input',function(e){
+  if(e.target.id==='mineSearch'){
+    ui.mineQuery=e.target.value;
+    var ma2=$('#swArea');
+    if(ma2){
+      var mc=mineCompute(ui.panel&&ui.panel.id);
+      ma2.innerHTML=mc.cur.length?mineRows(mc.cur,mc.m):mineEmpty(mc);
+      fixHang(ma2);
+    }
+    /* крестик появляется и пропадает вместе с текстом, но перерисовывать ради него панель
+       нельзя — поле потеряет курсор */
+    var mcl=$('#mineSearch').parentNode.querySelector('.searchfield__clear');
+    if(ui.mineQuery&&!mcl){
+      var b=document.createElement('button');
+      b.className='searchfield__clear'; b.setAttribute('data-act','mine-clear');
+      b.setAttribute('aria-label','Очистить'); b.innerHTML=icon('close');
+      $('#mineSearch').parentNode.appendChild(b);
+    }else if(!ui.mineQuery&&mcl)mcl.remove();
+    return;
+  }
   if(e.target.id==='msgSearch'){
     ui.msgQuery=e.target.value;
     var ma=$('#swArea');
@@ -7418,8 +7642,13 @@ function renderOnboard(){
       '<h1>Что происходит<br>у вас во дворе</h1>'+
       '<p>Соседи собирают команду на футбол, отдают вещи и просят помочь. Всё это — на карте вашего района</p>'+
       '<div class="stack">'+
+        /* Спрашиваем имя и фамилию целиком, а сокращаем сами. Прежде поле просило «имя
+           и первую букву фамилии» — то есть просило человека сделать нашу работу руками,
+           да ещё на первом экране, где нагрузка и без того лишняя. Подпись под полем
+           из инструкции стала обещанием: это согласие на то, что увидят соседи */
         '<div class="field"><label for="o-name">Как вас зовут</label>'+
-          '<input class="input" id="o-name" data-onb="name" maxlength="40" value="'+H(onb.name)+'" placeholder="Имя и первая буква фамилии"></div>'+
+          '<input class="input" id="o-name" data-onb="name" maxlength="40" value="'+H(onb.name)+'" placeholder="Анна Ковалевская">'+
+          '<span class="hint">Соседям покажем имя и первую букву фамилии</span></div>'+
         '<div class="field"><label for="o-phone">Телефон</label>'+
           '<input class="input" id="o-phone" data-onb="phone" type="tel" inputmode="tel" value="'+H(onb.phone)+'" placeholder="+7 900 000-00-00">'+
           '<span class="hint">Нужен, чтобы соседи общались с живыми людьми. В прототипе СМС не отправляется</span></div>'+
