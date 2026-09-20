@@ -3975,7 +3975,7 @@ function placeLabels(singles,out){
 }
 /* тот же ключ, которым отсортирован список: одно значение — один порядок */
 function labelSortKey(p){
-  if(ui.feedSort==='near'){var u=pinDistUnits(p); return u==null?1e12:u}
+  if(ui.feedSort==='near'){var u=sortDistUnits(p); return u==null?1e12:u}
   if(ui.feedSort==='soon')return soonKey(p)*1e12+(isAct(p)?p.starts_at:-p.created_at);
   return -p.created_at;
 }
@@ -4548,9 +4548,23 @@ function distChipHTML(p,u,showStation){
    Метровый набор — distText, niceUp, approxDistText — был в приложении с самого начала
    и работал в форме создания: одно и то же расстояние называлось метрами на одном экране
    и минутами на другом. Теперь оно называется одинаково везде */
+/* Порядок «рядом» и число в чипе отвечают на разные вопросы, и точка отсчёта у них разная.
+   В чипе — расстояние от события до его ориентира: свойство самого события, верное всегда
+   и подписанное стрелкой, чтобы не читалось как «от вас». В порядке — расстояние от вас,
+   а без геолокации от того места, куда человек смотрит: середины кадра. Второе меняется
+   вместе с картой, и это правильно — «рядом» значит «рядом с тем, что я сейчас вижу».
+   Сортировать по первому было бы бессмыслицей: событие в двух шагах от своего ориентира
+   на другом конце города оказалось бы первым */
+function sortDistUnits(p){
+  if(!p||p.x==null)return null;
+  var r;
+  if(geoOn())r=meRef();
+  else{var c=viewCenterPoint(); r={x:c[0],y:c[1]}}
+  return Math.sqrt(Math.pow(p.x-r.x,2)+Math.pow(p.y-r.y,2));
+}
 /* пин без точки не участвует в сортировке по близости — уводим его в конец списка,
    иначе он оказался бы первым как «нулевое расстояние» */
-function distKey(p){return p._d==null?Infinity:p._d}
+function distKey(p){return p._ds==null?Infinity:p._ds}
 /* «Скоро» отвечает на вопрос «во что я ещё успею», поэтому начавшееся не может стоять выше
    предстоящего: раньше ключом был просто старт по возрастанию, и самое давнее начавшееся
    оказывалось первым в списке — с подписью «уже прошло». Три группы: впереди предстоящие
@@ -4569,7 +4583,7 @@ function feedList(){
   var list=db.pins.filter(function(p){
     return p.status==='active'&&!hiddenForMe(p)&&ui.filters[p.type]&&inScope(p);
   });
-  list.forEach(function(p){p._d=pinDistUnits(p)});
+  list.forEach(function(p){p._d=pinDistUnits(p); p._ds=sortDistUnits(p)});
   /* Тот же набор ключей, что и в городском списке: раньше здесь была своя формула,
      смешивавшая старт встречи с публикацией вещи, и порядок нельзя было объяснить словами */
   if(ui.feedSort==='near')list.sort(function(a,b){return distKey(a)-distKey(b)});
@@ -4705,7 +4719,7 @@ function archiveList(){
     if(!inScope(p))return false;
     return !q||p.title.toLowerCase().indexOf(q)>=0||p.description.toLowerCase().indexOf(q)>=0;
   });
-  list.forEach(function(p){p._d=pinDistUnits(p)});
+  list.forEach(function(p){p._d=pinDistUnits(p); p._ds=sortDistUnits(p)});
   list.sort(function(a,b){return (b.closed_at||b.created_at)-(a.closed_at||a.created_at)});
   return list;
 }
