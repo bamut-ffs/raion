@@ -531,7 +531,11 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 }
 @media (max-width:1439px){.panel-b{display:none}}
 .work.is-collapsed .panel-b{display:none}
-.work.has-detail .panel-collapse{left:calc(var(--panel-w) + var(--panel-b-w) + 4px)}
+/* Сдвиг под две колонки нужен, только пока панель на месте. У этого правила и у правила
+   свёрнутого состояния одинаковый вес, и побеждало то, что ниже по файлу, — то есть это.
+   Свернув панель при открытой второй колонке, человек получал кнопку возврата посреди
+   карты, в семистах пикселях от края: искать её там никому не приходит в голову */
+.work.has-detail:not(.is-collapsed) .panel-collapse{left:calc(var(--panel-w) + var(--panel-b-w) + 4px)}
 .iconbtn{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--ink-2);flex:none}
 .iconbtn:hover{background:var(--surface-2);color:var(--ink)}
 .iconbtn svg{width:17px;height:17px}
@@ -2432,7 +2436,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.18';
+var VERSION='3.18.1';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
 var UPDATED='20 сентября 2026';
