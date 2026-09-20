@@ -8,6 +8,7 @@
 
 - **Прототип** — https://bamut-ffs.github.io/raion/
 - **Дизайн-система** — https://bamut-ffs.github.io/raion/raion-ds.html
+- **Техзадание v0.3** — https://bamut-ffs.github.io/raion/raion-tz-v03.html
 - **Техзадание v0.2** — https://bamut-ffs.github.io/raion/raion-tz-v02.html
 
 ## Что внутри
@@ -16,6 +17,7 @@
 | --- | --- |
 | `index.html` | Прототип — кликабельная модель продукта |
 | `raion-ds.html` | Дизайн-система: шкала кеглей, отступы, цвет, компоненты |
+| `raion-tz-v03.html` | Техзадание v0.3 — настоящая карта, география вне Москвы, онбординг |
 | `raion-tz-v02.html` | Техзадание v0.2 — продуктовые решения и их обоснование |
 
 ## Как устроено
