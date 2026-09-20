@@ -339,16 +339,17 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .stage{flex:1;position:relative;min-width:0;overflow:hidden;background:var(--ground)}
 .map{position:absolute;inset:0;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .map.is-drag{cursor:grabbing}
-/* Настоящая подложка лежит ПОВЕРХ нарисованной, а не под ней: нарисованная карта осталась
-   в файле и работает как заглушка. Пока тайлы едут — под пальцем нарисованный город, а не
-   белое поле; там, где тайлов нет вовсе (в артефакте их блокирует CSP), приложение
-   выглядит ровно как раньше и ничего не теряет */
-.tiles{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
-.tilez{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
-.tilez img{position:absolute;width:256px;height:256px;display:block;
-  /* Стандартные тайлы OSM цветные, а интерфейс монохромный, и цветными у нас остаются
-     только сами пины. Обесцвечиваем и высветляем: карта должна быть фоном, а не картинкой */
-  filter:grayscale(1) contrast(.86) brightness(1.1);}
+/* Настоящая карта лежит ПОВЕРХ нарисованной, а не под ней: нарисованная осталась в файле
+   и работает как запасная. Там, где движок или тайлы не доедут (в артефакте их блокирует
+   CSP), приложение выглядит ровно как раньше и ничего не теряет */
+.glmap{position:absolute;inset:0;z-index:0}
+/* Минимум из стилей MapLibre: подключить их файл нельзя — CSP пускает только Google Fonts.
+   Всё остальное в его таблице — про контролы, которых у нас нет */
+.maplibregl-map{position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent}
+.maplibregl-canvas-container,.maplibregl-canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.maplibregl-canvas-container.maplibregl-interactive{cursor:grab}
+.maplibregl-canvas-container.maplibregl-interactive:active,.map.is-drag .maplibregl-canvas-container{cursor:grabbing}
+.maplibregl-control-container{display:none}
 /* Шкала масштаба и подпись источника — про одно и то же, про саму карту, и живут одним
    углом. Порознь они стояли в одной точке и налезали друг на друга */
 .mapmeta{
@@ -1759,7 +1760,7 @@ svg{width:16px;height:16px}
     <div class="stage">
       <div class="map" id="map">
         <svg id="svg" aria-hidden="true"></svg>
-        <div class="tiles" id="tiles" aria-hidden="true"></div>
+        <div class="glmap" id="glmap" aria-hidden="true"></div>
         <div class="halos" id="halos"></div>
         <div class="markers" id="markers"></div>
       </div>
@@ -1774,7 +1775,7 @@ svg{width:16px;height:16px}
         <span class="mono" id="scaleTxt">200 м</span>
         <span class="scalebar__line" id="scaleLine" style="width:64px"></span>
       </div>
-      <div class="mapcredit" id="mapCredit" hidden>© OpenStreetMap</div>
+      <div class="mapcredit" id="mapCredit" hidden>© OpenStreetMap, © OpenMapTiles</div>
       </div>
       <div class="zoomctl">
         <div class="card-float zoomctl__group">
@@ -1797,6 +1798,10 @@ svg{width:16px;height:16px}
   <div class="sheet-scrim" id="sheetScrim"></div>
 </div>
 
+<!-- Настоящий движок карты. Единственный внешний скрипт в проекте: рисовать векторные
+     тайлы вручную — это написать вторую MapLibre, и хуже. Если он не доедет (в артефакте
+     CSP пускает cdnjs, но не тайлы), приложение вернётся к нарисованной карте само -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.6.1/maplibre-gl.js"></script>
 <div id="overlay"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -2385,7 +2390,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.16';
+var VERSION='3.17';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
 var UPDATED='20 сентября 2026';
@@ -3328,6 +3333,7 @@ function measure(){
   svgEl.setAttribute('viewBox','0 0 '+view.W+' '+view.Ht);
   svgEl.setAttribute('width',view.W); svgEl.setAttribute('height',view.Ht);
   view.kFit=Math.max(view.W/view.worldW,view.Ht/view.worldH);
+  if(glMap)glMap.resize();
 }
 /* Потолок приближения задан абсолютным числом, а не кратностью «сколько раз влезает город»:
    кратность зависит от размера окна, и на большом мониторе потолок уезжал бы. 10.5 — это
@@ -3373,7 +3379,6 @@ function applyView(){
   var pcEl=$('#pickCenter');
   if(pcEl&&!pcEl.hidden){pcEl.style.top=pickCenterY()+'px'; pcEl.style.left=viewCX()+'px'}
   updateDraftFromCenter();
-  updateTiles();
   renderMarkers(); updateScalebar();
   /* Карта снова участвует в охвате, но не молча. Прежняя механика переназначала охват
      сама и дважды давала сбои: открытие второй колонки меняет «центр видимой полосы»
@@ -3502,85 +3507,228 @@ function formatScale(m){
   if(m>=20)return (Math.round(m/5)*5)+' м';
   return Math.max(1,Math.round(m))+' м';
 }
-/* ============ 4.6 настоящая подложка ============
-   Тайлы кладутся тем же преобразованием, что и весь мир: единица мира — это пиксель
-   Web Mercator на z16, поэтому слой тайлов уровня z получает ровно transform самой карты
-   с поправкой на разницу масштабов. Ни одной отдельной системы координат здесь не заводится,
-   и пины с подложкой не могут разъехаться в принципе.
-   Источник — тайлы самого OSM, обесцвеченные фильтром. Это промежуточное состояние,
-   которое ТЗ прямо разрешает: свой стиль и свой список того, что видно на карте, требуют
-   векторных тайлов и отдельной работы, а настоящая география нужна уже сейчас — на ней
-   проверяются расстояния, кластеры и выбор места.
-   Готовые светлые подложки проверены и отпали: CARTO с недавних пор печатает
-   «API KEY REQUIRED» на каждом тайле без ключа, а ключ в открытом репозитории виден всем —
-   ТЗ это прямо запретило. У OSM ключа нет вовсе, и для прототипа его политика это допускает. */
-var TILE_MINZ=12, TILE_MAXZ=19;
-function tileURL(z,x,y){
-  return 'https://tile.openstreetmap.org/'+z+'/'+x+'/'+y+'.png';
-}
-var tilesEl=null, tileLayers={}, tilesAlive=false;
-function tileZoom(){
-  var z=Math.round(GEO_Z+Math.log(view.k)/Math.LN2);
-  return Math.max(TILE_MINZ,Math.min(TILE_MAXZ,z));
-}
-function tileLayer(z){
-  if(tileLayers[z])return tileLayers[z];
-  var el=document.createElement('div');
-  el.className='tilez';
-  tilesEl.appendChild(el);
-  return tileLayers[z]={el:el,z:z,g:Math.pow(2,z-GEO_Z),tiles:{},pending:0};
-}
-/* Слой предыдущего масштаба живёт, пока новый не догрузился: иначе на каждом переходе
-   через степень двойки карта на долю секунды показывает пустоту */
-function dropStaleLayers(keep){
-  for(var k in tileLayers){
-    if(+k===keep)continue;
-    tilesEl.removeChild(tileLayers[k].el);
-    delete tileLayers[k];
-  }
-}
-function updateTiles(){
-  if(!tilesEl)return;
-  var z=tileZoom(), L=tileLayer(z), g=L.g, f=view.k/g;
-  /* текущий масштаб рисуется поверх остальных */
-  if(tilesEl.lastChild!==L.el)tilesEl.appendChild(L.el);
-  L.el.style.transform='translate('+view.tx.toFixed(2)+'px,'+view.ty.toFixed(2)+'px) scale('+f.toFixed(5)+')';
+/* ============ 4.6 настоящая карта ============
+   Движок — MapLibre, данные — векторные тайлы OpenFreeMap (схема OpenMapTiles, открытые
+   данные OSM, без ключа). Векторные, а не картинки, по двум причинам, и обе наши:
+   стиль пишем сами — монохром интерфейса вместо чужой палитры, — и сами решаем, что на
+   карте видно. На готовых картинках второе невозможно в принципе: там уже нарисованы
+   и аптеки, и разметка полос.
+   Мир при этом остался прежним. Единица мира — пиксель Web Mercator на z16, а MapLibre
+   без наклона и поворота даёт ровно аффинное преобразование, поэтому view.k/tx/ty
+   вычисляются из его камеры, и весь старый код — метки, кластеры, прицел, расстояния —
+   продолжает работать, не зная о подмене. Мостом служат только toScreen и toWorld. */
+var glMap=null;
 
-  var w0=toWorld(0,0), w1=toWorld(view.W,view.Ht);
-  var lim=Math.pow(2,z)-1;
-  var x0=Math.max(0,Math.floor((MERC0[0]+w0[0])*g/256)-1), x1=Math.min(lim,Math.floor((MERC0[0]+w1[0])*g/256)+1);
-  var y0=Math.max(0,Math.floor((MERC0[1]+w0[1])*g/256)-1), y1=Math.min(lim,Math.floor((MERC0[1]+w1[1])*g/256)+1);
-  var need={}, x, y, key;
-  for(x=x0;x<=x1;x++)for(y=y0;y<=y1;y++){
-    key=x+'_'+y; need[key]=1;
-    if(L.tiles[key])continue;
-    var im=document.createElement('img');
-    im.style.left=(x*256-MERC0[0]*g)+'px';
-    im.style.top=(y*256-MERC0[1]*g)+'px';
-    im.decoding='async'; im.loading='eager';
-    L.pending++;
-    im.onload=function(){
-      L.pending--; tilesAlive=true;
-      var c=$('#mapCredit'); if(c)c.hidden=false;
-      if(!L.pending&&tileZoom()===L.z)dropStaleLayers(L.z);
-    };
-    im.onerror=function(){ L.pending--; };
-    im.src=tileURL(z,x,y);
-    L.el.appendChild(im);
-    L.tiles[key]=im;
-  }
-  for(key in L.tiles){
-    if(need[key])continue;
-    L.el.removeChild(L.tiles[key]);
-    delete L.tiles[key];
-  }
-  if(!L.pending)dropStaleLayers(z);
+/* Цвета берутся из тех же переменных, что и весь интерфейс, а не дублируются числами:
+   иначе тёмная тема разъехалась бы с картой, и «один факт — одно место» перестало бы
+   выполняться ровно там, где это заметнее всего */
+function mapPalette(){
+  var cs=getComputedStyle(document.documentElement);
+  function v(n){return cs.getPropertyValue(n).trim()}
+  return {
+    ground:v('--ground'), water:v('--water'), waterEdge:v('--water-edge'),
+    park:v('--park'), build:v('--build'), road:v('--road'), road2:v('--road-2'),
+    roadEdge:v('--road-edge'), ink:v('--ink'), ink2:v('--ink-2'), ink3:v('--ink-3')
+  };
+}
+
+/* Список того, что видно на карте, — наш, и граница проходит не по количеству объектов,
+   а по вопросу «помогает ли это договориться о встрече». У памятника и у заправки
+   встречаются, у аптеки — нет.
+   Остановок здесь нет сознательно: в Москве они названы по метро, и на экране выходило
+   шесть подписей «Метро „Профсоюзная"» вокруг одной станции. Автовокзалы остаются —
+   они имена мест, а не транспортная категория. */
+var POI_KEEP=['any',
+  ['all',['==','class','railway'],['in','subclass','subway','station','halt']],
+  ['all',['==','class','bus'],['==','subclass','bus_station']],
+  ['in','class','park','place_of_worship','fuel','attraction','school','college','stadium'],
+  /* только сама больница: подкласс clinic притаскивает медлаборатории и «центры долголетия» */
+  ['all',['==','class','hospital'],['==','subclass','hospital']],
+  ['all',['==','class','shop'],['in','subclass','mall','department_store']]
+];
+var POI_STATION=['all',['==','class','railway'],['in','subclass','subway','station','halt']];
+
+function mapStyle(){
+  var C=mapPalette(), SRC='ofm', T=['Noto Sans Regular'], TB=['Noto Sans Bold'];
+  function z(){var a=['interpolate',['linear'],['zoom']];
+    for(var i=0;i<arguments.length;i++)a.push(arguments[i]); return a}
+  var ROADS=['motorway','trunk','primary','secondary','tertiary','minor','service'];
+  /* русское имя, если оно есть: тайлы планетарные, и по умолчанию отдают местное */
+  var NAME=['coalesce',['get','name:ru'],['get','name']];
+  return {
+    version:8,
+    glyphs:'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+    sources:{ofm:{type:'vector',url:'https://tiles.openfreemap.org/planet'}},
+    layers:[
+      {id:'bg',type:'background',paint:{'background-color':C.ground}},
+      {id:'green',type:'fill',source:SRC,'source-layer':'landcover',
+        filter:['in','class','wood','grass','scrub','farmland'],
+        paint:{'fill-color':C.park,'fill-opacity':0.55}},
+      {id:'park',type:'fill',source:SRC,'source-layer':'park',
+        paint:{'fill-color':C.park,'fill-opacity':0.9}},
+      {id:'water',type:'fill',source:SRC,'source-layer':'water',paint:{'fill-color':C.water}},
+      {id:'waterway',type:'line',source:SRC,'source-layer':'waterway',
+        paint:{'line-color':C.water,'line-width':z(9,1,16,4)}},
+      {id:'building',type:'fill',source:SRC,'source-layer':'building',minzoom:14.5,
+        paint:{'fill-color':C.build,'fill-opacity':z(14.5,0,15.5,1)}},
+      {id:'rail',type:'line',source:SRC,'source-layer':'transportation',minzoom:11,
+        filter:['==','class','rail'],
+        paint:{'line-color':C.roadEdge,'line-width':z(11,0.6,16,1.6)}},
+      /* дорога рисуется двумя линиями — обводка и заливка, — как и на нарисованной карте:
+         без обводки перекрёстки сливаются в пятно */
+      {id:'road-case',type:'line',source:SRC,'source-layer':'transportation',minzoom:9,
+        filter:['in','class'].concat(ROADS),
+        layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':C.roadEdge,'line-width':z(9,1.6,13,3.4,16,11,19,32)}},
+      {id:'road',type:'line',source:SRC,'source-layer':'transportation',minzoom:9,
+        filter:['in','class'].concat(ROADS),
+        layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':['match',['get','class'],
+                 'motorway',C.road,'trunk',C.road,'primary',C.road,'secondary',C.road,C.road2],
+               'line-width':z(9,0.8,13,2.2,16,8.5,19,28)}},
+      {id:'street-label',type:'symbol',source:SRC,'source-layer':'transportation_name',minzoom:14,
+        layout:{'symbol-placement':'line','text-field':NAME,'text-font':T,'text-size':z(14,10,18,13)},
+        paint:{'text-color':C.ink3,'text-halo-color':C.ground,'text-halo-width':1.4}},
+      {id:'water-label',type:'symbol',source:SRC,'source-layer':'water_name',minzoom:12,
+        layout:{'text-field':NAME,'text-font':T,'text-size':11},
+        paint:{'text-color':C.waterEdge,'text-halo-color':C.ground,'text-halo-width':1.2}},
+      {id:'poi-dot',type:'circle',source:SRC,'source-layer':'poi',minzoom:13,filter:POI_STATION,
+        paint:{'circle-radius':z(13,2,17,4),'circle-color':C.ink2,
+               'circle-stroke-color':C.ground,'circle-stroke-width':1.5}},
+      {id:'poi-label',type:'symbol',source:SRC,'source-layer':'poi',minzoom:14,filter:POI_KEEP,
+        layout:{'text-field':NAME,'text-font':T,'text-size':z(14,10,18,12),
+          'text-offset':[0,0.9],'text-anchor':'top','text-max-width':8},
+        paint:{'text-color':C.ink2,'text-halo-color':C.ground,'text-halo-width':1.4}},
+      /* Названия городов и районов — то, ради чего карта вообще умеет отдаляться:
+         без них на общем плане не понять, куда ты уехал.
+         Зумовая интерполяция здесь одна и снаружи: две вложенные MapLibre не принимает */
+      {id:'place-label',type:'symbol',source:SRC,'source-layer':'place',
+        filter:['in','class','city','town','village','suburb','neighbourhood'],
+        layout:{'text-field':NAME,'text-font':TB,'text-max-width':9,
+          'text-size':['interpolate',['linear'],['zoom'],
+            4,  ['match',['get','class'],'city',12,'town',9,8],
+            10, ['match',['get','class'],'city',20,'town',15,11],
+            16, ['match',['get','class'],'city',24,'town',18,13]]},
+        paint:{'text-color':C.ink,'text-halo-color':C.ground,'text-halo-width':1.8}}
+    ]
+  };
+}
+
+/* ---- мост между камерой MapLibre и мировыми координатами приложения ---- */
+function glCenter(x,y){var ll=worldToLatLon(x,y);return [ll[1],ll[0]]}
+/* Панель на десктопе закрывает левую часть карты, поэтому «поставить точку в центр»
+   означает центр видимой полосы, а не экрана. MapLibre умеет это сам через offset */
+function glOffset(sx,sy){
+  return [ (sx==null?viewCX():sx)-view.W/2, (sy==null?view.Ht/2:sy)-view.Ht/2 ];
+}
+function syncFromGL(){
+  if(!glMap)return;
+  view.k=Math.pow(2,glMap.getZoom()-GEO_Z);
+  var c=glMap.getCenter(), cw=latLonToWorld(c.lat,c.lng);
+  view.tx=view.W/2-cw[0]*view.k;
+  view.ty=view.Ht/2-cw[1]*view.k;
+  applyView();
+}
+
+/* Рабочая область — тот самый прямоугольник из ТЗ. Двигаться за него можно куда угодно,
+   вплоть до другого города: карта настоящая и планета вся. А вот создавать события снаружи
+   нельзя — там нет ни демо-соседей, ни ориентиров, и пин уехал бы в пустоту.
+   Граница показана на карте пунктиром: запрет, который видно, не требует объяснений */
+function inWorkArea(x,y){return x>=20&&y>=20&&x<=WORLD_W-20&&y<=WORLD_H-20}
+function workAreaGeoJSON(){
+  var pts=[[0,0],[WORLD_W,0],[WORLD_W,WORLD_H],[0,WORLD_H],[0,0]].map(function(p){
+    var ll=worldToLatLon(p[0],p[1]); return [ll[1],ll[0]];
+  });
+  return {type:'Feature',geometry:{type:'LineString',coordinates:pts},properties:{}};
+}
+
+/* Камера переезжает на движок целиком. Старые функции не удаляются, а подменяются:
+   без движка (в артефакте его блокирует CSP) приложение возвращается к нарисованной
+   карте и к ним же. Подмена вместо ветвлений внутри — чтобы в каждой функции жила
+   одна механика, а не две, разделённые «если» */
+function glGoto(x,y,zoom,animate,sx,sy){
+  var zz=(zoom==null?glMap.getZoom():zoom), k=Math.pow(2,zz-GEO_Z), off=glOffset(sx,sy);
+  var o={center:glCenter(x-off[0]/k, y-off[1]/k)};
+  if(zoom!=null)o.zoom=zz;
+  if(animate){o.duration=320; glMap.easeTo(o)} else { glMap.jumpTo(o); syncFromGL() }
+}
+var GL_ZOOM=15.2;
+function useGLCamera(){
+  /* нарисованный мир спрятан — двигать его больше незачем */
+  worldEl=null;
+  /* границы мира держит движок, и они теперь планетарные */
+  clampView=function(){};
+  fitOnStation=function(id){var d=district(id); glGoto(d.sx,d.sy,GL_ZOOM,false)};
+  flyToStation=function(id){var r=metroRef(id); glGoto(r.x,r.y,GL_ZOOM,true)};
+  centerOnSmooth=function(x,y){glGoto(x,y,null,true)};
+  centerOn=function(x,y,k){glGoto(x,y,k?GEO_Z+Math.log(k)/Math.LN2:null,false)};
+  centerOnPick=function(x,y){glGoto(x,y,null,false,viewCX(),pickCenterY())};
+  fitView=function(){glGoto(WORLD_W/2,WORLD_H/2,GEO_Z+Math.log(view.kFit)/Math.LN2,true)};
+  zoomAt=function(factor,cx,cy){
+    glMap.jumpTo({zoom:glMap.getZoom()+Math.log(factor)/Math.LN2,around:glMap.unproject([cx,cy])});
+  };
+  zoomAtSmooth=function(factor,cx,cy){
+    glMap.easeTo({zoom:glMap.getZoom()+Math.log(factor)/Math.LN2,
+      around:glMap.unproject([cx,cy]),duration:220});
+  };
+  /* Шкала считается по широте самой камеры, а не по нашей средней: карта теперь ездит
+     по всей планете, и на широте Ставрополя метр в пикселе другой */
+  updateScalebar=function(){
+    var lat=glMap.getCenter().lat;
+    var mpp=156543.03392*Math.cos(lat*Math.PI/180)/Math.pow(2,glMap.getZoom());
+    $('#scaleTxt').textContent=formatScale(SCALE_PX*mpp);
+    $('#scaleLine').style.width=SCALE_PX+'px';
+  };
+}
+
+function initGL(){
+  if(!window.maplibregl)return false;
+  var el=$('#glmap'); if(!el)return false;
+  var hp=homePoint();
+  try{
+    glMap=new maplibregl.Map({
+      container:el, style:mapStyle(),
+      center:glCenter(hp.x,hp.y), zoom:15.2,
+      minZoom:3, maxZoom:19, fadeDuration:120,
+      attributionControl:false, dragRotate:false, pitchWithRotate:false, touchPitch:false,
+      /* подпись источника своя и стоит в общем углу карты вместе со шкалой */
+      keyboard:false
+    });
+  }catch(e){ glMap=null; return false }
+  glMap.touchZoomRotate.disableRotation();
+  /* Один недоехавший тайл не должен ронять приложение: карта живёт дырой, а не падением */
+  glMap.on('error',function(){});
+  glMap.on('move',syncFromGL);
+  glMap.on('movestart',function(){peekSheet(true)});
+  glMap.on('moveend',function(){peekSheet(false); markMapMoved()});
+  glMap.on('drag',markMapMoved);
+  /* Мышь после протяжки всегда выдаёт click, и он уходил в «тап мимо карточки»:
+     шторка закрывалась посреди панорамы. Тот же приём, что был у самописной карты */
+  glMap.on('dragend',function(){
+    var eat=function(ce){ce.stopPropagation();ce.preventDefault()};
+    window.addEventListener('click',eat,true);
+    setTimeout(function(){window.removeEventListener('click',eat,true)},0);
+  });
+  glMap.on('load',function(){
+    glMap.addSource('workarea',{type:'geojson',data:workAreaGeoJSON()});
+    glMap.addLayer({id:'workarea',type:'line',source:'workarea',
+      layout:{'line-cap':'round'},
+      paint:{'line-color':'#8e8e93','line-width':1.5,'line-dasharray':[4,4],'line-opacity':0.9}});
+    syncFromGL(); render();
+  });
+  return true;
 }
 
 function drawMap(){
+  /* Нарисованная карта строится всегда: она запасная и стоит дёшево. Если настоящая
+     поднялась — прячем её, но не выбрасываем */
   svgEl.innerHTML=mapSVG();
   worldEl=svgEl.querySelector('#world');
-  tilesEl=$('#tiles');
+  measure();
+  if(initGL()){
+    svgEl.hidden=true;
+    useGLCamera();
+  }
   fitOnStation(primaryStation());
 }
 
@@ -5461,7 +5609,9 @@ function viewCreate(){
           '<input class="input" id="placeStInput" data-place-open="1" autocomplete="off" placeholder="Найти станцию" value="'+
             H(d.stOpen?(d.stQ||''):district(curSt).name)+'">'+
         '</div>'+
-        '<span class="hint">Подведите карту под прицел или выберите станцию</span>'+
+        '<span class="hint">'+(d.outArea
+          ? 'Событие можно создать только внутри рабочей области — она обведена на карте пунктиром'
+          : 'Подведите карту под прицел или выберите станцию')+'</span>'+
       '</div></div>';
     if(d.stOpen){
       var plist=DISTRICTS.filter(function(x){
@@ -5482,7 +5632,7 @@ function viewCreate(){
               :'Точка встанет рядом со станцией, примерно')+'</span></div></div>':'')+
       '</div>';
     }
-    foot='<button class="btn btn--primary" data-act="step" data-step="2"'+(d.x==null?' disabled':'')+'>Место выбрано'+icon('chev-right')+'</button>';
+    foot='<button class="btn btn--primary" data-act="step" data-step="2"'+((d.x==null||d.outArea)?' disabled':'')+'>Место выбрано'+icon('chev-right')+'</button>';
   }
 
   if(d.step===2){
@@ -7034,10 +7184,12 @@ function centerOnPick(x,y){
 function updateDraftFromCenter(){
   if(!(ui.picking&&ui.draft))return;
   var c=toWorld(viewCX(),pickCenterY());
-  /* район берём из самой точки, а не из подписи над картой: подпись следит за камерой,
-     а человек после подтверждения места ещё двигает карту, заполняя поля */
-  ui.draft.x=Math.max(20,Math.min(WORLD_W-20,c[0]));
-  ui.draft.y=Math.max(20,Math.min(WORLD_H-20,c[1]));
+  /* Точка берётся как есть, без подгонки к краю. Прежде она прижималась к границе мира:
+     прицел стоял в одном месте, а пин вставал в другом — и человек узнавал об этом только
+     после публикации. Теперь снаружи просто нельзя создать, и это видно сразу */
+  ui.draft.outArea=!inWorkArea(c[0],c[1]);
+  ui.draft.x=c[0];
+  ui.draft.y=c[1];
   ui.draft.district_id=districtOf(ui.draft.x,ui.draft.y);
   updatePickReadout();
   syncPlaceField();
@@ -7059,7 +7211,9 @@ function syncPlaceField(){
    прицелом, там вокруг него достаточно места и понятнее, к чему относится надпись */
 function placePickInfo(){
   var pi=$('#pickInfo'); if(!pi)return;
-  pi.innerHTML=draftMetroHTML()||'Двигайте карту';
+  pi.innerHTML=(ui.draft&&ui.draft.outArea)
+    ? 'Здесь пока нельзя создавать'
+    : (draftMetroHTML()||'Двигайте карту');
   if(isDesktopPanel()){
     pi.style.left=viewCX()+'px';
     pi.style.top=(pickCenterY()-68)+'px';
@@ -7598,6 +7752,9 @@ document.addEventListener('click',function(e){
       dr.placeSt=pst; dr.district_id=pst;
       var xy=scatterNear(pst,dr.placeSeed);
       dr.x=xy.x; dr.y=xy.y;
+      /* станция всегда внутри рабочей области, и выбор по ней снимает запрет,
+         даже если карта в этот момент стояла в другом городе */
+      dr.outArea=false;
       if(dr.exact_x!=null){dr.exact_x=xy.x; dr.exact_y=xy.y}
       /* выбрали — список сворачивается, карта подлетает, прицел снова живой */
       dr.stOpen=false; dr.stQ=''; ui.pickPaused=false;
@@ -7775,6 +7932,9 @@ document.addEventListener('keydown',function(e){
 
 /* ---- карта: мышь и тач ---- */
 function bindMap(){
+  /* С настоящим движком панораму, щипок и колесо ведёт он сам, а его холст лежит внутри
+     #map — наши обработчики сработали бы вторыми поверх его же жеста */
+  if(glMap)return;
   var drag=null, lastTap=null;
   var pts={}; /* активные указатели: pointerId -> {x,y}, нужно для pinch-to-zoom */
   var pinch=null; /* {a,b,dist0,k0,wx,wy} — два пальца в щипке */
