@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Каталог элементов интерфейса «Района»: токены, компоненты во всех состояниях, правила проекта.">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ededf2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121214" media="(prefers-color-scheme: dark)">
 <title>«Район» — дизайн-система</title>
 </head>
 <body>
@@ -267,7 +267,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    безопасная зона» стояла в семи местах и в каждом обязана была совпасть с тем, чем
    таббар оказался на самом деле; стоило разойтись — появлялся второй отступ.
 */
-:root{--chrome-b:66px; --vh:100dvh}
+:root{--chrome-b:66px; --vh:100dvh; --kb:0px}
 .app{display:flex;position:fixed;left:0;top:0;width:100%;height:var(--vh);overflow:hidden}
 /* компактный рейл: иконка сверху, подпись снизу — единый стиль для десктопа и мобильного таббара */
 /* свой слой выше панели: панель теперь абсолютная и при сворачивании уезжает влево ровно на
@@ -328,6 +328,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   display:grid;place-items:center;background:var(--brand);color:#fff;box-shadow:0 0 0 3px var(--surface)}
 .mephoto__b:hover{opacity:.9}
 .mephoto__b svg{width:16px;height:16px}
+/* тот же кружок у маленького аватара в профиле: 42 пикселя против 96, значок соразмерно */
+.mephoto--s{position:relative;width:auto;margin:0;flex:none;display:block}
+.mephoto__b--s{width:18px;height:18px;right:-1px;bottom:-1px;box-shadow:0 0 0 2px var(--surface)}
+.mephoto__b--s svg{width:11px;height:11px}
 
 /* ---------- stage ---------- */
 .work{flex:1;display:flex;min-width:0;position:relative}
@@ -696,6 +700,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .linedot--l{width:12px;height:12px;vertical-align:0}
 /* станции внутри раскрытой линии сдвинуты: так видно, чему они принадлежат */
 .districtrow--sub{padding-left:32px;background:var(--surface-2)}
+.districtrow .sub{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
+/* значок места без линии метро: тот же размер, нейтральный цвет */
+.metro--place{color:var(--ink-3)}
 /* Точка и название — один блок: кружок читается как часть названия, а не как значок
    между двумя величинами. Внутри зазор маленький, снаружи обычный */
 .stn{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
@@ -1725,6 +1732,21 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   /* уезжает вверх с уменьшением, а не выключается: display не анимируется, поэтому
      кнопка остаётся в потоке и просто перестаёт ловить нажатия. Длительность та же,
      что у самой шторки, — они двигаются одним движением */
+  /* Под клавиатурой у списка появляется дно в её высоту: ничего не двигается, но последние
+     карточки достаются прокруткой, а не остаются под ней навсегда */
+  .app.is-kb .panel__body{padding-bottom:var(--kb)}
+  /* Шов между полосой статуса и содержимым смягчаем градиентом в цвет фона карты:
+     полоса заливается theme-color, то есть тем же цветом, и граница перестаёт быть линией */
+  .stage::before{
+    content:'';position:absolute;left:0;right:0;top:0;height:22px;z-index:5;pointer-events:none;
+    background:linear-gradient(var(--ground),rgba(0,0,0,0));
+  }
+  /* Полоску жестов рисует iOS поверх нашего таббара и цвет берёт по тому, что под ней.
+     На белом она терялась — подкладываем под неё чуть более тёмную полосу */
+  .rail::after{
+    content:'';position:absolute;left:0;right:0;bottom:0;pointer-events:none;
+    height:env(safe-area-inset-bottom,0px);background:var(--surface-2);
+  }
   .scopetop{display:flex;flex:1;height:42px;padding:0 12px;transform-origin:50% 0;transition:transform .22s ease,opacity .22s ease}
   .app.is-homeopen .scopetop{transform:translateY(-160%) scale(.92);opacity:0;pointer-events:none}
   /* центр не по экрану, а по свободной полосе между низом «Категорий» (10+42) и верхом
@@ -2197,6 +2219,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.20.6";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.21.0";</script>
 </body>
 </html>

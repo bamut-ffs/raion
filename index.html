@@ -12,8 +12,8 @@
 <link rel="icon" href="icon-192.png" type="image/png">
 <meta name="description" content="Карта района: соседи видят активности друг друга, отдают и просят вещи и услуги, публикуют находки и пропажи.">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1c1c1e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ededf2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121214" media="(prefers-color-scheme: dark)">
 <title>«Район» — прототип</title>
 </head>
 <body>
@@ -274,7 +274,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    безопасная зона» стояла в семи местах и в каждом обязана была совпасть с тем, чем
    таббар оказался на самом деле; стоило разойтись — появлялся второй отступ.
 */
-:root{--chrome-b:66px; --vh:100dvh}
+:root{--chrome-b:66px; --vh:100dvh; --kb:0px}
 .app{display:flex;position:fixed;left:0;top:0;width:100%;height:var(--vh);overflow:hidden}
 /* компактный рейл: иконка сверху, подпись снизу — единый стиль для десктопа и мобильного таббара */
 /* свой слой выше панели: панель теперь абсолютная и при сворачивании уезжает влево ровно на
@@ -335,6 +335,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   display:grid;place-items:center;background:var(--brand);color:#fff;box-shadow:0 0 0 3px var(--surface)}
 .mephoto__b:hover{opacity:.9}
 .mephoto__b svg{width:16px;height:16px}
+/* тот же кружок у маленького аватара в профиле: 42 пикселя против 96, значок соразмерно */
+.mephoto--s{position:relative;width:auto;margin:0;flex:none;display:block}
+.mephoto__b--s{width:18px;height:18px;right:-1px;bottom:-1px;box-shadow:0 0 0 2px var(--surface)}
+.mephoto__b--s svg{width:11px;height:11px}
 
 /* ---------- stage ---------- */
 .work{flex:1;display:flex;min-width:0;position:relative}
@@ -703,6 +707,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .linedot--l{width:12px;height:12px;vertical-align:0}
 /* станции внутри раскрытой линии сдвинуты: так видно, чему они принадлежат */
 .districtrow--sub{padding-left:32px;background:var(--surface-2)}
+.districtrow .sub{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
+/* значок места без линии метро: тот же размер, нейтральный цвет */
+.metro--place{color:var(--ink-3)}
 /* Точка и название — один блок: кружок читается как часть названия, а не как значок
    между двумя величинами. Внутри зазор маленький, снаружи обычный */
 .stn{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
@@ -1732,6 +1739,21 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   /* уезжает вверх с уменьшением, а не выключается: display не анимируется, поэтому
      кнопка остаётся в потоке и просто перестаёт ловить нажатия. Длительность та же,
      что у самой шторки, — они двигаются одним движением */
+  /* Под клавиатурой у списка появляется дно в её высоту: ничего не двигается, но последние
+     карточки достаются прокруткой, а не остаются под ней навсегда */
+  .app.is-kb .panel__body{padding-bottom:var(--kb)}
+  /* Шов между полосой статуса и содержимым смягчаем градиентом в цвет фона карты:
+     полоса заливается theme-color, то есть тем же цветом, и граница перестаёт быть линией */
+  .stage::before{
+    content:'';position:absolute;left:0;right:0;top:0;height:22px;z-index:5;pointer-events:none;
+    background:linear-gradient(var(--ground),rgba(0,0,0,0));
+  }
+  /* Полоску жестов рисует iOS поверх нашего таббара и цвет берёт по тому, что под ней.
+     На белом она терялась — подкладываем под неё чуть более тёмную полосу */
+  .rail::after{
+    content:'';position:absolute;left:0;right:0;bottom:0;pointer-events:none;
+    height:env(safe-area-inset-bottom,0px);background:var(--surface-2);
+  }
   .scopetop{display:flex;flex:1;height:42px;padding:0 12px;transform-origin:50% 0;transition:transform .22s ease,opacity .22s ease}
   .app.is-homeopen .scopetop{transform:translateY(-160%) scale(.92);opacity:0;pointer-events:none}
   /* центр не по экрану, а по свободной полосе между низом «Категорий» (10+42) и верхом
@@ -2327,12 +2349,16 @@ function toast(text,label,fn,ic){
 }
 
 /* ============ 1. справочники ============ */
-/* Все станции метро рабочей области — сорок девять, а не девять. Девять были остатком
-   выдуманного города: их набирали руками, когда карта была нарисованной и станции можно
-   было расставить как угодно. На настоящей карте выбирать, какие станции «считаются»,
-   не за что — в области либо есть станция, либо нет.
-   Таблица собрана не по памяти, а из слоя poi тех же тайлов, которыми карта нарисована:
-   скриптом обойдена рабочая область и выписано всё, что там лежит. */
+/* Ориентир — узел, а не платформа. Сорок девять станций рабочей области склеены по
+   расстоянию в тридцать два узла: Чистые пруды, Тургеневская и Сретенский бульвар — это
+   один перекрёсток, сто пятьдесят метров между краями. Пока они были тремя ориентирами,
+   ближайшим оказывалась то одна станция, то другая, и одно и то же место называлось
+   по-разному — а событие подписывалось то так, то эдак.
+   Имя узлу даёт станция самой старой линии. Не из почтения к истории: её название обычно
+   и есть то, как место зовут — Чистые пруды, Тверская, Лубянка, Курская.
+   PLACES — районы и город из слоя place тех же тайлов. Они не участвуют в подписи события
+   (событие стоит у ориентира, а не «в Тверском»), но ими называется кадр, когда он перерос
+   ориентир, и по ним ищут. Обе таблицы собраны скриптом, а не по памяти. */
 /* Истина у ориентира — широта и долгота, ровно те, где он стоит в жизни; координаты рабочей
    сетки из них выводятся, а не наоборот. Раньше было наоборот, и станция оказывалась
    за квартал от собственного выхода.
@@ -2344,55 +2370,52 @@ function toast(text,label,fn,ic){
    Поле kind остаётся: в малом городе ориентиром будет парк или площадь, и вид — та самая
    частность, которую структура уже готова пережить */
 var LANDMARKS=[
-  {id:'d_aleksandrovskiy_sa', name:'Александровский сад',     lines:[4],     lat:55.7524, lon:37.60868},
-  {id:'d_arbatskaya',         name:'Арбатская',               lines:[3,4],   lat:55.75185, lon:37.60065},
-  {id:'d_barr',               name:'Баррикадная',             lines:[7],     lat:55.76113, lon:37.57931},
-  {id:'d_belorusskaya',       name:'Белорусская',             lines:[2,5],   lat:55.7767, lon:37.58357},
-  {id:'d_biblioteka_imeni_l', name:'Библиотека имени Ленина', lines:[1],     lat:55.75123, lon:37.61017},
-  {id:'d_borovickaya',        name:'Боровицкая',              lines:[9],     lat:55.75097, lon:37.60706},
-  {id:'d_dobryninskaya',      name:'Добрынинская',            lines:[5],     lat:55.72911, lon:37.62442},
-  {id:'d_dostoevskaya',       name:'Достоевская',             lines:[10],    lat:55.78146, lon:37.61507},
-  {id:'d_kievskaya',          name:'Киевская',                lines:[3,4,5], lat:55.74368, lon:37.56565},
-  {id:'d_kitay_gorod',        name:'Китай-город',             lines:[6,7],   lat:55.75565, lon:37.63357},
-  {id:'d_komsomolskaya',      name:'Комсомольская',           lines:[1,5],   lat:55.77458, lon:37.65449},
-  {id:'d_krasnopresnenskaya', name:'Краснопресненская',       lines:[5],     lat:55.76119, lon:37.57733},
-  {id:'d_krasnoselskaya',     name:'Красносельская',          lines:[1],     lat:55.78036, lon:37.66766},
-  {id:'d_krasnye_vorota',     name:'Красные Ворота',          lines:[1],     lat:55.76902, lon:37.64899},
-  {id:'d_krestyanskaya_zast', name:'Крестьянская Застава',    lines:[10],    lat:55.73317, lon:37.66748},
-  {id:'d_kropot',             name:'Кропоткинская',           lines:[1],     lat:55.74543, lon:37.60381},
-  {id:'d_kuzneckiy_most',     name:'Кузнецкий Мост',          lines:[7],     lat:55.76075, lon:37.62614},
-  {id:'d_kursk',              name:'Курская',                 lines:[3,5],   lat:55.7572, lon:37.65933},
-  {id:'d_lubyanka',           name:'Лубянка',                 lines:[1],     lat:55.75987, lon:37.62786},
-  {id:'d_marksistskaya',      name:'Марксистская',            lines:[8],     lat:55.74132, lon:37.65354},
-  {id:'d_mayak',              name:'Маяковская',              lines:[2],     lat:55.77017, lon:37.59509},
-  {id:'d_mendeleevskaya',     name:'Менделеевская',           lines:[9],     lat:55.78096, lon:37.60198},
-  {id:'d_kuznec',             name:'Новокузнецкая',           lines:[2],     lat:55.74144, lon:37.6292},
-  {id:'d_novoslobodskaya',    name:'Новослободская',          lines:[5],     lat:55.77985, lon:37.60348},
-  {id:'d_oktyabrskaya',       name:'Октябрьская',             lines:[5,6],   lat:55.72978, lon:37.6094},
-  {id:'d_ohotnyy_ryad',       name:'Охотный Ряд',             lines:[1],     lat:55.75777, lon:37.61651},
-  {id:'d_paveleckaya',        name:'Павелецкая',              lines:[2,5],   lat:55.7305, lon:37.63784},
-  {id:'d_park_kultury',       name:'Парк Культуры',           lines:[1,5],   lat:55.73581, lon:37.5913},
-  {id:'d_ploschad_revolyuci', name:'Площадь Революции',       lines:[3],     lat:55.75665, lon:37.62178},
-  {id:'d_polyanka',           name:'Полянка',                 lines:[9],     lat:55.73817, lon:37.6172},
-  {id:'d_proletarskaya',      name:'Пролетарская',            lines:[7],     lat:55.73186, lon:37.66588},
-  {id:'d_prospekt_mira',      name:'Проспект Мира',           lines:[5,6],   lat:55.77963, lon:37.63175},
-  {id:'d_pushkinskaya',       name:'Пушкинская',              lines:[7],     lat:55.76543, lon:37.60742},
-  {id:'d_serpuhovskaya',      name:'Серпуховская',            lines:[9],     lat:55.72795, lon:37.62483},
-  {id:'d_smolenskaya',        name:'Смоленская',              lines:[3,4],   lat:55.74881, lon:37.58272},
-  {id:'d_sportivnaya',        name:'Спортивная',              lines:[1],     lat:55.72338, lon:37.56421},
-  {id:'d_sretenskiy_bulvar',  name:'Сретенский бульвар',      lines:[10],    lat:55.76699, lon:37.64009},
-  {id:'d_sretenka',           name:'Сухаревская',             lines:[6],     lat:55.77296, lon:37.6312},
-  {id:'d_tagan',              name:'Таганская',               lines:[5,7],   lat:55.74047, lon:37.6519},
-  {id:'d_tverskaya',          name:'Тверская',                lines:[2],     lat:55.7649, lon:37.60631},
-  {id:'d_teatralnaya',        name:'Театральная',             lines:[2],     lat:55.75751, lon:37.61919},
-  {id:'d_tretyakovskaya',     name:'Третьяковская',           lines:[6,8],   lat:55.74092, lon:37.62734},
-  {id:'d_trubnaya',           name:'Трубная',                 lines:[10],    lat:55.76911, lon:37.61955},
-  {id:'d_turgenevskaya',      name:'Тургеневская',            lines:[6],     lat:55.76649, lon:37.63747},
-  {id:'d_frunzenskaya',       name:'Фрунзенская',             lines:[1],     lat:55.72688, lon:37.57833},
-  {id:'d_cvetnoy',            name:'Цветной бульвар',         lines:[9],     lat:55.77087, lon:37.61791},
-  {id:'d_chehovskaya',        name:'Чеховская',               lines:[9],     lat:55.76483, lon:37.60909},
-  {id:'d_chisty',             name:'Чистые пруды',            lines:[1],     lat:55.76587, lon:37.63903},
-  {id:'d_chkalovskaya',       name:'Чкаловская',              lines:[10],    lat:55.7567, lon:37.657}
+  {id:'d_arbatskaya',         name:'Арбатская',               kind:'metro', lines:[3,4],    lat:55.75185, lon:37.60065, stations:[{n:'Арбатская',l:[3,4]}]},
+  {id:'d_belorusskaya',       name:'Белорусская',             kind:'metro', lines:[2,5],    lat:55.7767, lon:37.58357, stations:[{n:'Белорусская',l:[2,5]}]},
+  {id:'d_biblioteka_imeni_l', name:'Библиотека имени Ленина', kind:'metro', lines:[1,4,9],  lat:55.75153, lon:37.60864, stations:[{n:'Библиотека имени Ленина',l:[1]},{n:'Александровский сад',l:[4]},{n:'Боровицкая',l:[9]}]},
+  {id:'d_dobryninskaya',      name:'Добрынинская',            kind:'metro', lines:[5,9],    lat:55.72853, lon:37.62463, stations:[{n:'Добрынинская',l:[5]},{n:'Серпуховская',l:[9]}]},
+  {id:'d_dostoevskaya',       name:'Достоевская',             kind:'metro', lines:[10],     lat:55.78146, lon:37.61507, stations:[{n:'Достоевская',l:[10]}]},
+  {id:'d_kievskaya',          name:'Киевская',                kind:'metro', lines:[3,4,5],  lat:55.74368, lon:37.56565, stations:[{n:'Киевская',l:[3,4,5]}]},
+  {id:'d_kitay_gorod',        name:'Китай-город',             kind:'metro', lines:[6,7],    lat:55.75565, lon:37.63357, stations:[{n:'Китай-город',l:[6,7]}]},
+  {id:'d_komsomolskaya',      name:'Комсомольская',           kind:'metro', lines:[1,5],    lat:55.77458, lon:37.65449, stations:[{n:'Комсомольская',l:[1,5]}]},
+  {id:'d_barr',               name:'Краснопресненская',       kind:'metro', lines:[5,7],    lat:55.76116, lon:37.57832, stations:[{n:'Краснопресненская',l:[5]},{n:'Баррикадная',l:[7]}]},
+  {id:'d_krasnoselskaya',     name:'Красносельская',          kind:'metro', lines:[1],      lat:55.78036, lon:37.66766, stations:[{n:'Красносельская',l:[1]}]},
+  {id:'d_krasnye_vorota',     name:'Красные Ворота',          kind:'metro', lines:[1],      lat:55.76902, lon:37.64899, stations:[{n:'Красные Ворота',l:[1]}]},
+  {id:'d_kropot',             name:'Кропоткинская',           kind:'metro', lines:[1],      lat:55.74543, lon:37.60381, stations:[{n:'Кропоткинская',l:[1]}]},
+  {id:'d_kursk',              name:'Курская',                 kind:'metro', lines:[3,5,10], lat:55.75695, lon:37.65816, stations:[{n:'Курская',l:[3,5]},{n:'Чкаловская',l:[10]}]},
+  {id:'d_lubyanka',           name:'Лубянка',                 kind:'metro', lines:[1,7],    lat:55.76031, lon:37.627, stations:[{n:'Лубянка',l:[1]},{n:'Кузнецкий Мост',l:[7]}]},
+  {id:'d_mayak',              name:'Маяковская',              kind:'metro', lines:[2],      lat:55.77017, lon:37.59509, stations:[{n:'Маяковская',l:[2]}]},
+  {id:'d_kuznec',             name:'Новокузнецкая',           kind:'metro', lines:[2,6,8],  lat:55.74118, lon:37.62827, stations:[{n:'Новокузнецкая',l:[2]},{n:'Третьяковская',l:[6,8]}]},
+  {id:'d_novoslobodskaya',    name:'Новослободская',          kind:'metro', lines:[5,9],    lat:55.78041, lon:37.60273, stations:[{n:'Новослободская',l:[5]},{n:'Менделеевская',l:[9]}]},
+  {id:'d_oktyabrskaya',       name:'Октябрьская',             kind:'metro', lines:[5,6],    lat:55.72978, lon:37.6094, stations:[{n:'Октябрьская',l:[5,6]}]},
+  {id:'d_ohotnyy_ryad',       name:'Охотный Ряд',             kind:'metro', lines:[1,2,3],  lat:55.75731, lon:37.61916, stations:[{n:'Охотный Ряд',l:[1]},{n:'Театральная',l:[2]},{n:'Площадь Революции',l:[3]}]},
+  {id:'d_paveleckaya',        name:'Павелецкая',              kind:'metro', lines:[2,5],    lat:55.7305, lon:37.63784, stations:[{n:'Павелецкая',l:[2,5]}]},
+  {id:'d_park_kultury',       name:'Парк Культуры',           kind:'metro', lines:[1,5],    lat:55.73581, lon:37.5913, stations:[{n:'Парк Культуры',l:[1,5]}]},
+  {id:'d_polyanka',           name:'Полянка',                 kind:'metro', lines:[9],      lat:55.73817, lon:37.6172, stations:[{n:'Полянка',l:[9]}]},
+  {id:'d_proletarskaya',      name:'Пролетарская',            kind:'metro', lines:[7,10],   lat:55.73251, lon:37.66668, stations:[{n:'Пролетарская',l:[7]},{n:'Крестьянская Застава',l:[10]}]},
+  {id:'d_prospekt_mira',      name:'Проспект Мира',           kind:'metro', lines:[5,6],    lat:55.77963, lon:37.63175, stations:[{n:'Проспект Мира',l:[5,6]}]},
+  {id:'d_smolenskaya',        name:'Смоленская',              kind:'metro', lines:[3,4],    lat:55.74881, lon:37.58272, stations:[{n:'Смоленская',l:[3,4]}]},
+  {id:'d_sportivnaya',        name:'Спортивная',              kind:'metro', lines:[1],      lat:55.72338, lon:37.56421, stations:[{n:'Спортивная',l:[1]}]},
+  {id:'d_sretenka',           name:'Сухаревская',             kind:'metro', lines:[6],      lat:55.77296, lon:37.6312, stations:[{n:'Сухаревская',l:[6]}]},
+  {id:'d_tagan',              name:'Таганская',               kind:'metro', lines:[5,7,8],  lat:55.7409, lon:37.65272, stations:[{n:'Таганская',l:[5,7]},{n:'Марксистская',l:[8]}]},
+  {id:'d_tverskaya',          name:'Тверская',                kind:'metro', lines:[2,7,9],  lat:55.76505, lon:37.60761, stations:[{n:'Тверская',l:[2]},{n:'Пушкинская',l:[7]},{n:'Чеховская',l:[9]}]},
+  {id:'d_frunzenskaya',       name:'Фрунзенская',             kind:'metro', lines:[1],      lat:55.72688, lon:37.57833, stations:[{n:'Фрунзенская',l:[1]}]},
+  {id:'d_cvetnoy',            name:'Цветной бульвар',         kind:'metro', lines:[9,10],   lat:55.76999, lon:37.61873, stations:[{n:'Цветной бульвар',l:[9]},{n:'Трубная',l:[10]}]},
+  {id:'d_chisty',             name:'Чистые пруды',            kind:'metro', lines:[1,6,10], lat:55.76645, lon:37.63886, stations:[{n:'Чистые пруды',l:[1]},{n:'Тургеневская',l:[6]},{n:'Сретенский бульвар',l:[10]}]}
+];
+
+var PLACES=[
+  {id:'c_moskva',        name:'Москва',         kind:'city', lat:55.75054, lon:37.61748},
+  {id:'r_arbat',         name:'Арбат',          kind:'district', lat:55.7512, lon:37.58987},
+  {id:'r_basmannyy',     name:'Басманный',      kind:'district', lat:55.76728, lon:37.66977},
+  {id:'r_begovoy',       name:'Беговой',        kind:'district', lat:55.78192, lon:37.5663},
+  {id:'r_zamoskvoreche', name:'Замоскворечье',  kind:'district', lat:55.73572, lon:37.63457},
+  {id:'r_krasnoselskiy', name:'Красносельский', kind:'district', lat:55.77745, lon:37.65416},
+  {id:'r_meschanskiy',   name:'Мещанский',      kind:'district', lat:55.77917, lon:37.62799},
+  {id:'r_taganskiy',     name:'Таганский',      kind:'district', lat:55.74157, lon:37.66707},
+  {id:'r_tverskoy',      name:'Тверской',       kind:'district', lat:55.76914, lon:37.60884},
+  {id:'r_hamovniki',     name:'Хамовники',      kind:'district', lat:55.72923, lon:37.57295},
+  {id:'r_yakimanka',     name:'Якиманка',       kind:'district', lat:55.73838, lon:37.61691}
 ];
 /* Рабочая сетка — производная. Пока она нужна геометрии (радиусы, слипание пинов, рисование
    кругов), но истиной больше не является: её считает одна функция из широты и долготы */
@@ -2417,14 +2440,31 @@ function lineColor(nm){var l=METRO_LINES[nm]; return l?l.color:'var(--ink-2)'}
    кругов), но истиной больше не является: её считает одна функция из широты и долготы.
    Цвет тоже производная: у пересадочного узла линий несколько, а значок один, и берёт он
    первую — остальные показываются точками рядом, там, где для них есть место */
-var DISTRICTS=LANDMARKS.map(function(d){
+function toGrid(d){
   var w=latLonToWorld(d.lat,d.lon);
+  d.sx=Math.round(w[0]); d.sy=Math.round(w[1]);
+  return d;
+}
+var DISTRICTS=LANDMARKS.map(function(d){
   d.kind=d.kind||'metro';
   d.boundary_type=(d.kind==='metro')?'metro_preset':'place';
   d.lineColor=lineColor((d.lines&&d.lines[0])||0);
-  d.sx=Math.round(w[0]); d.sy=Math.round(w[1]);
-  return d;
+  return toGrid(d);
 });
+PLACES.forEach(toGrid);
+/* Всё, что можно найти по названию и к чему можно переехать: ориентиры плюс районы и город.
+   Вид остаётся значком в строке, а не отдельной механикой — ни вкладок, ни фильтра по виду */
+function allPlaces(){return DISTRICTS.concat(PLACES)}
+function placeById(id){
+  var a=allPlaces();
+  for(var i=0;i<a.length;i++)if(a[i].id===id)return a[i];
+  return null;
+}
+/* значок вида: у метро наш кружок в цвет линии, у района и города — свой */
+function placeIcon(d){
+  if(d.kind==='metro')return '<svg class="metro" aria-hidden="true" style="color:'+d.lineColor+'"><use href="#i-metro"/></svg>';
+  return '<svg class="metro metro--place" aria-hidden="true"><use href="#i-'+(d.kind==='city'?'map':'pin')+'"/></svg>';
+}
 function district(id){for(var i=0;i<DISTRICTS.length;i++)if(DISTRICTS[i].id===id)return DISTRICTS[i];return DISTRICTS[0]}
 
 
@@ -2555,7 +2595,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.20.6';
+var VERSION='3.21.0';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
 var UPDATED='21 сентября 2026';
@@ -3677,11 +3717,18 @@ function mapStyle(){
     sources:{ofm:{type:'vector',url:'https://tiles.openfreemap.org/planet'}},
     layers:[
       {id:'bg',type:'background',paint:{'background-color':C.ground}},
+      /* Слоя park здесь больше нет, и это не про красоту. В нём лежат не парки, а охранные
+         зоны — границы территорий объектов культурного наследия: в центре Москвы их пять из
+         шести объектов, и они накрывают его целиком. Мы честно заливали их зелёным, и центр
+         города выглядел лесом.
+         Настоящая зелень — в landcover: скверы, бульвары, сады, газоны и лесные массивы.
+         Раньше она рисовалась полупрозрачной поверх охранных зон, поэтому разницы было
+         не видно; теперь она одна и в полную силу.
+         Пашни, виноградники и питомники из фильтра убраны: в центре города их по одному-два,
+         и это шум, а не зелень */
       {id:'green',type:'fill',source:SRC,'source-layer':'landcover',
-        filter:['in','class','wood','grass','scrub','farmland'],
-        paint:{'fill-color':C.park,'fill-opacity':0.55}},
-      {id:'park',type:'fill',source:SRC,'source-layer':'park',
-        paint:{'fill-color':C.park,'fill-opacity':0.9}},
+        filter:['in','class','wood','grass','scrub'],
+        paint:{'fill-color':C.park,'fill-opacity':0.85}},
       {id:'water',type:'fill',source:SRC,'source-layer':'water',paint:{'fill-color':C.water}},
       {id:'waterway',type:'line',source:SRC,'source-layer':'waterway',
         paint:{'line-color':C.water,'line-width':z(9,1,16,4)}},
@@ -3737,11 +3784,15 @@ function glOffset(sx,sy){
 }
 function syncFromGL(){
   if(!glMap)return;
-  /* На единицу нашей сетки приходится вдвое больше пикселей, чем даёт простое сравнение
-     номеров зума: сетка считана по тайлу в 256 пикселей, движок рисует по 512. От этого
-     числа зависят круги неопределённости и круг точности геолокации — они рисовались
-     вдвое меньше, чем означали */
-  view.k=Math.pow(2,glMap.getZoom()-GEO_Z+1);
+  /* Пикселей на единицу мира ровно столько, сколько даёт сравнение номеров зума. В прошлой
+     волне я добавил сюда множитель два, решив, что движок рисует по тайлу в 512 пикселей, —
+     и ошибся: проекция движка считает в тех же CSS-пикселях, что и наша сетка.
+     Проверяется шкалой, которая считается независимо и по другой формуле: на зуме 15,2
+     она даёт 2,34 метра в пикселе, а метр в единице мира у нас 1,343 — значит 0,574
+     пикселя на единицу, то есть ровно два в степени (зум минус шестнадцать).
+     От этого числа зависят круги неопределённости, круг точности геолокации и ширина
+     кадра, по которой выбирается имя места */
+  view.k=Math.pow(2,glMap.getZoom()-GEO_Z);
   var c=glMap.getCenter(), cw=latLonToWorld(c.lat,c.lng);
   view.tx=view.W/2-cw[0]*view.k;
   view.ty=view.Ht/2-cw[1]*view.k;
@@ -3893,6 +3944,14 @@ function syncViewport(){
   var vv=window.visualViewport;
   var st=document.documentElement.style;
   var kb=vv?Math.max(0,Math.round(window.innerHeight-vv.height-vv.offsetTop)):0;
+  /* Клавиатура просто ложится поверх шторки: ничего не двигаем и не поджимаем. Чтобы низ
+     списка не оказался в западне под ней, прокручиваемой области даём нижний отступ ровно
+     в её высоту — визуально это ничего не сдвигает, но последние строки можно доскроллить */
+  st.setProperty('--kb',kb+'px');
+  var ap0=$('#app'); if(ap0)ap0.classList.toggle('is-kb',kb>60);
+  /* iOS сам прокручивает окно к полю ввода, и вместе с окном уезжает вся оболочка.
+     Возвращаем окно на место: поле и так видно — шторка раскрыта, а строка у неё сверху */
+  if(window.scrollY||window.scrollX)window.scrollTo(0,0);
   /* Высоту берём у окна, а не у видимой части. Видимая часть меняется от клавиатуры
      и — главное — на старте приложения с домашнего экрана приходит заниженной: полосы
      системы встают не в первом кадре. Одно такое значение, записанное на старте, и оболочка
@@ -3909,6 +3968,7 @@ if(window.visualViewport){
 }
 window.addEventListener('orientationchange',function(){setTimeout(syncViewport,250)});
 window.addEventListener('resize',syncViewport);
+window.addEventListener('scroll',function(){if(window.scrollY||window.scrollX)window.scrollTo(0,0)});
 function drawMap(){
   measure();
   if(initGL()){ useGLCamera(); }
@@ -3918,7 +3978,9 @@ function drawMap(){
       '<div class="mapfail">'+icon('map')+'<b>Карта не загрузилась</b>'+
       '<p>Проверьте сеть и обновите страницу. События и переписка работают и без неё</p></div>');
   }
-  fitOnStation(primaryStation());
+  /* кадр встал на место — список и подпись над ним обязаны это заметить:
+     иначе на первом экране остаётся имя, посчитанное до того, как движок сообщил масштаб */
+  askedMove(); fitOnStation(primaryStation());
 }
 
 /* ============ 5. маркеры и кластеры ============ */
@@ -3980,15 +4042,37 @@ function viewCenterPoint(){var q=viewRect(); return toWorld((q.l+q.r)/2,(q.t+q.b
    оба от карты — вышло бы два ответа на один вопрос, и они бы разошлись.
    Без геолокации точка отсчёта — дом; нет и его — фильтр недоступен */
 var RADIUS_STEPS=[500,1000,2000];
-function radiusRef(){
-  if(geoOn())return meRef();
-  /* Без геолокации считаем от дома. Дом известен всегда: человек назвал свой район при
-     регистрации, и даже без точной точки у района есть центр. Поэтому фильтр не пропадает
-     с экрана — пропадала бы только внятность, если бы мы молчали, от чего меряем */
-  var hp=homePoint();
-  return (hp&&hp.x!=null)?hp:null;
+/* «Когда» — единственный фильтр, который человек действительно задаёт словами: «что-нибудь
+   сегодня», «на выходных». У вещей старта нет, поэтому фильтр показывается, только когда
+   в кадре есть встречи, и вещи он не трогает — иначе «сегодня» молча прятало бы половину
+   карты по признаку, которого у неё нет */
+var WHEN_STEPS=[['','Неважно'],['today','Сегодня'],['soon','На днях'],['weekend','В выходные']];
+function dayStart(t){var d=new Date(t); d.setHours(0,0,0,0); return d.getTime()}
+function whenOK(p){
+  var w=ui.when;
+  if(!w||!isAct(p)||!p.starts_at)return true;
+  var t=p.starts_at, today=dayStart(now());
+  if(w==='today')return t>=today&&t<today+DAY;
+  if(w==='soon')return t>=today&&t<today+4*DAY;
+  if(w==='weekend'){
+    var d=new Date(t).getDay();
+    return (d===0||d===6)&&t>=today&&t<today+8*DAY;
+  }
+  return true;
 }
-function radiusFromText(){return geoOn()?'Расстояние от вас':'Расстояние от дома'}
+function anyAct(){
+  for(var i=0;i<db.pins.length;i++){
+    var p=db.pins[i];
+    if(p.status==='active'&&isAct(p)&&!hiddenForMe(p)&&inView(p.x,p.y))return true;
+  }
+  return false;
+}
+/* Расстояние существует, только когда есть точка, которая движется с человеком. Без
+   геолокации его заменяет кадр: приблизил — сузил. Считать «не дальше километра от дома»,
+   пока человек смотрит на другой конец города, значит отвечать на вопрос, которого он не
+   задавал, — и получать пустой список по причине, которой на экране нет.
+   Поэтому контрол не пересчитывается на дом, а просто исчезает вместе с точкой отсчёта */
+function radiusRef(){return geoOn()?meRef():null}
 function radiusOK(p){
   if(!ui.radius)return true;
   var r=radiusRef();
@@ -4020,6 +4104,7 @@ function landmarkOf(p){
   return (p&&p.district_id)||ui.districtId;
 }
 function inScope(p){
+  if(!whenOK(p))return false;
   if(!radiusOK(p))return false;
   /* пин без точки на карте не стоит и в кадр попасть не может сам: показываем его,
      пока в кадре его ориентир — иначе пропажа «не знаю где» пропала бы отовсюду */
@@ -4035,7 +4120,34 @@ function nearestStation(x,y){
   }
   return best;
 }
-/* Ориентир, которым подписан кадр, — ближайший к его центру */
+/* Точка описывает кадр, только пока кадр с неё размером. Станция метро описывает двести
+   метров вокруг, район — пару километров, город — десять. На широком кадре «18 событий ·
+   Охотный Ряд» читается как «восемнадцать событий на Охотном Ряду», хотя они размазаны
+   по половине центра, а Охотный Ряд просто оказался ближайшим к середине экрана.
+   Поэтому имя идёт по лестнице вместе с размером кадра — ровно как подписи на самой карте */
+function frameWidthM(){
+  var q=viewRect();
+  return (q.r-q.l)/view.k*METERS_PER_UNIT;
+}
+function nearestOf(list,x,y){
+  var best=null, bd=Infinity;
+  for(var i=0;i<list.length;i++){
+    var d=list[i], dx=x-d.sx, dy=y-d.sy, q=dx*dx+dy*dy;
+    if(q<bd){bd=q;best=d}
+  }
+  return best;
+}
+function framePlace(){
+  /* пока движок не поднялся, масштаба нет и лестница считает мусор: до этого момента
+     имя даёт ближайший ориентир, иначе на первом кадре мелькает чужой район */
+  if(!glMap){var c0=viewCenterPoint(); return district(nearestStation(c0[0],c0[1]))}
+  var c=viewCenterPoint(), w=frameWidthM();
+  if(w<2500)return district(nearestStation(c[0],c[1]));
+  var kind=(w<10000)?'district':'city';
+  var pool=PLACES.filter(function(p){return p.kind===kind});
+  if(!pool.length)pool=PLACES;
+  return nearestOf(pool,c[0],c[1])||district(nearestStation(c[0],c[1]));
+}
 function primaryStation(){var c=viewCenterPoint(); return nearestStation(c[0],c[1])}
 function viewCenterWorld(){return viewCenterPoint()}
 /* Список идёт за картой, поэтому её движение — это смена выдачи, а не повод спросить.
@@ -4085,9 +4197,16 @@ function homePoint(){
    а список сам догоняет её. Одно действие вместо двух — и то же самое делает рука,
    когда человек просто тащит карту пальцем */
 function goToStation(id){
-  ui.districtId=id;
+  var d=placeById(id); if(!d)return;
+  if(d.kind==='metro')ui.districtId=id;
+  /* Недавние — не догадка приложения о том, куда человек хочет, а факт: он уже туда ходил.
+     Никакого управления списком, никаких «закрепить» и «очистить» — чем пользовались,
+     то и под рукой */
+  ui.recentPlaces=[id].concat((ui.recentPlaces||[]).filter(function(x){return x!==id})).slice(0,4);
   askedMove();
-  flyToStation(id);
+  /* Масштаб под размер места: у станции двор, у района квартал, у города весь он */
+  var z=(d.kind==='metro')?GL_ZOOM:(d.kind==='district'?13.4:11.6);
+  if(glMap)glGoto(d.sx,d.sy,z,true); else flyToStation(id);
 }
 /* счётчик у станции считает по тому же радиусу, что и охват, поэтому один пин может
    считаться у двух соседних станций и сумма по станциям больше общегородской */
@@ -4171,7 +4290,7 @@ function placeLabels(singles,out,stns){
    плане, — а подпись только вблизи: на дальнем зуме сорок девять имён легли бы друг на друга
    и закрыли события. Пороги те же по смыслу, что у любой карты: сначала точка, потом имя */
 var STN_ICON_Z=12, STN_NAME_Z=14;
-function mapZoom(){return GEO_Z-1+Math.log(view.k)/Math.LN2}
+function mapZoom(){return GEO_Z+Math.log(view.k)/Math.LN2}
 function stationMarks(){
   var z=mapZoom();
   if(z<STN_ICON_Z)return [];
@@ -4394,10 +4513,10 @@ var ui={
   mineTab:'own', mineSort:null, mineCats:null, mineQuery:'', userTab:'active', typing:false, panelCollapsed:false, searchQuery:'',
   /* вкладка сообщений живёт только в памяти сеанса: вернувшись, человек всегда видит «Все»,
      иначе вчерашний фильтр спрятал бы сегодняшнее сообщение */
-  msgTab:'all', lineOpen:null,
+  msgTab:'all', lineOpen:null, when:'', recentPlaces:[], searchFocus:false,
   /* поиск и ветка в списке станций живут только в памяти сеанса: это способ добраться
      до станции, а не настройка — вернувшись, человек должен видеть весь список */
-  stQuery:'', stFocus:false, msgQuery:'',
+  msgQuery:'',
   /* карточка пина на телефоне: свёрнута до корешка или раскрыта */
   pinShut:false, pinFull:false
 };
@@ -5041,6 +5160,34 @@ function nearestOutside(){
   });
   return best?{p:best,u:bd}:null;
 }
+/* Место в выдаче — обычная строка результата: значок вида, название, и всё. Ни счётчика,
+   ни заливки, ни вида переключателя — она не фильтрует, она переносит карту */
+function placeRow(d){
+  return '<button class="districtrow" data-station-toggle="'+d.id+'">'+
+    placeIcon(d)+
+    '<span style="flex:1;min-width:0"><b>'+H(d.name)+'</b>'+
+      (d.kind==='metro'?'<span class="dots">'+lineDotsHTML(d)+'</span>':'')+
+    '</span>'+
+    icon('chev-right')+'</button>';
+}
+/* Пока строка поиска пуста и в работе — показываем недавние, а следом ближайшие к кадру.
+   На первом запуске недавних нет, и список целиком из ближайших: то же, что было раньше,
+   только оно перестаёт быть единственным вариантом и уступает место по мере использования */
+function placeSuggest(q){
+  var all=allPlaces();
+  if(q){
+    return all.filter(function(d){return d.name.toLowerCase().indexOf(q)>=0}).slice(0,6);
+  }
+  var out=[];
+  (ui.recentPlaces||[]).forEach(function(id){var d=placeById(id); if(d)out.push(d)});
+  var c=viewCenterPoint();
+  all.slice().sort(function(a,b){
+    return (Math.pow(a.sx-c[0],2)+Math.pow(a.sy-c[1],2))-(Math.pow(b.sx-c[0],2)+Math.pow(b.sy-c[1],2));
+  }).forEach(function(d){
+    if(out.length<6&&out.indexOf(d)<0)out.push(d);
+  });
+  return out.slice(0,6);
+}
 function homeResultsHTML(){
   var q=(ui.searchQuery||'').trim();
   var list=homeList();
@@ -5051,6 +5198,16 @@ function homeResultsHTML(){
      поиска подходит к ней почти вплотную, и мимо начинают промахиваться — поэтому в
      развёрнутом виде кнопка уходит с карты сюда, под строку поиска. В саму шапку шторки её
      не поставить: там ловится жест перетаскивания, и тап по кнопке считался бы за него */
+  /* Места идут над событиями: человек, который печатает название станции, ищет место,
+     а не событие с таким словом в описании */
+  var ql=q.toLowerCase();
+  var places=(ui.searchFocus||ql)?placeSuggest(ql):[];
+  var placesHTML=places.length
+    ? '<div class="eyebrow" style="padding:12px 16px 4px">'+(ql?'Места':((ui.recentPlaces||[]).length?'Недавние и рядом':'Рядом'))+'</div>'+
+      places.map(placeRow).join('')+
+      (ql?'':'<div class="stclear"><button class="linkbtn" data-act="open-stations">Все станции · '+DISTRICTS.length+'</button></div>')+
+      '<div class="divider divider--lg"></div>'
+    : '';
   var head=((isDesktopPanel()||ui.homeOpen)?'<div class="feedhead"><div class="scoperow">'+
     '<button class="scopebtn" data-act="open-scope">'+scopeBtnHTML()+'</button></div>':'<div class="feedhead">')+
     '<div class="feed__sort" style="padding:12px 16px">'+
@@ -5115,7 +5272,7 @@ function homeResultsHTML(){
       '<div class="hint">'+H(ct.charAt(0).toUpperCase()+ct.slice(1))+'</div>'+
       '<button class="linkbtn" data-act="open-archive">Открыть архив</button>'+
     '</div>':'';
-  return head+body+tail;
+  return head+placesHTML+body+tail;
 }
 function viewHome(){
   var top=(isDesktopPanel()?'':'<span class="sheet-grip" data-grip="1" aria-hidden="true"></span>')+
@@ -5160,13 +5317,25 @@ function renderDetail(p){
   hscrollInit(el);
   if(v.after)v.after();
 }
-/* Название в шапке проявляется, когда обложка уехала вверх — порог чуть меньше её высоты.
-   Слушатель вешается на свежий узел тела при каждой перерисовке, старый уходит вместе с ним */
+/* Название в шапке проявляется, когда собственное название карточки ушло под неё. Порог
+   был числом — 96 пикселей, взятые на глаз, — и при обложке в двести пикселей оба названия
+   оказывались на экране разом: одно в шапке, второе прямо под ней.
+   Меряем вместо того, чтобы угадывать: порог — это нижний край заголовка карточки минус
+   высота самой шапки. Слушатель вешается на свежий узел тела при каждой перерисовке,
+   старый уходит вместе с ним */
 function bindFadeTitle(root,bodyEl,on){
   if(!root)return;
   root.classList.remove('is-scrolled');
   if(!on||!bodyEl)return;
-  var upd=function(){root.classList.toggle('is-scrolled',bodyEl.scrollTop>96)};
+  var upd=function(){
+    var h2=bodyEl.querySelector('h2'), trig=96;
+    if(h2){
+      var head=root.querySelector('.panelhead--over')||root.querySelector('.chathead');
+      var hh=head?head.offsetHeight:56;
+      trig=bodyEl.scrollTop+(h2.getBoundingClientRect().bottom-bodyEl.getBoundingClientRect().top)-hh;
+    }
+    root.classList.toggle('is-scrolled',bodyEl.scrollTop>trig);
+  };
   bodyEl.addEventListener('scroll',upd);
   upd();
 }
@@ -6366,8 +6535,12 @@ function viewProfile(){
   }
   var bell=bellHTML('');
   var head='<div class="pad profhead">'+
-    /* аватар и есть вход в правку: так это устроено везде, где профиль правят */
-    '<button data-act="open-me" aria-label="Изменить профиль" style="flex:none">'+avatarHTML(m,'avatar--l')+'</button>'+
+    /* Аватар и есть вход в правку — но без значка об этом никто не догадается: раньше здесь
+       стоял голый кружок, и «на него можно нажать» было допущением, а не фактом.
+       Значок один и тот же в обоих местах и означает одно: это можно изменить. В профиле
+       он ведёт в правку, в самой правке открывает выбор снимка */
+    '<span class="mephoto mephoto--s"><button data-act="open-me" aria-label="Изменить профиль">'+avatarHTML(m,'avatar--l')+
+      '<i class="mephoto__b mephoto__b--s">'+icon('pencil')+'</i></button></span>'+
     '<div style="flex:1;min-width:0"><div style="font-size:var(--f-h40);line-height:var(--l-h40);font-weight:600">'+H(m.name)+'</div>'+
     '<div style="font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)">'+H(m.phone||'без телефона')+'</div></div>'+
     '<span class="headacts">'+(isDesktopPanel()?bell:'')+
@@ -6515,7 +6688,7 @@ function viewMe(){
   var m=me();
   var body='<div class="pad stack">'+
     '<div class="mephoto">'+avatarHTML(m,'avatar--xl')+
-      '<button class="mephoto__b" data-act="me-photo" aria-label="Выбрать снимок">'+icon('camera')+'</button>'+
+      '<button class="mephoto__b" data-act="me-photo" aria-label="Выбрать снимок">'+icon('pencil')+'</button>'+
     '</div>'+
     (m.avatar?'<div style="text-align:center"><button class="linkbtn" data-act="me-photo-off">Удалить снимок</button></div>':'')+
     '<div class="field"><label for="meName">Имя и фамилия</label>'+
@@ -7205,9 +7378,9 @@ function allCat(){for(var t in PIN_TYPES)if(!ui.filters[t])return false; return 
    пустой поиск. Место сюда не входит — его задаёт карта, а не фильтр */
 function resetFilters(){
   for(var t in PIN_TYPES)ui.filters[t]=true;
-  ui.radius=null; ui.stQuery='';
+  ui.radius=null; ui.when='';
 }
-function filtersDirty(){return !allCat()||!!ui.radius||!!(ui.stQuery||'').trim()}
+function filtersDirty(){return !allCat()||!!ui.radius||!!ui.when}
 /* кружки категорий: залитый — показывается, контурный — выключена */
 function catDotsHTML(){
   var out='';
@@ -7236,14 +7409,19 @@ function lineDotsHTML(d){
     return '<i class="linedot" style="background:'+lineColor(nm)+'"></i>';
   }).join('');
 }
-/* Кадр подписывается ближайшим к его центру ориентиром. Это не выбор и ни на что не влияет —
-   это ответ на вопрос «куда я смотрю», и человек читает его, а не назначает */
-function scopeName(){return district(primaryStation()).name}
-function scopeSubHTML(){return stationTag(primaryStation())}
+/* Кадр подписывается местом своего размера. Это не выбор и ни на что не влияет — это ответ
+   на вопрос «куда я смотрю», и человек читает его, а не назначает */
+function placeTag(d){
+  if(!d)return '';
+  if(d.kind==='metro')return '<span class="stn">'+lineDot(d.id)+H(d.name)+'</span>';
+  return '<span class="stn">'+H(d.name)+'</span>';
+}
+function scopeName(){var p=framePlace(); return p?p.name:''}
+function scopeSubHTML(){return placeTag(framePlace())}
 /* Радиус в подписи появляется, только когда он включён: выключенный он молчал бы числом
    о том, чего нет */
 function scopeStHTML(){
-  return stationTag(primaryStation())+
+  return placeTag(framePlace())+
     (ui.radius?'<span class="scopebtn__more">'+H(niceUp(ui.radius))+'</span>':'');
 }
 function scopeBtnHTML(){
@@ -7258,11 +7436,16 @@ function scopeBtnHTML(){
    из сорока девяти строк подряд ничем не лучше того, от чего мы ушли, а свёрнутый
    отвечает на другой вопрос — «что вообще есть вокруг», и отвечает схемой */
 function viewStations(){
+  /* В списке по линиям строка остаётся у каждой станции — человек ищет «Тургеневскую»,
+     а не «узел, в который она входит». Ведёт она к своему узлу */
   var byLine={};
   DISTRICTS.forEach(function(d){
-    (d.lines||[]).forEach(function(nm){(byLine[nm]=byLine[nm]||[]).push(d)});
+    (d.stations||[{n:d.name,l:d.lines}]).forEach(function(st){
+      (st.l||[]).forEach(function(nm){(byLine[nm]=byLine[nm]||[]).push({node:d,name:st.n})});
+    });
   });
   var nums=Object.keys(byLine).map(Number).sort(function(a,b){return a-b});
+  nums.forEach(function(nm){byLine[nm].sort(function(a,b){return a.name.localeCompare(b.name,'ru')})});
   var body=nums.map(function(nm){
     var L=METRO_LINES[nm]||{name:'Линия '+nm,color:'var(--ink-2)'};
     var open=(ui.lineOpen===nm);
@@ -7272,10 +7455,13 @@ function viewStations(){
       '<span class="cnt"><span class="tag">'+byLine[nm].length+'</span></span>'+
       icon(open?'chev-up':'chev-down')+'</button>';
     if(!open)return head;
-    return head+'<div data-reveal="line'+nm+'">'+byLine[nm].map(function(d){
+    return head+'<div data-reveal="line'+nm+'">'+byLine[nm].map(function(it){
+      var d=it.node, other=(it.name!==d.name);
       return '<button class="districtrow districtrow--sub" data-station-toggle="'+d.id+'">'+
-        '<svg class="metro" aria-hidden="true" style="color:'+d.lineColor+'"><use href="#i-metro"/></svg>'+
-        '<span style="flex:1;min-width:0"><b>'+H(d.name)+'</b><span class="dots">'+lineDotsHTML(d)+'</span></span>'+
+        '<svg class="metro" aria-hidden="true" style="color:'+lineColor(nm)+'"><use href="#i-metro"/></svg>'+
+        '<span style="flex:1;min-width:0"><b>'+H(it.name)+'</b>'+
+          (other?'<span class="dots"><span class="sub">в узле «'+H(d.name)+'»</span></span>':'<span class="dots">'+lineDotsHTML(d)+'</span>')+
+        '</span>'+
         '<span class="cnt"><span class="tag">'+pinsOfDistrict(d.id,{filtered:1}).length+'</span></span></button>';
     }).join('')+'</div>';
   }).join('');
@@ -7300,50 +7486,28 @@ function viewScope(){
   /* Станция теперь не набирается, а выбирается: охват это круг вокруг точки, и точка одна.
      Прежний набор решал задачу «человек живёт между станциями» — её решает сам радиус,
      причём точнее, потому что круг не обязан совпадать ни с одной станцией */
-  var q=(ui.stQuery||'').trim().toLowerCase();
-  /* Галки нет: выбранное говорят и чипы сверху, и заливка строки — третий знак лишний.
-     Строка ведёт себя как карточка списка, теми же заливкой и расходящимися линиями */
-  function row(d){
-    var n=pinsOfDistrict(d.id,{filtered:1}).length;
-    return '<button class="districtrow" data-station-toggle="'+d.id+'">'+
-      '<svg class="metro" aria-hidden="true" style="color:'+d.lineColor+'"><use href="#i-metro"/></svg>'+
-      '<span style="flex:1;min-width:0"><b>'+H(d.name)+'</b><span class="dots">'+lineDotsHTML(d)+'</span></span>'+
-      /* число тегом: слово повторялось в каждой из девяти строк подряд, а смысл
-         держится колонкой — все числа в одном месте на экране «Фильтры» */
-      '<span class="cnt"><span class="tag">'+n+'</span></span></button>';
-  }
-  /* Расстояние — единственная настройка места, которую нельзя задать движением карты:
-     кадр отвечает на «где я смотрю», а этот фильтр на «не дальше чем от меня». Поэтому он
-     необязательный и по умолчанию выключен — место задаёт карта, а не число.
-     Без геолокации считается от дома; нет и его — выбирать нечего */
+  /* Расстояние появляется вместе с точкой отсчёта и пропадает вместе с ней: без
+     геолокации его роль играет сам кадр */
   var rad=radiusRef()
-    ? '<div class="pad stack" style="padding-bottom:12px">'+
-      '<div class="field"><label>'+radiusFromText()+'</label><div class="segctl">'+
+    ? '<div class="field"><label>Расстояние от вас</label><div class="segctl">'+
       '<button class="'+(ui.radius?'':'is-on')+'" data-radius="0">Любое</button>'+
       RADIUS_STEPS.map(function(m){
         return '<button class="'+(ui.radius===m?'is-on':'')+'" data-radius="'+m+'">'+H(niceUp(m))+'</button>';
-      }).join('')+'</div></div></div>'
+      }).join('')+'</div></div>'
     : '';
-  var picked=rad;
-  var tools='<div class="stools"><div class="searchfield" style="flex:1">'+
-    icon('search','searchfield__ic')+
-    '<input class="input" id="stInput" placeholder="Найти ориентир" value="'+H(ui.stQuery||'')+'" autocomplete="off">'+
-    (q?'<button class="searchfield__clear" data-act="st-clear" type="button" aria-label="Очистить">'+icon('close')+'</button>':'')+
-  '</div></div>';
-  /* Список ориентиров перестал быть списком для просмотра. Место выбирает карта, а это
-     поиск — «перенеси меня туда, что я могу назвать». Поиск не показывают целиком:
-     сорок девять строк подряд листать незачем, а в другом городе их будут сотни.
-     Поэтому без запроса — ближайшие к тому, куда человек смотрит, а с запросом — все,
-     что подошли. Правило одно и для метро, и для будущего парка или площади */
-  var list;
-  if(q){
-    list=DISTRICTS.filter(function(d){return d.name.toLowerCase().indexOf(q)>=0});
-  }else{
-    var c0=viewCenterPoint();
-    list=DISTRICTS.slice().sort(function(a,b){
-      return (Math.pow(a.sx-c0[0],2)+Math.pow(a.sy-c0[1],2))-(Math.pow(b.sx-c0[0],2)+Math.pow(b.sy-c0[1],2));
-    }).slice(0,6);
-  }
+  /* «Когда» показывается, только если в кадре есть встречи: у вещей старта нет */
+  var when=anyAct()
+    ? '<div class="field"><label>Когда</label><div class="segctl">'+
+      WHEN_STEPS.map(function(o){
+        return '<button class="'+((ui.when||'')===o[0]?'is-on':'')+'" data-when="'+o[0]+'">'+H(o[1])+'</button>';
+      }).join('')+'</div></div>'
+    : '';
+  var picked=(rad||when)?('<div class="pad stack" style="padding-bottom:16px">'+when+rad+'</div>'):'';
+  /* Ориентиров здесь больше нет. Они не фильтр: строка ничего не включала и не выключала,
+     она переносила карту — но стояла между двумя настоящими фильтрами, со счётчиком справа,
+     и читалась переключателем. Ноль напротив станции был строкой, которая не делает ничего
+     и честно об этом сообщает.
+     Место ищут там, где ищут вообще, — в строке поиска над списком событий */
   /* На десктопе фильтр стоит второй колонкой, и как убывает число событий видно в списке
      слева. На телефоне списка рядом нет, прогрессии не видно — поэтому внизу плавает
      кнопка с числом. Она не «применить»: фильтры применяются сразу, каждым нажатием.
@@ -7352,30 +7516,15 @@ function viewScope(){
   var nres=homeList().length;
   var done=isDesktopPanel()?'':'<div class="stdone"><button class="btn btn--primary" data-act="scope-done">'+
     'Показать '+nres+' '+plural(nres,'событие','события','событий')+'</button></div>';
-  /* Всё, что выше списка станций, собрано в одну приклеенную шапку и стоит первым
-     в прокрутке. Пока над ней лежали чипы категорий, её место в потоке не совпадало
-     с местом, куда её прижимает, — а сдвигаю я относительно первого, вижу во втором.
-     Между ними и открывалась щель: то станции уезжали под шапку, то шапка наезжала
-     на первую строку. Совпадают они только когда приклеенный элемент первый */
-  /* Приклеен только поиск. Чипы выбранных станций не могут быть липкими по своей природе —
-     у них нет потолка высоты: девять станций давали четыре ряда, и приклеенная шапка
-     съедала экран, оставляя от списка одну строку. Поле поиска остаётся над чипами,
-     как и стояло: ниже их оно ездило бы вниз при каждом переносе строки */
-  /* Полный список живёт за ссылкой: кто хочет схему — откроет, остальные её не увидят.
-     Аккордеон на первом экране заставил бы выбирать линию всех, включая тех, кто просто
-     ищет по названию */
-  var all=q?'':'<div class="stclear"><button class="linkbtn" data-act="open-stations">Все станции · '+DISTRICTS.length+'</button></div>';
-  var body=seg+'<div class="feedhead">'+tools+'</div>'+picked+
-    (list.length?list.map(row).join('')
-      :'<div class="empty">'+icon('search')+'<b>Ничего не нашлось</b></div>')+all+
-    (isDesktopPanel()?'':'<div class="stdone__gap"></div>');
-  /* сброс гаснет, когда сбрасывать нечего: все категории, весь город, пустой поиск */
+  /* Экран стал честно только про «что показывать»: категории, время и расстояние.
+     Навигации здесь больше нет, поэтому нет и приклеенной шапки с поиском — прокручивать
+     тут почти нечего */
+  var body=seg+picked+(isDesktopPanel()?'':'<div class="stdone__gap"></div>');
+  /* сброс гаснет, когда сбрасывать нечего */
   var act=filtersDirty()
     ? '<button class="iconbtn chathead__act" data-act="filters-reset" aria-label="Сбросить фильтры" title="Сбросить фильтры">'+icon('reset')+'</button>'
     : '';
-  return {title:'Фильтры',body:body,back:true,screen:true,action:act,after:function(){
-    var i=$('#stInput'); if(i&&ui.stFocus){i.focus();i.setSelectionRange(i.value.length,i.value.length)}
-  },foot:null,over:done};
+  return {title:'Фильтры',body:body,back:true,screen:true,action:act,foot:null,over:done};
 }
 
 
@@ -8207,9 +8356,8 @@ function onAction(act,el,e){
     /* контекст события несём с собой: личная переписка в проекте всегда принадлежит
        событию, и без него кнопке «Написать» в профиле не из чего завести разговор */
     case 'user': openPanel({type:'user',id:id,pinctx:el.getAttribute('data-pinctx')||pinCtxOf(ui.panel),prev:ui.panel}); break;
-    case 'open-scope': ui.stQuery=''; ui.stFocus=false; openPanel({type:'scope',prev:ui.panel}); break;
+    case 'open-scope': openPanel({type:'scope',prev:ui.panel}); break;
     case 'open-stations': openPanel({type:'stations',prev:ui.panel}); break;
-    case 'st-clear': ui.stQuery=''; ui.stFocus=true; render(); break;
 
     case 'people': openPanel({type:'people',id:id,prev:ui.panel}); break;
     case 'open-archive': openPanel({type:'archive',prev:ui.panel}); break;
@@ -8249,9 +8397,16 @@ document.addEventListener('click',function(e){
     ui.lineOpen=(ui.lineOpen===ln)?null:ln;
     render(); return;
   }
+  /* строка места переносит карту — выдача догоняет её сама */
   if((el=e.target.closest('[data-station-toggle]'))){
+    var si0=$('#searchInput'); if(si0)si0.blur();
+    ui.searchFocus=false;
     goToStation(el.getAttribute('data-station-toggle'));
-    if(!isDesktopPanel())closePanel();
+    /* пришли из «Всех станций» или из фильтров — возвращаемся туда, откуда открывали:
+       место выбрано, экран своё отработал */
+    if(ui.panel&&(ui.panel.type==='scope'||ui.panel.type==='stations'))
+      {ui.panel=ui.panel.prev||null; expandPanel()}
+    else if(!isDesktopPanel())closePanel();
     render();
     return;
   }
@@ -8350,6 +8505,10 @@ document.addEventListener('click',function(e){
   }
   if((el=e.target.closest('[data-theme-set]'))){setTheme(el.getAttribute('data-theme-set'));render();return}
   if((el=e.target.closest('[data-cat]'))){toggleCat(el.getAttribute('data-cat'));render();return}
+  if((el=e.target.closest('[data-when]'))){
+    ui.when=el.getAttribute('data-when')||'';
+    render(); return;
+  }
   if((el=e.target.closest('[data-radius]'))){
     var rv=parseInt(el.getAttribute('data-radius'),10)||0;
     ui.radius=(rv&&ui.radius!==rv)?rv:null;
@@ -8460,20 +8619,6 @@ document.addEventListener('input',function(e){
     if(ui.draft){ui.draft.stOpen=true; ui.draft.stQ=e.target.value; ui.pickPaused=true}
     render();
     var pi=$('#placeStInput'); if(pi){pi.focus(); pi.setSelectionRange(pi.value.length,pi.value.length)}
-    return;
-  }
-  if(e.target.id==='stInput'){
-    ui.stQuery=e.target.value; ui.stFocus=true;
-    /* От себя, а не по имени: в двух колонках #panelBody — это левая, и фильтр,
-       открытый справа, переписывал ленту слева своей разметкой. Получался дубль окна,
-       и ввод продолжался уже в копии */
-    var sc=e.target.closest('.panel__body');
-    if(sc){
-      var v=viewScope(), tmp=document.createElement('div');
-      tmp.innerHTML=v.body; fixHang(tmp);
-      sc.innerHTML=tmp.innerHTML;
-      var i2=$('#stInput'); if(i2){i2.value=ui.stQuery; i2.focus(); i2.setSelectionRange(i2.value.length,i2.value.length)}
-    }
     return;
   }
   if(e.target.id==='searchInput'){
@@ -8671,6 +8816,17 @@ function renderOnboard(){
     '<div class="modal__foot">'+f+'</div></div></div>');
   var first=$('#o-name')||$('#o-code'); if(first)first.focus();
 }
+/* Пока строка поиска в работе, над выдачей стоят места. Это не режим и не экран: ни одной
+   новой кнопки, ни «Отмены» — просто выдача отвечает на то, что человек сейчас делает */
+document.addEventListener('focusin',function(e){
+  if(e.target&&e.target.id==='searchInput'&&!ui.searchFocus){ui.searchFocus=true; renderPanelOnly()}
+});
+document.addEventListener('focusout',function(e){
+  if(e.target&&e.target.id==='searchInput')setTimeout(function(){
+    if(document.activeElement&&document.activeElement.id==='searchInput')return;
+    ui.searchFocus=false; renderPanelOnly();
+  },140);
+});
 /* Прокрутка выдачи прячет клавиатуру: начал листать — значит набирать закончил.
    Так это устроено в картах, и это дешевле отдельного режима поиска с «Отменой» —
    его я сделал по образцу и убрал: строка ввода и крестик в ней справлялись сами */
@@ -8789,7 +8945,9 @@ function startApp(){
   /* Кадр ставим второй раз, уже после render: он открывает панель, и левая часть карты
      уходит под неё. Первый fit целился в середину пустого экрана, и район оказывался
      наполовину закрыт — приложение открывалось не на том месте, про которое рассказывает */
-  fitOnStation(primaryStation());
+  /* кадр встал на место — список и подпись над ним обязаны это заметить:
+     иначе на первом экране остаётся имя, посчитанное до того, как движок сообщил масштаб */
+  askedMove(); fitOnStation(primaryStation());
   if(window.ResizeObserver){
     new ResizeObserver(function(){
       measure(); clampView(); applyView();
