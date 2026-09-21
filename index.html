@@ -2555,7 +2555,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.20.5';
+var VERSION='3.20.6';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
 var UPDATED='21 сентября 2026';
@@ -7399,7 +7399,12 @@ function measureRows(){
   var vv=window.visualViewport, ap=$('#app'), r=$('.rail');
   var apr=ap?ap.getBoundingClientRect():null, rr=r?r.getBoundingClientRect():null;
   var cs=getComputedStyle(document.documentElement);
+  /* Версия стоит первой строкой замера: без неё нельзя отличить «правка не помогла»
+     от «телефон показывает вчерашнюю сборку», а это разные диагнозы */
+  var sb=document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
   return [
+    ['Версия', VERSION],
+    ['Строка состояния', sb?sb.getAttribute('content'):'—'],
     ['Окно', Math.round(window.innerHeight)+' px'],
     ['Видимая часть', vv?Math.round(vv.height)+' px':'—'],
     ['Экран', Math.round(screen.height)+' × '+(window.devicePixelRatio||1)],
