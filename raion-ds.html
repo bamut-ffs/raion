@@ -264,8 +264,16 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    оставалась полоса фона, и получалось два отступа — один внутри таббара, где безопасную
    зону учли честно, второй под ним, где её вычли ещё раз.
    --kb — высота клавиатуры; её ставит скрипт по visualViewport, и по умолчанию она ноль */
-:root{--kb:0px}
-.app{display:flex;position:fixed;inset:0;overflow:hidden}
+/* Три величины, которые приложение меряет, а не выводит из формул.
+   --vh — сколько сейчас видно по высоте. Считать её через 100dvh нельзя: на iPhone
+   в приложении с домашнего экрана dvh и настоящая видимая высота расходятся, и коробка
+   оказывалась ниже края экрана — под таббаром оставалась полоса фона.
+   --chrome-b — настоящая высота таббара вместе с полосой жестов. Формула «66 плюс
+   безопасная зона» стояла в семи местах и в каждом обязана была совпасть с тем, чем
+   таббар оказался на самом деле; стоило разойтись — появлялся второй отступ.
+   --kb — высота клавиатуры. */
+:root{--kb:0px; --chrome-b:66px; --vh:100dvh}
+.app{display:flex;position:fixed;left:0;top:0;width:100%;height:var(--vh);overflow:hidden}
 /* компактный рейл: иконка сверху, подпись снизу — единый стиль для десктопа и мобильного таббара */
 /* свой слой выше панели: панель теперь абсолютная и при сворачивании уезжает влево ровно на
    место рейла — без этого она ложилась бы поверх навигации и прятала её.
@@ -1484,7 +1492,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .sheet-scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:19;display:none}
 /* под домашней шторкой затемняем только карту: дом — состояние просмотра, и уходить
    из него в чаты одним касанием человек вправе, поэтому таббар остаётся живым */
-.sheet-scrim--home{bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px))}
+.sheet-scrim--home{bottom:var(--chrome-b)}
 /* Карта уехала в сторону — предлагаем перенести охват сюда. Само по себе панорамирование
    охват не меняет: список прыгал бы под рукой, и человек не смог бы просто посмотреть
    соседний район. Поэтому движение показывает предложение, а решение остаётся за ним */
@@ -1567,6 +1575,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      в потоке, карта до него не доходила, и когда он уезжал на время жеста, снизу
      оставалась белая полоса. Он непрозрачный, поэтому в обычном виде ничего не изменилось */
   .rail{
+    /* единственное место, где высота таббара задаётся формулой: всё остальное меряет его */
     position:absolute;left:0;right:0;bottom:0;width:auto;height:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));
     flex:none;flex-direction:row;justify-content:space-around;align-items:center;
     border-right:none;border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));
@@ -1579,12 +1588,12 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   /* шторка: высота по содержимому с потолком в 72% экрана — короткие шторки вроде категорий
      больше не растягиваются на пустоту. Теней у шторок нет вообще (правило проекта) */
   .panel{
-    position:absolute;left:0;right:0;width:auto;bottom:0;top:auto;flex-basis:auto;height:auto;max-height:calc(100dvh - 76px);z-index:20;order:0;
+    position:absolute;left:0;right:0;width:auto;bottom:0;top:auto;flex-basis:auto;height:auto;max-height:calc(var(--vh) - 76px);z-index:20;order:0;
     border-right:none;border-top:1px solid var(--line);border-radius:var(--r-l) var(--r-l) 0 0;
   }
   /* «разделы» (чаты, профиль, поиск, переписка) — во весь экран над таббаром: он их навигация,
      поэтому таббар остаётся виден и затемнения под ними нет */
-  .panel.is-section{top:0;bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));height:auto;max-height:none;border-radius:0;border-top:none;
+  .panel.is-section{top:0;bottom:var(--chrome-b);height:auto;max-height:none;border-radius:0;border-top:none;
     /* подложка доходит до физического верха экрана, а содержимое начинается под островом */
     padding-top:env(safe-area-inset-top,0px)}
   /* Переписка не раздел, а экран внутри него: выход даёт стрелка в шапке, а не таббар.
@@ -1597,7 +1606,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .sheet-scrim.is-on{display:block}
   /* после подтверждения места высота жёсткая, а не потолок: иначе второй и третий шаг
      были бы разной высоты и прыгали друг относительно друга */
-  .panel.is-tall{height:calc(100dvh - 100px);max-height:none}
+  .panel.is-tall{height:calc(var(--vh) - 100px);max-height:none}
   .panel.is-tall .panel__body{flex:1 1 auto}
   /* палец на карте при выборе места — шторка уезжает вниз почти целиком и открывает карту */
   .panel{transition:transform .22s ease}
@@ -1612,7 +1621,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      не может его накрыть. Свёрнутая показывает ровно строку поиска, остальное обрезается.
      Развёрнутая встаёт по тому же правилу, что шторка создания — сто пикселей карты сверху */
   .panel.is-home,.panel.is-screen{
-    top:calc(100px + env(safe-area-inset-top,0px));bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));height:auto;max-height:none;
+    top:calc(100px + env(safe-area-inset-top,0px));bottom:var(--chrome-b);height:auto;max-height:none;
     border-radius:var(--r-l) var(--r-l) 0 0;border-top:1px solid var(--line);
     transition:top .24s ease;
   }
@@ -1630,7 +1639,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      возвращаем собственные касания — иначе тап уходит в жест */
   .panel.is-home .panel__top{touch-action:none}
   .panel.is-home .panel__top .searchfield{touch-action:auto}
-  .panel.is-home.is-shut{top:calc(100dvh - calc(var(--rail-h) + env(safe-area-inset-bottom,0px)) - var(--home-peek))}
+  .panel.is-home.is-shut{top:calc(var(--vh) - var(--chrome-b) - var(--home-peek))}
   /* в свёрнутом виде своя линия под строкой поиска не нужна: она встала бы в пиксель
      от границы таббара и читалась как вторая полоса */
   .panel.is-home.is-shut .panel__top{border-bottom:none;
@@ -1657,14 +1666,14 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      негде было лежать; ручка переезжает внутрь, и полоска становится не нужна. Углы
      выпрямляем: на телефоне их скругляет сам экран, а в браузере шторка во весь экран
      и обязана быть прямоугольной */
-  .panel.is-pin.is-full{top:0;bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));height:auto;max-height:none;min-height:0;
+  .panel.is-pin.is-full{top:0;bottom:var(--chrome-b);height:auto;max-height:none;min-height:0;
     border-radius:0;border-top:none}
   .panel.is-pin.is-full .sheet-grip{display:flex;top:env(safe-area-inset-top,0px)}
   /* кнопки шапки уходят ниже ручки и ниже острова: в этом положении над ними ничего нет */
   .panel.is-pin.is-full .panelhead--over{padding-top:calc(env(safe-area-inset-top,0px) + 22px)}
   /* Пол карточки: сверху остаётся полоска карты с булавкой и её окружением — карта здесь
      часть ответа, а не фон, — но не половина экрана пустоты, как было при 60dvh */
-  .panel.is-pin:not(.is-shut):not(.is-full){min-height:calc(100dvh - 160px)}
+  .panel.is-pin:not(.is-shut):not(.is-full){min-height:calc(var(--vh) - 160px)}
   /* Обложка идёт от самого верха и повторяет скругление шторки. Обрезкой по панели этого
      не сделать: ручка лежит выше её края, на затемнении, и обрезка съела бы её */
   .panel.is-pin:not(.is-full) .cover{border-radius:var(--r-l) var(--r-l) 0 0}
@@ -1687,7 +1696,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .panel.is-swipe{padding-top:8px}
   .panel.is-pin{transition:top .24s ease,transform .22s ease}
   .panel.is-pin.is-shut{
-    top:calc(100dvh - calc(var(--rail-h) + env(safe-area-inset-bottom,0px)) - var(--pin-peek));bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));height:auto;max-height:none;
+    top:calc(var(--vh) - var(--chrome-b) - var(--pin-peek));bottom:var(--chrome-b);height:auto;max-height:none;
   }
   .panel.is-pin.is-shut .panel__body,.panel.is-pin.is-shut .panel__foot{display:none}
   .panel.is-pin.is-shut .panelhead--over{display:none}
@@ -1737,7 +1746,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .scalebar{display:none}
   /* над таббаром и свёрнутой домашней шторкой: 66 + 70 + отступ */
   /* высота таббара — переменная, а не число: безопасную зону он тоже занимает */
-  .mapmeta{bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px) + var(--home-peek) + 8px)}
+  .mapmeta{bottom:calc(var(--chrome-b) + var(--home-peek) + 8px)}
 }
 </style>
 <style>/* Собственные стили каталога. Всё с приставкой ds-, чтобы не столкнуться с продуктовыми */
@@ -2201,6 +2210,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.20.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.20.1";</script>
 </body>
 </html>
