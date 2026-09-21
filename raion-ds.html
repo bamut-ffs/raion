@@ -259,20 +259,15 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 /* ---------- shell ---------- */
-/* Оболочка прибита к окну, а не меряется в dvh. Динамическая высота на iOS в приложении
-   с домашнего экрана даёт не то, что видно: коробка заканчивалась выше края экрана, снизу
-   оставалась полоса фона, и получалось два отступа — один внутри таббара, где безопасную
-   зону учли честно, второй под ним, где её вычли ещё раз.
-   --kb — высота клавиатуры; её ставит скрипт по visualViewport, и по умолчанию она ноль */
-/* Три величины, которые приложение меряет, а не выводит из формул.
+/* Две величины, которые приложение меряет, а не выводит из формул.
    --vh — сколько сейчас видно по высоте. Считать её через 100dvh нельзя: на iPhone
    в приложении с домашнего экрана dvh и настоящая видимая высота расходятся, и коробка
    оказывалась ниже края экрана — под таббаром оставалась полоса фона.
    --chrome-b — настоящая высота таббара вместе с полосой жестов. Формула «66 плюс
    безопасная зона» стояла в семи местах и в каждом обязана была совпасть с тем, чем
    таббар оказался на самом деле; стоило разойтись — появлялся второй отступ.
-   --kb — высота клавиатуры. */
-:root{--kb:0px; --chrome-b:66px; --vh:100dvh}
+*/
+:root{--chrome-b:66px; --vh:100dvh}
 .app{display:flex;position:fixed;left:0;top:0;width:100%;height:var(--vh);overflow:hidden}
 /* компактный рейл: иконка сверху, подпись снизу — единый стиль для десктопа и мобильного таббара */
 /* свой слой выше панели: панель теперь абсолютная и при сворачивании уезжает влево ровно на
@@ -1730,14 +1725,6 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   /* уезжает вверх с уменьшением, а не выключается: display не анимируется, поэтому
      кнопка остаётся в потоке и просто перестаёт ловить нажатия. Длительность та же,
      что у самой шторки, — они двигаются одним движением */
-  .searchrow{display:flex;align-items:center;gap:8px}
-  .searchrow .searchfield{flex:1;min-width:0}
-  .searchrow__cancel{flex:none;padding:4px 2px}
-  /* пока клавиатура открыта, шторка занимает всё до её верхнего края, а таббар уходит:
-     показывать его под клавиатурой незачем */
-  .app.is-kb .rail{display:none}
-  .app.is-kb .panel.is-home{top:0;bottom:var(--kb);height:auto;max-height:none;border-radius:0}
-  .app.is-kb .sheet-grip{display:none}
   .scopetop{display:flex;flex:1;height:42px;padding:0 12px;transform-origin:50% 0;transition:transform .22s ease,opacity .22s ease}
   .app.is-homeopen .scopetop{transform:translateY(-160%) scale(.92);opacity:0;pointer-events:none}
   /* центр не по экрану, а по свободной полосе между низом «Категорий» (10+42) и верхом
@@ -2210,6 +2197,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.20.2";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.20.3";</script>
 </body>
 </html>

@@ -266,20 +266,15 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 /* ---------- shell ---------- */
-/* Оболочка прибита к окну, а не меряется в dvh. Динамическая высота на iOS в приложении
-   с домашнего экрана даёт не то, что видно: коробка заканчивалась выше края экрана, снизу
-   оставалась полоса фона, и получалось два отступа — один внутри таббара, где безопасную
-   зону учли честно, второй под ним, где её вычли ещё раз.
-   --kb — высота клавиатуры; её ставит скрипт по visualViewport, и по умолчанию она ноль */
-/* Три величины, которые приложение меряет, а не выводит из формул.
+/* Две величины, которые приложение меряет, а не выводит из формул.
    --vh — сколько сейчас видно по высоте. Считать её через 100dvh нельзя: на iPhone
    в приложении с домашнего экрана dvh и настоящая видимая высота расходятся, и коробка
    оказывалась ниже края экрана — под таббаром оставалась полоса фона.
    --chrome-b — настоящая высота таббара вместе с полосой жестов. Формула «66 плюс
    безопасная зона» стояла в семи местах и в каждом обязана была совпасть с тем, чем
    таббар оказался на самом деле; стоило разойтись — появлялся второй отступ.
-   --kb — высота клавиатуры. */
-:root{--kb:0px; --chrome-b:66px; --vh:100dvh}
+*/
+:root{--chrome-b:66px; --vh:100dvh}
 .app{display:flex;position:fixed;left:0;top:0;width:100%;height:var(--vh);overflow:hidden}
 /* компактный рейл: иконка сверху, подпись снизу — единый стиль для десктопа и мобильного таббара */
 /* свой слой выше панели: панель теперь абсолютная и при сворачивании уезжает влево ровно на
@@ -1737,14 +1732,6 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   /* уезжает вверх с уменьшением, а не выключается: display не анимируется, поэтому
      кнопка остаётся в потоке и просто перестаёт ловить нажатия. Длительность та же,
      что у самой шторки, — они двигаются одним движением */
-  .searchrow{display:flex;align-items:center;gap:8px}
-  .searchrow .searchfield{flex:1;min-width:0}
-  .searchrow__cancel{flex:none;padding:4px 2px}
-  /* пока клавиатура открыта, шторка занимает всё до её верхнего края, а таббар уходит:
-     показывать его под клавиатурой незачем */
-  .app.is-kb .rail{display:none}
-  .app.is-kb .panel.is-home{top:0;bottom:var(--kb);height:auto;max-height:none;border-radius:0}
-  .app.is-kb .sheet-grip{display:none}
   .scopetop{display:flex;flex:1;height:42px;padding:0 12px;transform-origin:50% 0;transition:transform .22s ease,opacity .22s ease}
   .app.is-homeopen .scopetop{transform:translateY(-160%) scale(.92);opacity:0;pointer-events:none}
   /* центр не по экрану, а по свободной полосе между низом «Категорий» (10+42) и верхом
@@ -2568,7 +2555,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.20.2';
+var VERSION='3.20.3';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
 var UPDATED='21 сентября 2026';
@@ -3905,16 +3892,16 @@ function initGL(){
 function syncViewport(){
   var vv=window.visualViewport;
   var st=document.documentElement.style;
-  var vh=Math.round(vv?vv.height:window.innerHeight);
   var kb=vv?Math.max(0,Math.round(window.innerHeight-vv.height-vv.offsetTop)):0;
-  st.setProperty('--vh',vh+'px');
-  st.setProperty('--kb',kb+'px');
+  /* Высоту берём у окна, а не у видимой части. Видимая часть меняется от клавиатуры
+     и — главное — на старте приложения с домашнего экрана приходит заниженной: полосы
+     системы встают не в первом кадре. Одно такое значение, записанное на старте, и оболочка
+     навсегда оставалась короче экрана. innerHeight на iOS от клавиатуры не зависит */
+  st.setProperty('--vh',window.innerHeight+'px');
   /* таббар меряем по факту: это единственный способ не гадать, чем на этом телефоне
      оказалась безопасная зона и включил ли её в себя dvh */
   var r=$('.rail');
   if(r&&r.offsetHeight)st.setProperty('--chrome-b',r.offsetHeight+'px');
-  var ap=$('#app'); if(ap)ap.classList.toggle('is-kb',kb>60);
-  if(window.scrollY||window.scrollX)window.scrollTo(0,0);
 }
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize',syncViewport);
@@ -3922,7 +3909,6 @@ if(window.visualViewport){
 }
 window.addEventListener('orientationchange',function(){setTimeout(syncViewport,250)});
 window.addEventListener('resize',syncViewport);
-window.addEventListener('scroll',function(){if(window.scrollY||window.scrollX)window.scrollTo(0,0)});
 function drawMap(){
   measure();
   if(initGL()){ useGLCamera(); }
@@ -4408,7 +4394,7 @@ var ui={
   mineTab:'own', mineSort:null, mineCats:null, mineQuery:'', userTab:'active', typing:false, panelCollapsed:false, searchQuery:'',
   /* вкладка сообщений живёт только в памяти сеанса: вернувшись, человек всегда видит «Все»,
      иначе вчерашний фильтр спрятал бы сегодняшнее сообщение */
-  msgTab:'all', lineOpen:null, searching:false,
+  msgTab:'all', lineOpen:null,
   /* поиск и ветка в списке станций живут только в памяти сеанса: это способ добраться
      до станции, а не настройка — вернувшись, человек должен видеть весь список */
   stQuery:'', stFocus:false, msgQuery:'',
@@ -5132,17 +5118,10 @@ function homeResultsHTML(){
   return head+body+tail;
 }
 function viewHome(){
-  /* На телефоне поиск занимает весь экран, как в мобильных картах: поле прилипает к верху,
-     рядом «Отмена», выдача прокручивается между полем и клавиатурой. Иначе поле оказывается
-     ровно под клавиатурой, и до него приходится докручивать */
-  var searching=ui.searching&&!isDesktopPanel();
   var top=(isDesktopPanel()?'':'<span class="sheet-grip" data-grip="1" aria-hidden="true"></span>')+
-    '<div class="searchrow">'+
-      '<div class="searchfield">'+icon('search','searchfield__ic')+
-        '<input class="input" id="searchInput" placeholder="Поиск по названию и описанию" value="'+H(ui.searchQuery||'')+'" autocomplete="off">'+
-        searchClearHTML()+
-      '</div>'+
-      (searching?'<button class="linkbtn searchrow__cancel" data-act="search-cancel">Отмена</button>':'')+
+    '<div class="searchfield">'+icon('search','searchfield__ic')+
+      '<input class="input" id="searchInput" placeholder="Поиск по названию и описанию" value="'+H(ui.searchQuery||'')+'" autocomplete="off">'+
+      searchClearHTML()+
     '</div>';
   return {title:'Район', home:true, top:top, body:'<div id="searchResults">'+homeResultsHTML()+'</div>'};
 }
@@ -8192,12 +8171,6 @@ function onAction(act,el,e){
     case 'open-scope': ui.stQuery=''; ui.stFocus=false; openPanel({type:'scope',prev:ui.panel}); break;
     case 'open-stations': openPanel({type:'stations',prev:ui.panel}); break;
     case 'st-clear': ui.stQuery=''; ui.stFocus=true; render(); break;
-    /* «Отмена» отменяет: снимает фокус, стирает запрос и возвращает шторку туда,
-       где она была до нажатия на поле */
-    case 'search-cancel':
-      ui.searching=false; ui.searchQuery='';
-      var si2=$('#searchInput'); if(si2)si2.blur();
-      render(); break;
 
     case 'people': openPanel({type:'people',id:id,prev:ui.panel}); break;
     case 'open-archive': openPanel({type:'archive',prev:ui.panel}); break;
@@ -8659,13 +8632,13 @@ function renderOnboard(){
     '<div class="modal__foot">'+f+'</div></div></div>');
   var first=$('#o-name')||$('#o-code'); if(first)first.focus();
 }
-/* фокус в поле поиска на телефоне — это вход в режим поиска, а не просто каретка */
-document.addEventListener('focusin',function(e){
-  if(e.target&&e.target.id==='searchInput'&&!isDesktopPanel()&&!ui.searching){
-    ui.searching=true; ui.homeOpen=true; render();
-    var i=$('#searchInput'); if(i){i.focus(); i.setSelectionRange(i.value.length,i.value.length)}
-  }
-});
+/* Прокрутка выдачи прячет клавиатуру: начал листать — значит набирать закончил.
+   Так это устроено в картах, и это дешевле отдельного режима поиска с «Отменой» —
+   его я сделал по образцу и убрал: строка ввода и крестик в ней справлялись сами */
+document.addEventListener('scroll',function(e){
+  var t=e.target, a=document.activeElement;
+  if(t&&t.id==='panelBody'&&a&&a.id==='searchInput')a.blur();
+},true);
 document.addEventListener('input',function(e){
   var k=e.target.getAttribute&&e.target.getAttribute('data-onb');
   if(!k)return;
@@ -8768,6 +8741,9 @@ function startApp(){
   selfCheck();
   cacheDom();
   syncViewport();
+  /* Меряем ещё несколько раз после запуска: системные полосы на iOS встают не сразу,
+     и первое измерение бывает заниженным */
+  [60,250,700,1500].forEach(function(ms){setTimeout(syncViewport,ms)});
   var m=me();
   ui.districtId=(m&&m.district_id)||'d_chisty';
   drawMap(); bindMap(); render();
@@ -8924,7 +8900,7 @@ document.addEventListener('pointerup',function(e){
   }
   if(d.moved<6){
     /* тап по строке — раскрыть и сразу дать печатать */
-    if(!ui.homeOpen){ui.homeOpen=true;ui.searching=!isDesktopPanel();render();var inp=$('#searchInput');if(inp)inp.focus()}
+    if(!ui.homeOpen){ui.homeOpen=true;render();var inp=$('#searchInput');if(inp)inp.focus()}
     return;
   }
   ui.homeOpen=d.open?(dy<60):(dy<-40);
