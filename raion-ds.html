@@ -706,6 +706,11 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Точка и название — один блок: кружок читается как часть названия, а не как значок
    между двумя величинами. Внутри зазор маленький, снаружи обычный */
 .stn{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+/* название и расстояние — элементы одного ряда, а не коробка плюс текст рядом с ней:
+   иначе у них разные базовые линии и число уезжает вверх */
+.placerow{display:inline-flex;align-items:center;gap:8px}
+.placerow__d{color:var(--ink-3)}
+.pickinfo .placerow__d{color:var(--line-2)}
 .chip .stn{margin-left:4px}
 .scopebtn__more{margin:0;color:var(--ink-3)}
 .scopebtn__st{gap:4px}
@@ -1068,7 +1073,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* лупа остаётся на месте и при фокусе; насквозь кликабельна, чтобы попадание ставило курсор */
 .searchfield__ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--ink-3);pointer-events:none}
 /* кружок линии на месте лупы, пока строка не в работе: она показывает станцию, а не ищет */
-.searchfield__dot{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;pointer-events:none}
+.searchfield__pic{position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;display:block}
+.searchfield__pic .metro{width:20px;height:20px}
 .searchfield__clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:27px;height:27px;border-radius:50%;display:grid;place-items:center;color:var(--ink-3)}
 .searchfield__clear:hover{background:var(--surface-3);color:var(--ink)}
 .searchfield__clear svg{width:13px;height:13px}
@@ -1286,7 +1292,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .ctl--dots:hover .catdots{--btn-bg:var(--surface-3)}
 /* Выбор внутри всплывающего списка. Пункт с галкой — тот же .menu__i, но галка стоит
    справа и занимает место всегда, иначе строки прыгают при переключении */
-.menu__i .menu__on{margin-left:auto;width:16px;height:16px;flex:none;color:var(--brand-icon);opacity:0}
+.menu__i .menu__i.is-danger,.menu__i.is-danger svg{color:var(--danger-solid)}
+.menu__on{margin-left:auto;width:16px;height:16px;flex:none;color:var(--brand-icon);opacity:0}
 .menu__i.is-on .menu__on{opacity:1}
 .menu__i.is-on{font-weight:600;color:var(--ink)}
 /* кружок типа в списке — тот же размер, что в ряду контролов */
@@ -1749,13 +1756,19 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   }
   .scopetop{display:flex;flex:1;height:42px;padding:0 12px;transform-origin:50% 0;transition:transform .22s ease,opacity .22s ease}
   .app.is-homeopen .scopetop{transform:translateY(-160%) scale(.92);opacity:0;pointer-events:none}
-  /* центр не по экрану, а по свободной полосе между низом «Категорий» (10+42) и верхом
-     свёрнутой шторки (76 над таббаром в 66): (52 + 100dvh - 142) / 2 */
-  .zoomctl{top:calc(50dvh - 45px + env(safe-area-inset-top,0px)/2)}
+  /* Контролы стоят на одном месте во всём приложении и ни от чего не зависят. Прежде их
+     положение считалось от верха шторки, а верх был взят числом под свёрнутое состояние —
+     и в создании события, где шторка занимает пол-экрана, кнопки упирались в неё.
+     Место, которое зависит от чужого состояния, ездит; ездящую кнопку каждый раз ищут
+     глазами. Поэтому отмеряем от верха экрана и больше не пересчитываем: под плашкой
+     охвата, примерно на трети высоты. Накрыла шторка — значит человек сам её поднял
+     и свернёт, когда захочет карту */
+  .zoomctl{top:calc(34% + env(safe-area-inset-top,0px));transform:none}
   .scalebar{display:none}
   /* над таббаром и свёрнутой домашней шторкой: 66 + 70 + отступ */
   /* высота таббара — переменная, а не число: безопасную зону он тоже занимает */
-  .mapmeta{bottom:calc(var(--chrome-b) + var(--home-peek) + 8px)}
+  /* шкала прибита к нижнему краю карты, а не к выдуманной высоте свёрнутой шторки */
+  .mapmeta{bottom:calc(var(--chrome-b) + 8px)}
 }
 </style>
 <style>/* Собственные стили каталога. Всё с приставкой ds-, чтобы не столкнуться с продуктовыми */
@@ -2219,6 +2232,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.21.1";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.22.0";</script>
 </body>
 </html>

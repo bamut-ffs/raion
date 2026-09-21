@@ -713,6 +713,11 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Точка и название — один блок: кружок читается как часть названия, а не как значок
    между двумя величинами. Внутри зазор маленький, снаружи обычный */
 .stn{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+/* название и расстояние — элементы одного ряда, а не коробка плюс текст рядом с ней:
+   иначе у них разные базовые линии и число уезжает вверх */
+.placerow{display:inline-flex;align-items:center;gap:8px}
+.placerow__d{color:var(--ink-3)}
+.pickinfo .placerow__d{color:var(--line-2)}
 .chip .stn{margin-left:4px}
 .scopebtn__more{margin:0;color:var(--ink-3)}
 .scopebtn__st{gap:4px}
@@ -1075,7 +1080,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* лупа остаётся на месте и при фокусе; насквозь кликабельна, чтобы попадание ставило курсор */
 .searchfield__ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--ink-3);pointer-events:none}
 /* кружок линии на месте лупы, пока строка не в работе: она показывает станцию, а не ищет */
-.searchfield__dot{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;pointer-events:none}
+.searchfield__pic{position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;display:block}
+.searchfield__pic .metro{width:20px;height:20px}
 .searchfield__clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:27px;height:27px;border-radius:50%;display:grid;place-items:center;color:var(--ink-3)}
 .searchfield__clear:hover{background:var(--surface-3);color:var(--ink)}
 .searchfield__clear svg{width:13px;height:13px}
@@ -1293,7 +1299,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .ctl--dots:hover .catdots{--btn-bg:var(--surface-3)}
 /* Выбор внутри всплывающего списка. Пункт с галкой — тот же .menu__i, но галка стоит
    справа и занимает место всегда, иначе строки прыгают при переключении */
-.menu__i .menu__on{margin-left:auto;width:16px;height:16px;flex:none;color:var(--brand-icon);opacity:0}
+.menu__i .menu__i.is-danger,.menu__i.is-danger svg{color:var(--danger-solid)}
+.menu__on{margin-left:auto;width:16px;height:16px;flex:none;color:var(--brand-icon);opacity:0}
 .menu__i.is-on .menu__on{opacity:1}
 .menu__i.is-on{font-weight:600;color:var(--ink)}
 /* кружок типа в списке — тот же размер, что в ряду контролов */
@@ -1756,13 +1763,19 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   }
   .scopetop{display:flex;flex:1;height:42px;padding:0 12px;transform-origin:50% 0;transition:transform .22s ease,opacity .22s ease}
   .app.is-homeopen .scopetop{transform:translateY(-160%) scale(.92);opacity:0;pointer-events:none}
-  /* центр не по экрану, а по свободной полосе между низом «Категорий» (10+42) и верхом
-     свёрнутой шторки (76 над таббаром в 66): (52 + 100dvh - 142) / 2 */
-  .zoomctl{top:calc(50dvh - 45px + env(safe-area-inset-top,0px)/2)}
+  /* Контролы стоят на одном месте во всём приложении и ни от чего не зависят. Прежде их
+     положение считалось от верха шторки, а верх был взят числом под свёрнутое состояние —
+     и в создании события, где шторка занимает пол-экрана, кнопки упирались в неё.
+     Место, которое зависит от чужого состояния, ездит; ездящую кнопку каждый раз ищут
+     глазами. Поэтому отмеряем от верха экрана и больше не пересчитываем: под плашкой
+     охвата, примерно на трети высоты. Накрыла шторка — значит человек сам её поднял
+     и свернёт, когда захочет карту */
+  .zoomctl{top:calc(34% + env(safe-area-inset-top,0px));transform:none}
   .scalebar{display:none}
   /* над таббаром и свёрнутой домашней шторкой: 66 + 70 + отступ */
   /* высота таббара — переменная, а не число: безопасную зону он тоже занимает */
-  .mapmeta{bottom:calc(var(--chrome-b) + var(--home-peek) + 8px)}
+  /* шкала прибита к нижнему краю карты, а не к выдуманной высоте свёрнутой шторки */
+  .mapmeta{bottom:calc(var(--chrome-b) + 8px)}
 }
 </style>
 
@@ -2595,7 +2608,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.21.1';
+var VERSION='3.22.0';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
 var UPDATED='21 сентября 2026';
@@ -3303,7 +3316,26 @@ function responsesOf(pinId){return db.pins&&db.responses.filter(function(r){retu
 /* Будильник на встречу, в которой человек не участвует. Это не подписка: количество
    уведомлений равно количеству нажатий, и заспамить себя невозможно. Значение 1 — будильник
    заведён, но ещё не сработал; после срабатывания там время, чтобы не звонить дважды */
-function remindOn(pid){var u=me();return !!(u&&u.reminders&&u.reminders[pid])}
+/* Напоминание было устроено наизнанку: тумблер показывался только тому, кто НЕ участвует,
+   а участник получал сообщение молча и выключить его не мог. То есть управлять напоминанием
+   можно было там, где оно нужно меньше всего.
+   Теперь тумблер один и на всех, а разное у него только умолчание: участник и автор идут,
+   значит напомнить надо — включено; остальные решают сами — выключено.
+   Хранение различает три состояния: ноль — выключено руками, число — включено (и заодно
+   отметка, что уже сработало), отсутствие ключа — умолчание */
+function remindDefault(p){
+  var m=me();
+  if(!m||!p||!isAct(p))return false;
+  if(p.author_id===m.id)return true;
+  return isJoined(myResponse(p.id));
+}
+function remindOn(pid){
+  var u=me(); if(!u)return false;
+  var v=u.reminders&&u.reminders[pid];
+  if(v===0)return false;
+  if(v)return true;
+  return remindDefault(pin(pid));
+}
 function isJoined(r){return !!r&&r.status!=="interested"&&r.status!=="released"}
 function myResponse(pinId){
   var m=db.currentUserId;
@@ -3345,11 +3377,14 @@ function sweepConfirm(){
     if(!isJoined(r))return;
     if(left>CONFIRM_H*HOUR&&left<REMIND_H*HOUR&&!r.confirmed_at&&!r.reminded_at){
       r.reminded_at=t; changed=true;
+      /* «Подтвердите участие» — не напоминание: это способ удержать место, и нужен он
+         автору, а не участнику. Живёт он только там, где мест ограниченное число.
+         Прежнее «Скоро встреча» отсюда убрано: теперь это сообщение тумблера, и участник
+         может его выключить, а раньше оно приходило молча и навсегда */
       if(lim)sysNotify('Подтвердите участие',
         whenText(p.starts_at)+'. Подтвердите за '+CONFIRM_H+' '+
         plural(CONFIRM_H,'час','часа','часов')+' до начала',
         'open-pin',p.id,'Открыть','confirm');
-      else sysNotify('Скоро встреча',whenText(p.starts_at),'open-pin',p.id,'Открыть');
     }
     if(lim&&left<=CONFIRM_H*HOUR&&r.reminded_at&&!r.confirmed_at){
       r.status='released'; r.released_at=t; changed=true;
@@ -3371,14 +3406,22 @@ function flushHeldStored(){
    с закрытием события */
 function sweepRemind(){
   var t=now(), u=me(), changed=false;
-  if(!u||!u.reminders)return;
+  if(!u)return;
+  u.reminders=u.reminders||{};
+  /* Идём по встречам, а не по ключам: у участника ключа нет вовсе — у него напоминание
+     включено по умолчанию, — и обход по ключам его бы не нашёл */
+  db.pins.forEach(function(p){
+    if(!isAct(p)||p.status!=='active')return;
+    if(p.starts_at-t>HOUR||p.starts_at<t-HOUR)return;
+    if(u.reminders[p.id])return;          /* ноль — выключено, число — уже сработало */
+    if(!remindOn(p.id))return;
+    u.reminders[p.id]=t; changed=true;
+    sysNotify('Скоро встреча',whenText(p.starts_at),'open-pin',p.id,'Открыть');
+  });
+  /* прошедшее и закрытое чистим, чтобы отметки не копились */
   Object.keys(u.reminders).forEach(function(pid){
     var p=pin(pid);
-    if(!p||!isAct(p)||p.status!=="active"||p.starts_at<t-HOUR){delete u.reminders[pid]; changed=true; return}
-    if(u.reminders[pid]===1&&p.starts_at-t<=HOUR){
-      u.reminders[pid]=t; changed=true;
-      sysNotify("Скоро встреча",whenText(p.starts_at)+" — вы просили напомнить","open-pin",p.id,"Открыть");
-    }
+    if(!p||!isAct(p)||p.status!=='active'||p.starts_at<t-HOUR){delete u.reminders[pid]; changed=true}
   });
   if(changed)save();
 }
@@ -4041,7 +4084,10 @@ function viewCenterPoint(){var q=viewRect(); return toWorld((q.l+q.r)/2,(q.t+q.b
    Это разные вопросы: кадр отвечает «где я смотрю», радиус — «не дальше чем». Мерили бы
    оба от карты — вышло бы два ответа на один вопрос, и они бы разошлись.
    Без геолокации точка отсчёта — дом; нет и его — фильтр недоступен */
-var RADIUS_STEPS=[500,1000,2000];
+/* Дорожка расстояния: от трёхсот метров до трёх километров шагом в сотню. Правый край —
+   «Любое»: это не расстояние, а его отсутствие, и стоять ему больше негде */
+var RAD_MIN=300, RAD_MAX=3000, RAD_STEP=100;
+function radiusText(v){return (+v>=RAD_MAX)?'Любое':niceUp(+v)}
 /* «Когда» — единственный фильтр, который человек действительно задаёт словами: «что-нибудь
    сегодня», «на выходных». У вещей старта нет, поэтому фильтр показывается, только когда
    в кадре есть встречи, и вещи он не трогает — иначе «сегодня» молча прятало бы половину
@@ -4137,17 +4183,21 @@ function nearestOf(list,x,y){
   }
   return best;
 }
-function framePlace(){
+/* Место для точки — по размеру кадра. Уровень задаёт кадр, а ближайшее ищется от точки:
+   на широком плане «Цветной бульвар» описывает не то место, куда человек смотрит, даже
+   если станция к точке ближе всех */
+function placeForPoint(x,y){
   /* пока движок не поднялся, масштаба нет и лестница считает мусор: до этого момента
      имя даёт ближайший ориентир, иначе на первом кадре мелькает чужой район */
-  if(!glMap){var c0=viewCenterPoint(); return district(nearestStation(c0[0],c0[1]))}
-  var c=viewCenterPoint(), w=frameWidthM();
-  if(w<2500)return district(nearestStation(c[0],c[1]));
+  if(!glMap)return district(nearestStation(x,y));
+  var w=frameWidthM();
+  if(w<2500)return district(nearestStation(x,y));
   var kind=(w<10000)?'district':'city';
   var pool=PLACES.filter(function(p){return p.kind===kind});
   if(!pool.length)pool=PLACES;
-  return nearestOf(pool,c[0],c[1])||district(nearestStation(c[0],c[1]));
+  return nearestOf(pool,x,y)||district(nearestStation(x,y));
 }
+function framePlace(){var c=viewCenterPoint(); return placeForPoint(c[0],c[1])}
 function primaryStation(){var c=viewCenterPoint(); return nearestStation(c[0],c[1])}
 function viewCenterWorld(){return viewCenterPoint()}
 /* Список идёт за картой, поэтому её движение — это смена выдачи, а не повод спросить.
@@ -4823,7 +4873,20 @@ function renderShell(){
   $('#map').classList.toggle('is-selpin',pt==='pin');
 }
 
+/* Переход у тумблера прописан в стилях — дорожка меняет цвет, кружок едет на 17 пикселей, —
+   но его убивала общая отрисовка: панель пересобиралась, и на месте узла появлялся новый,
+   уже включённый. Переходить не из чего, потому что промежуточного состояния браузеру
+   не показали. Тот же капкан был у разлёта булавок из кластера и у подсветки при наведении.
+   Поэтому нажатие на тумблер сразу меняет класс на живом узле и придерживает общую
+   отрисовку на время перехода. Одно место — и оживают все переключатели разом */
+var renderHold=0, renderWait=null;
+function holdRender(ms){renderHold=Date.now()+(ms||220)}
 function render(){
+  var left=renderHold-Date.now();
+  if(left>0){
+    if(!renderWait)renderWait=setTimeout(function(){renderWait=null; render()},left+20);
+    return;
+  }
   sweep();
   syncDefaultSort();
   renderShell();
@@ -5339,6 +5402,66 @@ function bindFadeTitle(root,bodyEl,on){
   bodyEl.addEventListener('scroll',upd);
   upd();
 }
+/* Возврат жестом. В приложении с домашнего экрана нет ни браузерных стрелок, ни системного
+   свайпа назад — Safari отдаёт их только вкладке, — поэтому жест приходится делать самим.
+   Три ограничения, и каждое не от вкуса:
+   — начало только у левого края, первые 24 пикселя. Иначе жест дерётся со всем, что уже
+     ездит вбок: ряд вкладок в «Текущих делах», лента фотографий, чипы категорий;
+   — только там, где есть шеврон. Условие берём то же самое, по которому он рисуется:
+     где возвращаться некуда, нет и жеста;
+   — кроме создания и правки события. «Назад» там выбрасывает черновик, а это единственное
+     необратимое действие в приложении, и отдавать его случайному движению пальца нельзя.
+   Только касание: тачпад умеет слать горизонтальную прокрутку, и панель начала бы уезжать
+   от обычного двупальцевого смахивания */
+var backSwipe=null;
+function canSwipeBack(){
+  if(isDesktopPanel())return false;
+  var p=ui.panel;
+  if(!p)return false;
+  if(p.type==='create'||p.type==='edit')return false;
+  if(p.type==='pin')return true;
+  return !!oneUp(p)||!!p.prev||p.type==='mine'||p.type==='me'||p.type==='settings'||
+         p.type==='scope'||p.type==='stations'||p.type==='archive'||p.type==='thread'||
+         p.type==='user'||p.type==='people';
+}
+document.addEventListener('touchstart',function(e){
+  backSwipe=null;
+  if(e.touches.length!==1||!canSwipeBack())return;
+  var el=$('#panel'); if(!el||el.hidden)return;
+  var t=e.touches[0], r=el.getBoundingClientRect();
+  if(t.clientX-r.left>24)return;
+  backSwipe={el:el,x0:t.clientX,y0:t.clientY,w:r.width,live:false};
+},{passive:true});
+document.addEventListener('touchmove',function(e){
+  if(!backSwipe||e.touches.length!==1)return;
+  var t=e.touches[0], dx=t.clientX-backSwipe.x0, dy=t.clientY-backSwipe.y0;
+  if(!backSwipe.live){
+    /* решаем один раз: горизонталь заметно больше вертикали — жест наш, иначе отдаём
+       прокрутке и больше не вмешиваемся */
+    if(Math.abs(dy)>Math.abs(dx)||dx<8){if(Math.abs(dy)>10)backSwipe=null; return}
+    backSwipe.live=true;
+    backSwipe.el.style.transition='none';
+  }
+  if(dx<0)dx=0;
+  backSwipe.el.style.transform='translateX('+dx+'px)';
+},{passive:true});
+document.addEventListener('touchend',function(){
+  var b=backSwipe; backSwipe=null;
+  if(!b||!b.live)return;
+  var m=/translateX\(([-0-9.]+)px\)/.exec(b.el.style.transform||'');
+  var dx=m?+m[1]:0;
+  b.el.style.transition='transform .22s cubic-bezier(.2,.7,.3,1)';
+  if(dx>b.w*0.33){
+    b.el.style.transform='translateX('+b.w+'px)';
+    setTimeout(function(){
+      b.el.style.transition=''; b.el.style.transform='';
+      onAction('back',b.el,null);
+    },200);
+  }else{
+    b.el.style.transform='';
+    setTimeout(function(){b.el.style.transition=''},240);
+  }
+},{passive:true});
 function sheetScrim(on,home){
   var sc=$('#sheetScrim'); if(!sc)return;
   sc.classList.toggle('is-on',!!on);
@@ -5607,7 +5730,10 @@ function renderPanel(){
   el.classList.toggle('is-full',pinSheet&&!ui.pinShut&&!!ui.pinFull);
   /* таббар уходит только в переписке — остальные вложенные экраны у нас шторки
      поверх карты, они не «проваливаются», а наезжают */
-  var inChat=!!main&&main.type==='thread'&&!isDesktopPanel();
+  /* Таббар уходит там, где есть куда печатать: полю ввода и клавиатуре нужно место.
+     Признаком был тип панели, и под него попадал системный канал уведомлений — писать
+     в него некуда, а таббар всё равно прятался */
+  var inChat=!!main&&main.type==='thread'&&!isDesktopPanel()&&!!v.foot&&/composer/.test(v.foot);
   el.classList.toggle('is-chat',inChat);
   var apc=$('#app'); if(apc)apc.classList.toggle('is-chat',inChat);
   /* кнопка фильтра над картой прячется ровно тогда, когда она же выехала внутрь шторки */
@@ -5913,9 +6039,12 @@ function viewPin(id){
     var groupBtn=gt?'<button class="btn btn--line" data-act="open-group" data-id="'+p.id+'">'+icon('chat')+groupName(p)+'</button>':'';
     if(mine){
       /* автор в общем чате с самого начала, поэтому кнопка нужна и ему */
-      foot=groupBtn+'<div class="row">'+
-        '<button class="btn btn--ghost" data-act="close-pin" data-id="'+p.id+'">'+icon('check')+'Завершить'+'</button>'+
-        '<button class="btn btn--line" data-act="delete-pin" data-id="'+p.id+'">'+icon('trash')+'Удалить</button></div>';
+      /* Кнопок две, а не три. Завершение остаётся на виду: на нём держится половина
+         приложения — пока автор не закрыл событие, оно висит на карте живым, не попадает
+         в архив и не считается в летописи. Удаление ушло в меню: оно редкое и необратимое,
+         а это ровно то, что живёт под тремя точками, а не под пальцем рядом с чатом */
+      foot=groupBtn+'<button class="btn btn--line" data-act="close-pin" data-id="'+p.id+'">'+
+        icon('check')+'Завершить</button>';
     }else if(act){
       if(mr&&mr.status==='interested'){
         /* заявка ещё не принята: участником человек не стал и в общий чат не попал */
@@ -5953,7 +6082,7 @@ function viewPin(id){
   /* Напоминание — не кнопка, а настройка, поэтому и выглядит настройкой: тумблер с
      пояснением над главным действием. Вторая строка отвечает на вопрос, который значок
      задавал и не отвечал: это разовый будильник, а не подписка, и заспамить себя нельзя */
-  if(act&&!mine&&!isJoined(mr)&&p.status==='active'&&p.starts_at>now()){
+  if(act&&p.status==='active'&&p.starts_at>now()){
     foot='<div class="switchrow switchrow--foot"><span class="switchrow__txt">'+
         '<b>Напомнить о встрече</b><span>Одно сообщение за час до начала</span>'+
       '</span><button class="switch'+(remindOn(p.id)?' is-on':'')+'" data-act="remind" data-id="'+p.id+'"'+
@@ -6079,22 +6208,58 @@ function draftValid(){return !draftMissing()}
 /* «180 м до м. Сокольники · Сокольники» — и расстояние, и район считаются от самой точки */
 /* «~180 м до м. Сокольники» — без названия района: у станционных районов оно совпадает
    с названием станции и читалось бы дважды */
+/* тот же смысл словами — для строки, встроенной в предложение на шаге «Условия» */
 function draftMetroText(){
   var d=ui.draft; if(!d||d.x==null)return '';
-  var did=d.district_id||ui.districtId, r=metroRef(did);
-  var u=Math.sqrt(Math.pow(d.x-r.x,2)+Math.pow(d.y-r.y,2));
-  return (d.type==='need_offer'?approxDistText(u):distText(u))+' '+(r.metro?'до м. '+r.name:'до центра района');
+  var pl=placeForPoint(d.x,d.y);
+  if(!pl)return '';
+  if(pl.kind!=='metro')return pl.name;
+  var u=Math.sqrt(Math.pow(d.x-pl.sx,2)+Math.pow(d.y-pl.sy,2));
+  return (d.type==='need_offer'?approxDistText(u):distText(u))+' до м. '+pl.name;
 }
 /* после перехода на станции название района совпадает с названием станции, поэтому
    приписка «· Сокольники» к строке «до м. Сокольники» была чистым дублем */
 function draftPlaceText(){return draftMetroText()}
+/* Заголовок экрана создания: пока тип не выбран — «Новое событие», дальше сам выбор.
+   Словарь не новый: те же подписи, что у чипа события */
+function draftTitle(d){
+  if(!d||!d.type)return 'Новое событие';
+  if(d.type==='activity')return 'Встреча';
+  if(d.type==='lost_found')return (LF_SUBTYPES[d.lfsub]||{}).label||'Находка или пропажа';
+  return (SUBTYPES[d.subtype]||{}).label||'Услуга или вещь';
+}
+/* Подсказка в поле заголовка — пример в том же голосе, что и живые события. Раньше она
+   ветвилась надвое, и человек, потерявший кота, видел в поле пример про детский стульчик */
+var TITLE_HINTS={
+  activity:'Футбол 5×5 у прудов',
+  give_away:'Отдам детский стульчик',
+  need_help:'Помогите занести шкаф на пятый этаж',
+  offer_service:'Подстригу под машинку',
+  found:'Нашёл ключи у детской площадки',
+  lost:'Пропал рыжий кот, двор у 14 дома'
+};
+function titleHint(d){
+  if(!d||!d.type)return 'Отдам детский стульчик';
+  if(d.type==='activity')return TITLE_HINTS.activity;
+  if(d.type==='lost_found')return TITLE_HINTS[d.lfsub]||TITLE_HINTS.found;
+  return TITLE_HINTS[d.subtype]||TITLE_HINTS.give_away;
+}
 /* то же самое разметкой: вместо «м.» — цветной значок станции. Текстовый вариант остаётся
    для заметки на шаге «Условия», где строка встроена в предложение */
+/* Плашка собирается одним флекс-рядом. Прежде stationTag возвращал коробку со своим
+   выравниванием, а расстояние стояло рядом обычным текстом — в одной строке оказывались
+   две базовые линии, внутренняя у коробки и внешняя у текста, и число уезжало вверх.
+   Расстояние показывается только у точечного ориентира: у станции есть конкретный выход,
+   до него сто восемьдесят метров — понятно. У района точки нет, и число там было бы
+   выдумкой. Сегодня точечный вид один — метро; завтра это будет парк или площадь */
 function draftMetroHTML(){
   var d=ui.draft; if(!d||d.x==null)return '';
-  var did=d.district_id||ui.districtId, r=metroRef(did), pd=district(did);
-  var u=Math.sqrt(Math.pow(d.x-r.x,2)+Math.pow(d.y-r.y,2));
-  return stationTag(did)+' '+H(d.type==='need_offer'?approxDistText(u):distText(u));
+  var pl=placeForPoint(d.x,d.y), dist='';
+  if(pl&&pl.kind==='metro'){
+    var u=Math.sqrt(Math.pow(d.x-pl.sx,2)+Math.pow(d.y-pl.sy,2));
+    dist='<span class="placerow__d">'+H(d.type==='need_offer'?approxDistText(u):distText(u))+'</span>';
+  }
+  return '<span class="placerow">'+placeTag(pl)+dist+'</span>';
 }
 /* на каком шаге полосу прогресса показывали в прошлый раз — чтобы анимация заливки
    играла только при смене шага, а не на каждое действие внутри него */
@@ -6142,7 +6307,7 @@ function fldBasic(d,act){
         ? 'Без фотографии находку не опознают — она здесь обязательна'
         : 'До трёх штук, хранятся в вашем браузере')+'</span></div>';
   var main='<div class="field"><label for="f-title">Заголовок'+req()+'</label>'+
-      '<input class="input" id="f-title" data-field="title" maxlength="80" value="'+H(d.title)+'" placeholder="'+(act?'Футбол 5×5 у прудов':'Отдам детский стульчик')+'">'+
+      '<input class="input" id="f-title" data-field="title" maxlength="80" value="'+H(d.title)+'" placeholder="'+H(titleHint(d))+'">'+
       '<span class="hint">Коротко и по делу — это единственное, что видно на карте</span></div>'+
     '<div class="field"><label for="f-desc">Описание</label>'+
       '<textarea class="textarea" id="f-desc" data-field="description" maxlength="600" placeholder="'+(act?'Что делаем, где собираемся, что взять с собой':'Состояние, размер, когда удобно забрать')+'">'+H(d.description)+'</textarea></div>';
@@ -6239,8 +6404,11 @@ function viewCreate(){
     body+='<div class="pad stack">'+
       '<div class="field"><label>Ориентир</label>'+
         '<div class="searchfield">'+
+          /* в слоте лупы стоит тот же значок, что в строках списка. Точка висела абсолютно
+             по краю поля, а текст начинался там, где кончается место под лупу, — кружок
+             оказывался в четверти сантиметра от названия */
           (d.stOpen?icon('search','searchfield__ic')
-                   :'<i class="searchfield__dot" style="background:'+district(curSt).lineColor+'"></i>')+
+                   :'<span class="searchfield__pic">'+placeIcon(district(curSt))+'</span>')+
           '<input class="input" id="placeStInput" data-place-open="1" autocomplete="off" placeholder="Найти ориентир" value="'+
             H(d.stOpen?(d.stQ||''):district(curSt).name)+'">'+
         '</div>'+
@@ -6326,7 +6494,9 @@ function viewCreate(){
   /* На первом шаге высота по содержимому: точку выбирают, подводя карту под прицел,
      и поднятая шторка закрывает и прицел, и окрестности. Правило «один верхний край»
      распространяется на шторки, для которых карта — фон; здесь она рабочая поверхность */
-  return {title:'Новое событие',body:body,foot:foot,tall:d.step>1,top:steps,topFlush:true,
+  /* Экран помнит, что человек выбрал, и не переспрашивает молчанием: как только тип задан,
+     заголовок называет его теми же словами, что стоят чипом на карточке */
+  return {title:draftTitle(d),body:body,foot:foot,tall:d.step>1,top:steps,topFlush:true,
     head:'<div class="chathead chathead--center">'+
       '<span class="chathead__side">'+nav+'</span>'+
       '<span class="chathead__txt"><span class="chathead__n">Новое событие</span></span>'+
@@ -6675,7 +6845,10 @@ function viewMine(era){
   var body=bar+tabs+'<div class="swrap"><div id="swArea">'+
     (cur.length?mineRows(cur,m):mineEmpty(c))+
     '</div></div>';
-  return {title:past?'Архив':'Текущие дела',back:true,top:head,body:body,
+  /* Раздел, а не шторка по содержимому. Пока признака не было, высота считалась от того,
+     что внутри: выключили категорию — строк стало меньше — шторка подтянулась под руку.
+     У раздела рамка не зависит от содержимого, как у «Настроек» */
+  return {title:past?'Архив':'Текущие дела',back:true,section:true,top:head,body:body,
     after:function(){scrollTabIntoView($('#panel'))}};
 }
 
@@ -6808,8 +6981,12 @@ function profileFacts(id,self,hasPins){
      и человек искал, где ошибка. В строке остаётся то, чего полоса сказать не может: когда
      это было в последний раз и сколько народу собирается */
   if(lines.length&&st.last){
-    var fresh='Последнее — '+lowerFirst(agoText(st.last));
-    facts+='<div class="factrow">'+icon('check')+'<div><b>'+H(fresh)+'</b>'+
+    /* «Последнее — вчера» повисало без существительного: заголовок блока стоит через
+       две строки, и глаз его туда не доносит. Глагол ставим в саму строку, а галочку
+       меняем на архив: галочка утверждает «сделано», а строка на самом деле про «когда»,
+       и этим же значком помечен раздел, куда закрытое уходит */
+    var fresh='Последнее закрыто '+lowerFirst(agoText(st.last));
+    facts+='<div class="factrow">'+icon('archive')+'<div><b>'+H(fresh)+'</b>'+
       (st.crowd>1?'<span>Собирается по '+st.crowd+' '+plural(st.crowd,'соседу','соседа','соседей')+'</span>':'')+
     '</div></div>';
   }else if(hasPins){
@@ -6905,7 +7082,9 @@ function alertsOn(){var m=me();return !m||m.lost_alerts!==false}
    Расстояние от дома отвечает на тот же вопрос честнее и работает там, где станций нет.
    Спрашивать об этом на входе не стали: оповещения включены в радиусе по умолчанию,
    а число ищут тогда, когда оно понадобилось, — то есть здесь */
-var ALERT_STEPS=[500,1000,2000,5000];
+/* Тот же вид контрола, что у фильтра расстояния: величина одна и та же, и выглядеть они
+   должны одинаково. «Любого» здесь нет — при включённых оповещениях радиус всегда какой-то */
+var ALERT_MIN=300, ALERT_MAX=5000, ALERT_STEP=100;
 function alertRadius(){var m=me();return (m&&m.alert_radius)||1000}
 function lostReachesHome(p,u){
   u=u||me();
@@ -6978,10 +7157,15 @@ function viewSettings(){
        тот включён. Поэтому и выглядит вложенным — со сдвигом под заголовком, без
        собственного заголовка-ровни. Имя величины существительным: «Не дальше от дома»
        плюс «1 км» читалось как «не дальше от дома один километр» */
-    (alertsOn()?'<div class="subfield"><label>Радиус вокруг дома</label><div class="segctl">'+
-      ALERT_STEPS.map(function(m){
-        return '<button class="'+(alertRadius()===m?'is-on':'')+'" data-alert-radius="'+m+'">'+H(niceUp(m))+'</button>';
-      }).join('')+'</div></div>':'')+
+    /* Блок появляется и исчезает вместе с тумблером — то есть высота меняется от действия
+       внутри самого блока. По правилу проекта это анимируется; механизм общий и подключается
+       одним признаком */
+    (alertsOn()?'<div class="subfield" data-reveal="alertradius"><label for="f-alert">Присылать, если пропажа ближе</label>'+
+      '<div class="rangerow">'+
+        '<input class="input" type="range" id="f-alert" min="'+ALERT_MIN+'" max="'+ALERT_MAX+'" step="'+ALERT_STEP+'" '+
+          'data-range="alert" value="'+alertRadius()+'">'+
+        '<span class="tag tag--solid rangeval" id="alertVal">'+H(niceUp(alertRadius()))+'</span>'+
+      '</div></div>':'')+
   '</div>'+
   '<div class="divider divider--lg"></div>'+
   '<div class="pad stack">'+
@@ -7487,20 +7671,28 @@ function viewScope(){
      Прежний набор решал задачу «человек живёт между станциями» — её решает сам радиус,
      причём точнее, потому что круг не обязан совпадать ни с одной станцией */
   /* Расстояние появляется вместе с точкой отсчёта и пропадает вместе с ней: без
-     геолокации его роль играет сам кадр */
+     геолокации его роль играет сам кадр.
+     Ползунок, а не ряд кнопок: четыре подписи в колонке не помещались и обрезались —
+     «Нева…», «Сегод…». «Любое» стоит на правом краю: тянешь дальше и дальше, пока
+     расстояние не перестаёт иметь значение. Слева оно означало бы «ноль метров» */
   var rad=radiusRef()
-    ? '<div class="field"><label>Расстояние от вас</label><div class="segctl">'+
-      '<button class="'+(ui.radius?'':'is-on')+'" data-radius="0">Любое</button>'+
-      RADIUS_STEPS.map(function(m){
-        return '<button class="'+(ui.radius===m?'is-on':'')+'" data-radius="'+m+'">'+H(niceUp(m))+'</button>';
-      }).join('')+'</div></div>'
+    ? '<div class="field"><label>Расстояние от вас</label>'+
+      '<div class="rangerow">'+
+        '<input class="input" type="range" id="f-far" min="'+RAD_MIN+'" max="'+RAD_MAX+'" step="'+RAD_STEP+'" '+
+          'data-range="radius" value="'+(ui.radius||RAD_MAX)+'">'+
+        '<span class="tag tag--solid rangeval" id="farVal">'+H(radiusText(ui.radius||RAD_MAX))+'</span>'+
+      '</div></div>'
     : '';
-  /* «Когда» показывается, только если в кадре есть встречи: у вещей старта нет */
+  /* «Когда» показывается, только если в кадре есть встречи: у вещей старта нет.
+     Выпадающий список, а не ряд: на телефоне это системный барабан, и четыре варианта
+     читаются целиком, а в колонке контрол занимает одну строку вместо четырёх обрезанных */
   var when=anyAct()
-    ? '<div class="field"><label>Когда</label><div class="segctl">'+
-      WHEN_STEPS.map(function(o){
-        return '<button class="'+((ui.when||'')===o[0]?'is-on':'')+'" data-when="'+o[0]+'">'+H(o[1])+'</button>';
-      }).join('')+'</div></div>'
+    ? '<div class="field"><label for="f-when">Когда</label>'+
+      '<div class="selectwrap"><select class="select" id="f-when" data-when-sel="1">'+
+        WHEN_STEPS.map(function(o){
+          return '<option value="'+o[0]+'"'+((ui.when||'')===o[0]?' selected':'')+'>'+H(o[1])+'</option>';
+        }).join('')+
+      '</select>'+icon('chev-down','selectwrap__chev')+'</div></div>'
     : '';
   var picked=(rad||when)?('<div class="pad stack" style="padding-bottom:16px">'+when+rad+'</div>'):'';
   /* Ориентиров здесь больше нет. Они не фильтр: строка ничего не включала и не выключала,
@@ -7709,7 +7901,9 @@ function menuDialog(anchor,items){
       /* Три вида пункта: обычное действие со значком, выбор с галкой и переключатель типа
          с цветным кружком. Общего у них поле, высота и наведение — различается только то,
          что стоит по краям */
-      return '<button class="menu__i'+(it.on?' is-on':'')+'" data-act="'+it.act+'" data-id="'+H(it.id||'')+'" role="menuitem">'+
+      /* Необратимое помечается цветом: в меню пункты стоят ровным столбцом, и «Удалить»
+         ничем не отличалось бы от «Поделиться», пока не прочитаешь */
+      return '<button class="menu__i'+(it.on?' is-on':'')+(it.danger?' is-danger':'')+'" data-act="'+it.act+'" data-id="'+H(it.id||'')+'" role="menuitem">'+
         (it.dot?'<i class="catdot" style="border-color:'+it.dot+(it.on?';background:'+it.dot:'')+'"></i>':(it.icon?icon(it.icon):''))+
         H(it.label)+
         (it.check?'<span class="menu__on">'+icon('check')+'</span>':'')+
@@ -7937,10 +8131,10 @@ function updateDraftFromCenter(){
 function syncPlaceField(){
   var d=ui.draft; if(!d||d.stOpen)return;
   var inp=$('#placeStInput'); if(!inp)return;
-  var did=d.district_id||ui.districtId, nm=district(did).name;
-  if(inp.value!==nm)inp.value=nm;
-  var dot=inp.parentNode&&inp.parentNode.querySelector('.searchfield__dot');
-  if(dot)dot.style.background=district(did).lineColor;
+  var pl=(d.x!=null)?placeForPoint(d.x,d.y):district(d.district_id||ui.districtId);
+  if(inp.value!==pl.name)inp.value=pl.name;
+  var pic=inp.parentNode&&inp.parentNode.querySelector('.searchfield__pic');
+  if(pic)pic.innerHTML=placeIcon(pl);
 }
 /* точечное обновление строки с расстоянием — полный render() на каждом кадре перетаскивания
    карты был бы расточителен */
@@ -8037,9 +8231,12 @@ function onAction(act,el,e){
         openPanel(up||{type:'chats'});
         break;
       }
-      /* Последняя ветка значит «откуда пришли — неизвестно». Честный ответ на это —
-         закрыть, а не увезти в раздел, о котором не просили */
-      closePanel();
+      /* Последняя ветка значит «откуда пришли — неизвестно». Но у нас есть oneUp, который
+         для «Текущих дел», «Архива» и «Правки профиля» ответ знает — профиль. Раньше его
+         просто не спрашивали, и эти три экрана проваливались сюда и закрывались на карту,
+         хотя человек пришёл из профиля. Спрашиваем; если и он не знает — закрываем */
+      var up0=oneUp(ui.panel);
+      if(up0)openPanel(up0); else closePanel();
       break;
     case 'scrim': if(e.target===el)closeModal(); break;
     case 'modal-no': closeModal(); break;
@@ -8068,7 +8265,9 @@ function onAction(act,el,e){
       var ru=me();
       if(ru){
         ru.reminders=ru.reminders||{};
-        if(ru.reminders[id]){delete ru.reminders[id]; save(); render(); toast('Напоминание выключено')}
+        /* записываем решение явно, а не удалением ключа: у ключа три состояния, и
+           «выключено руками» надо отличать от «не трогали» */
+        if(remindOn(id)){ru.reminders[id]=0; save(); render(); toast('Напоминание выключено')}
         else {ru.reminders[id]=1; save(); render(); toast('Напомним за час до начала')}
       }
       break;
@@ -8175,7 +8374,10 @@ function onAction(act,el,e){
       /* жаловаться на себя незачем — у своего пина на этом месте стоит правка */
       var mp=pin(id), own=mp&&mp.author_id===db.currentUserId;
       var mmr=myResponse(id), items=[{act:'share',icon:'share',label:'Поделиться',id:id}];
-      if(own)items.push({act:'edit-pin',icon:'pencil',label:'Редактировать',id:id});
+      if(own){
+        items.push({act:'edit-pin',icon:'pencil',label:'Редактировать',id:id});
+        if(mp.status==='active')items.push({act:'delete-pin',icon:'trash',label:'Удалить',id:id,danger:true});
+      }
       else{
         if(mp&&isAct(mp)&&mp.status==='active'&&isJoined(mmr))
           items.push({act:'leave',icon:'exit',label:'Не пойду',id:id});
@@ -8377,6 +8579,17 @@ function onAction(act,el,e){
   }
 }
 
+/* Класс переключается на том узле, по которому нажали, — до того, как что-либо
+   перерисуется. Состояние в базе поменяет само действие; здесь только вид */
+document.addEventListener('click',function(e){
+  var sw=e.target.closest&&e.target.closest('.switch');
+  if(sw&&!sw.disabled){
+    var on=!sw.classList.contains('is-on');
+    sw.classList.toggle('is-on',on);
+    if(sw.getAttribute('role')==='switch')sw.setAttribute('aria-checked',on?'true':'false');
+    holdRender(220);
+  }
+},true);
 document.addEventListener('click',function(e){
   var el;
   /* стрелка полосы с прокруткой: обработчик один на все полосы, включая те, которых
@@ -8505,19 +8718,10 @@ document.addEventListener('click',function(e){
   }
   if((el=e.target.closest('[data-theme-set]'))){setTheme(el.getAttribute('data-theme-set'));render();return}
   if((el=e.target.closest('[data-cat]'))){toggleCat(el.getAttribute('data-cat'));render();return}
-  if((el=e.target.closest('[data-when]'))){
-    ui.when=el.getAttribute('data-when')||'';
-    render(); return;
-  }
+  /* кнопка «Показать на любом расстоянии» из пустого состояния осталась единственным
+     местом, где радиус снимается нажатием */
   if((el=e.target.closest('[data-radius]'))){
-    var rv=parseInt(el.getAttribute('data-radius'),10)||0;
-    ui.radius=(rv&&ui.radius!==rv)?rv:null;
-    render(); return;
-  }
-  if((el=e.target.closest('[data-alert-radius]'))){
-    var mA=me();
-    if(mA){mA.alert_radius=parseInt(el.getAttribute('data-alert-radius'),10)||1000; save(); render()}
-    return;
+    ui.radius=null; render(); return;
   }
   /* «Показать ближайшее» из пустого кадра: везём карту к событию и открываем его карточку */
   if((el=e.target.closest('[data-goto-pin]'))){
@@ -8629,6 +8833,18 @@ document.addEventListener('input',function(e){
     ui.searchQuery=e.target.value;
     var res=$('#searchResults'); if(res)res.innerHTML=homeResultsHTML();
     syncSearchClear();
+    return;
+  }
+  /* Ползунки фильтра и оповещений. Пока палец на дорожке — меняем только чип со значением:
+     полная перерисовка заменила бы узел и перетаскивание оборвалось бы. Применяем на
+     отпускании, там же и общая отрисовка */
+  var rg=e.target.getAttribute&&e.target.getAttribute('data-range');
+  if(rg==='radius'){
+    var fv=$('#farVal'); if(fv)fv.textContent=radiusText(e.target.value);
+    return;
+  }
+  if(rg==='alert'){
+    var av=$('#alertVal'); if(av)av.textContent=niceUp(+e.target.value);
     return;
   }
   var f=e.target.getAttribute&&e.target.getAttribute('data-field');
@@ -8838,6 +9054,23 @@ document.addEventListener('scroll',function(e){
   var t=e.target, a=document.activeElement;
   if(t&&t.id==='panelBody'&&a&&a.id==='searchInput')a.blur();
 },true);
+document.addEventListener('change',function(e){
+  var rg=e.target.getAttribute&&e.target.getAttribute('data-range');
+  if(rg==='radius'){
+    var v=+e.target.value;
+    ui.radius=(v>=RAD_MAX)?null:v;
+    render(); return;
+  }
+  if(rg==='alert'){
+    var mA=me();
+    if(mA){mA.alert_radius=+e.target.value; save()}
+    return;
+  }
+  if(e.target.getAttribute&&e.target.getAttribute('data-when-sel')){
+    ui.when=e.target.value||'';
+    render(); return;
+  }
+});
 document.addEventListener('input',function(e){
   var k=e.target.getAttribute&&e.target.getAttribute('data-onb');
   if(!k)return;
