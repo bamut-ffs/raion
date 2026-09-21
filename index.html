@@ -2568,7 +2568,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.20.1';
+var VERSION='3.20.2';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
 var UPDATED='21 сентября 2026';
@@ -8939,16 +8939,33 @@ document.addEventListener('pointerup',function(e){
    Ничего заранее не размечаем: обработчик ловит прокрутку любого элемента, так что новые
    прокручиваемые блоки получают полосу сами, без правок здесь. */
 var OS_FADE=900, osDrag=null;
+/* Прокручиваемым считается тот, у кого прокрутка разрешена стилем, а не тот, у кого
+   содержимое не поместилось. Разница существенная: у контейнера карты overflow:hidden,
+   метки и подписи выходят за нижний край, и по числам он выглядел прокручиваемым —
+   ему даже приделывалась полоса, которой там взяться неоткуда */
+function osScrollable(el){
+  var ov=getComputedStyle(el).overflowY;
+  return ov==='auto'||ov==='scroll';
+}
 function osThumb(el){
   if(!el||el.nodeType!==1||el===document.body||el===document.documentElement)return null;
   var tag=el.tagName;
   if(tag==='TEXTAREA'||tag==='INPUT'||tag==='SELECT')return null;   /* внутрь не вложить */
   if(el.scrollHeight-el.clientHeight<4)return null;                 /* прокручивать нечего */
+  if(!osScrollable(el))return null;
+  /* Плашка живёт СНАРУЖИ прокручиваемого блока, а не внутри него. Внутри она попадала
+     в прокручиваемую область: смещённый элемент её увеличивает, и чем ниже уезжала плашка,
+     тем больше становилось, куда прокручивать. На телефоне это читалось как бесконечная
+     прокрутка вниз — чем сильнее мах, тем дальше уезжало. В Chrome сдвиг в область
+     не попадал, поэтому на десктопе ничего не было видно */
+  var host=el.parentNode;
+  while(host&&host.nodeType===1&&osScrollable(host))host=host.parentNode;
+  if(!host||host.nodeType!==1||host===document.body||host===document.documentElement)return null;
   var t=el.__osThumb;
-  if(!t||t.parentNode!==el){                                        /* панель перерисовалась — плашку унесло */
-    if(getComputedStyle(el).position==='static')el.style.position='relative';
+  if(!t||t.parentNode!==host){                                      /* панель перерисовалась — плашку унесло */
+    if(getComputedStyle(host).position==='static')host.style.position='relative';
     t=document.createElement('i'); t.className='oscroll__thumb';
-    el.appendChild(t); el.__osThumb=t;
+    host.appendChild(t); el.__osThumb=t;
   }
   return t;
 }
@@ -8956,8 +8973,12 @@ function osUpdate(el){
   var t=osThumb(el); if(!t)return;
   var ch=el.clientHeight, sh=el.scrollHeight, st=el.scrollTop;
   var h=Math.max(28,Math.round(ch*ch/sh));
+  var host=t.parentNode;
+  /* плашка стоит у правого края самого блока, а не его хозяина: колонки бывают разной ширины */
+  var er=el.getBoundingClientRect(), hr=host.getBoundingClientRect();
   t.style.height=h+'px';
-  t.style.transform='translateY('+Math.round(st+(ch-h)*(st/(sh-ch)))+'px)';
+  t.style.right=Math.round(hr.right-er.right+3)+'px';
+  t.style.transform='translateY('+Math.round(er.top-hr.top+(ch-h)*(st/(sh-ch)))+'px)';
 }
 function osFlash(el){
   var t=osThumb(el); if(!t)return;
