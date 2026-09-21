@@ -2555,7 +2555,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.20.3';
+var VERSION='3.20.4';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
 var UPDATED='21 сентября 2026';
@@ -6816,6 +6816,16 @@ function viewSettings(){
   '</div>'+
   blocked+
   '<div class="divider divider--lg"></div>'+
+  /* Замер края экрана стоит в настройках, а не в «О прототипе»: то окно открывается
+     логотипом на боковой панели, а на телефоне её нет — и на телефоне же он и нужен */
+  '<div class="pad stack">'+
+    '<div class="eyebrow">Край экрана</div>'+
+    '<div class="about__meta">'+
+      measureRows().map(function(r){return '<span><b>'+H(r[0])+'</b>'+H(r[1])+'</span>'}).join('')+
+    '</div>'+
+    '<span class="hint">Отладочное: если снизу или сверху остаётся лишняя полоса, сфотографируйте этот блок</span>'+
+  '</div>'+
+  '<div class="divider divider--lg"></div>'+
   '<div class="pad stack">'+
     '<button class="btn btn--danger" data-act="reset">'+icon('reset')+'Сбросить прототип'+'</button>'+
     '<span class="hint">Сброс удалит ваш профиль, события и переписку из браузера и вернёт демо-данные</span>'+
@@ -7371,15 +7381,39 @@ function viewScope(){
 
 /* ---- о прототипе ---- */
 /* «О прототипе» — попап, а не раздел панели: это справка, а не место, где живёт работа */
-function measureText(){
+/* Значение env(safe-area-inset-*) из скрипта не прочитать — его считает только вёрстка.
+   Поэтому меряем пробником: пустой блок высотой ровно в эту зону */
+function safeInset(side){
+  var p=document.createElement('i');
+  p.style.cssText='position:fixed;left:-9999px;width:1px;height:env(safe-area-inset-'+side+',0px)';
+  document.body.appendChild(p);
+  var h=Math.round(p.getBoundingClientRect().height);
+  document.body.removeChild(p);
+  return h;
+}
+/* Замер края экрана. Низ на телефоне чинился пять раз вслепую: в браузерной панели нет
+   ни безопасных зон, ни запуска с домашнего экрана, и воспроизвести отступ там нечем.
+   Эти числа отвечают на вопрос прямо — доходит ли приложение до низа окна, доходит ли
+   таббар до низа приложения, и совпадает ли окно с экраном */
+function measureRows(){
   var vv=window.visualViewport, ap=$('#app'), r=$('.rail');
+  var apr=ap?ap.getBoundingClientRect():null, rr=r?r.getBoundingClientRect():null;
   var cs=getComputedStyle(document.documentElement);
   return [
-    'окно '+Math.round(window.innerHeight),
-    'видно '+(vv?Math.round(vv.height):'—'),
-    'приложение '+(ap?Math.round(ap.getBoundingClientRect().height):'—'),
-    'таббар '+(r?Math.round(r.offsetHeight):'—')+' / '+cs.getPropertyValue('--chrome-b').trim()
-  ].join(' · ');
+    ['Окно', Math.round(window.innerHeight)+' px'],
+    ['Видимая часть', vv?Math.round(vv.height)+' px':'—'],
+    ['Экран', Math.round(screen.height)+' × '+(window.devicePixelRatio||1)],
+    ['Приложение', apr?Math.round(apr.height)+' px, низ '+Math.round(apr.bottom):'—'],
+    ['Таббар', rr?Math.round(rr.height)+' px, низ '+Math.round(rr.bottom):'—'],
+    ['Щель снизу', rr?(Math.round(window.innerHeight-rr.bottom)+' px'):'—'],
+    ['Зона снизу', safeInset('bottom')+' px'],
+    ['Зона сверху', safeInset('top')+' px'],
+    ['--vh / --chrome-b', cs.getPropertyValue('--vh').trim()+' / '+cs.getPropertyValue('--chrome-b').trim()],
+    ['Режим', (window.navigator.standalone||window.matchMedia('(display-mode: standalone)').matches)?'с домашнего экрана':'во вкладке']
+  ];
+}
+function measureText(){
+  return measureRows().map(function(r){return r[0]+' '+r[1]}).join(' · ');
 }
 function aboutDialog(){
   pendingOk=null;
