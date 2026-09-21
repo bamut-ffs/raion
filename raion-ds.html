@@ -31,11 +31,14 @@
   --road-edge:#d1d1d6;
   --build:#dedee4;
   --build-2:#d2d2d9;
-  --park:#d0d0d7;
-  --park-2:#c4c4cc;
-  --park-ink:#6f6f6f;
-  --water:#c0c0c8;
-  --water-edge:#a6a6af;
+  /* Вода и зелень — единственный цвет на подложке. Он намеренно бледнее и холоднее наших
+     акцентов: на карте самым ярким должен оставаться пин, иначе зелёная услуга спорит
+     с зелёным сквером, а синяя находка — с рекой */
+  --park:#cfe1c2;
+  --park-2:#c3d8b4;
+  --park-ink:#5f7355;
+  --water:#bfd8e8;
+  --water-edge:#9dc0d6;
   /* Акценты взяты из системной палитры Apple (HIG → Color), но не из колонки Default:
      дефолтный оранжевый #FF8D28 под белым текстом даёт 2:1 и не читается. Заливки берут
      колонку Increased contrast (light) — она для того и существует, и даёт нам 6:1 вместо
@@ -135,11 +138,11 @@
     --road-edge:#3d3d40;
     --build:#1e1e21;
     --build-2:#232326;
-    --park:#252528;
-    --park-2:#2a2a2d;
-    --park-ink:#9a9a9a;
-    --water:#2e2e31;
-    --water-edge:#18181b;
+    --park:#1f2a1d;
+    --park-2:#243020;
+    --park-ink:#8ba382;
+    --water:#1b2a33;
+    --water-edge:#0f1b21;
     /* тёмная тема берёт колонку Default (dark): там цвета уже осветлены под тёмный фон,
        а иконки поверх остаются тёмными — на светящейся заливке белое слепит */
     --act:#ff9230;
@@ -256,7 +259,13 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 /* ---------- shell ---------- */
-.app{display:flex;height:100dvh;overflow:hidden;position:relative}
+/* Оболочка прибита к окну, а не меряется в dvh. Динамическая высота на iOS в приложении
+   с домашнего экрана даёт не то, что видно: коробка заканчивалась выше края экрана, снизу
+   оставалась полоса фона, и получалось два отступа — один внутри таббара, где безопасную
+   зону учли честно, второй под ним, где её вычли ещё раз.
+   --kb — высота клавиатуры; её ставит скрипт по visualViewport, и по умолчанию она ноль */
+:root{--kb:0px}
+.app{display:flex;position:fixed;inset:0;overflow:hidden}
 /* компактный рейл: иконка сверху, подпись снизу — единый стиль для десктопа и мобильного таббара */
 /* свой слой выше панели: панель теперь абсолютная и при сворачивании уезжает влево ровно на
    место рейла — без этого она ложилась бы поверх навигации и прятала её.
@@ -397,10 +406,16 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Пока открыта карточка, остальные булавки гаснут — выбранная и так крупнее, но на плотной
    карте одного размера мало. Глубина другая, чем у «вне охвата»: два разных смысла не должны
    выглядеть одинаково */
-.map.is-selpin .pin,.map.is-selpin .cluster,.map.is-selpin .pin__label,.map.is-selpin .halo{opacity:.28}
+/* Пока открыта карточка, остальные булавки гаснут — но не настолько, чтобы перестать
+   различаться: выбранная и так крупнее на четверть и лежит поверх, так что работу делает
+   форма, а прозрачность лишь помогает */
+.map.is-selpin .pin,.map.is-selpin .cluster,.map.is-selpin .pin__label,.map.is-selpin .halo{opacity:.55}
 .map.is-selpin .marker.is-sel .pin,.map.is-selpin .marker.is-sel .pin__label,
 .map.is-selpin .marker.is-sel .halo{opacity:1}
-.pin,.cluster,.pin__label{transition:opacity .18s ease}
+/* Переход задан на самой булавке, а не на метке: положение лежит на .marker, и стоило бы
+   анимировать его — весь слой поехал бы за картой с отставанием в те же 180 мс */
+.pin{transition:opacity .18s ease,transform .18s ease}
+.cluster,.pin__label{transition:opacity .18s ease}
 .pin__label{
   position:absolute;left:0;top:8px;transform:translate(-50%,0);
   background:var(--surface);border:1px solid var(--line);border-radius:var(--r-s);
@@ -518,7 +533,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .iconbtn:hover{background:var(--surface-2);color:var(--ink)}
 .iconbtn svg{width:17px;height:17px}
 /* отклонение заявки — иконка без подписи, но по высоте вровень с «Принять» рядом */
-.iconbtn--34{width:34px;height:34px}
+.iconbtn--34{width:32px;height:32px}
 /* шестерня в шапке профиля равняется на иконки таббара, а не на стрелки в шапках */
 .iconbtn--20 svg{width:20px;height:20px}
 /* та же первая полоса, что зона поиска: высота одна на все экраны, содержимое по центру.
@@ -649,7 +664,35 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .chip-metro{width:15px;height:15px;flex:none}
 .chip .chip-metro{width:15px;height:15px}
 /* точка в цвет линии — для мелких мест, где значок метро превращался в грязь */
+/* Станция метро — наш значок, а не подпись карты: заливка кружка приходит из color,
+   поэтому цвет линии меняется одной строкой, а на будущий ориентир другого вида
+   (парк, площадь) встанет свой значок без переделки слоя */
+.marker--stn{z-index:1}
+.stnmark{width:19px;height:19px;display:block;transform:translate(-50%,-50%);pointer-events:none}
+/* имя станции — обычный текст с обводкой фоном, а не плашка: плашки в этом приложении
+   принадлежат событиям, и станция не должна выглядеть как ещё одно из них */
+.stnmark__n{
+  position:absolute;left:0;top:11px;transform:translate(-50%,0);white-space:nowrap;
+  font-size:var(--f-xs10);line-height:var(--l-xs10);font-weight:600;color:var(--ink-2);
+  pointer-events:none;
+  text-shadow:0 0 3px var(--ground),0 0 3px var(--ground),0 0 3px var(--ground),0 0 3px var(--ground);
+}
+.distchip__ic{width:13px;height:13px;color:var(--ink-3);flex:none}
 .linedot{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none;vertical-align:1px}
+/* ряд точек под названием станции: высота задана, чтобы строка узла с двумя линиями
+   и строка одиночной станции стояли одинаково */
+.dots{display:flex;align-items:center;gap:4px;height:14px}
+/* строка линии в полном списке: цвет, название, число станций и шеврон */
+.linerow{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;border-bottom:1px solid var(--line)}
+.linerow:hover{background:var(--surface-2)}
+.linerow.is-on{background:var(--surface-2)}
+.linerow__t{flex:1;min-width:0}
+.linerow__t b{display:block;font-size:var(--f-m10);line-height:var(--l-m10);font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.linerow svg{width:16px;height:16px;color:var(--ink-3);flex:none}
+.linedot--l{width:12px;height:12px;vertical-align:0}
+/* станции внутри раскрытой линии сдвинуты: так видно, чему они принадлежат */
+.districtrow--sub{padding-left:32px;background:var(--surface-2)}
 /* Точка и название — один блок: кружок читается как часть названия, а не как значок
    между двумя величинами. Внутри зазор маленький, снаружи обычный */
 .stn{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
@@ -722,6 +765,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    пишет тому, кто ни на что не подписывался, и выключатель к ней обязателен */
 /* тумблер прижат к верху: против двух-трёх строк пояснения по центру он смотрелся криво */
 .switchrow{display:flex;align-items:flex-start;gap:16px;padding:4px}
+/* в подвале карточки тумблер стоит над кнопкой и отделён от неё линией: подвал приклеен,
+   и без линии строка читалась бы как часть самой кнопки */
+.switchrow--foot{align-items:center;padding:0 4px 12px;margin-bottom:4px;border-bottom:1px solid var(--line)}
 .switchrow .switch{margin-top:-2px}
 .switchrow__txt{flex:1;min-width:0}
 .switchrow b{display:block;font-size:var(--f-h60);line-height:var(--l-h60);font-weight:600}
@@ -797,9 +843,6 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .factrow svg{width:16px;height:16px;color:var(--ink-3);flex:none;margin-top:2px}
 .factrow b{font-weight:600}
 /* будильник на строке времени: прижат к правому краю строки и не спорит с текстом */
-.factrow__act{margin-left:auto;flex:none;color:var(--ink-3)}
-.factrow__act.is-on{color:var(--brand)}
-.factrow__act.is-on svg{fill:currentColor}
 .factrow span{color:var(--ink-3);font-size:var(--f-s20);line-height:var(--l-s20);display:block;margin-top:4px}
 /* Обе кнопки — автор и участники — одного роста: содержимое внутри держится в 36, поэтому
    при центрировании верхняя строка встаёт на те же 12 сверху, а полоса заполнения остаётся
@@ -935,6 +978,10 @@ button.person:hover{background:var(--surface-2)}
 
 /* ---------- forms ---------- */
 .field{display:flex;flex-direction:column;gap:8px}
+/* вложенный контрол принадлежит тумблеру над собой: сдвиг слева говорит это без слов,
+   а подпись остаётся мелкой — заголовок здесь уже есть, он у тумблера */
+.subfield{display:flex;flex-direction:column;gap:8px;padding-left:4px;margin-top:4px}
+.subfield>label{font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;color:var(--ink-3)}
 .field>label{font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;color:var(--ink-2)}
 .field .hint{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
 /* обязательные поля: их ровно три — заголовок, дата и время. Остальные имеют значения
@@ -976,7 +1023,7 @@ button.person:hover{background:var(--surface-2)}
 .rangerow:hover .rangeval{background:var(--ink)}
 .rangerow .input[type=range]:active~.rangeval{background:var(--brand);color:#fff}
 /* кольцо фокуса снимаем с дорожки и отдаём бегунку: обводить надо то, чем управляют */
-input[type=range].input{padding:0;height:36px;background:transparent;border:none;appearance:none}
+input[type=range].input{padding:0;height:40px;background:transparent;border:none;appearance:none}
 input[type=range].input:focus{box-shadow:none;border-color:transparent}
 input[type=range].input:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(--ring)}
 input[type=range].input:focus-visible::-moz-range-thumb{box-shadow:0 0 0 3px var(--ring)}
@@ -1212,13 +1259,16 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .ctlrow{display:flex;align-items:center;gap:8px;padding:12px 16px;
   overflow-x:auto;overflow-y:hidden;touch-action:pan-x;overscroll-behavior-x:contain;
   border-bottom:1px solid var(--line)}
-.ctl{flex:none;display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:var(--r-m);
+/* Высота задана числом, а не выведена из начинки: с текстом внутри выходило 32, с тремя
+   кружками 29, и два соседних контрола стояли разной высоты. Высота — свойство контрола,
+   а не того, что в него положили. 32 — компактный размер приложения, он же у .iconbtn */
+.ctl{flex:none;height:32px;display:flex;align-items:center;gap:6px;padding:0 10px;border-radius:var(--r-m);
   background:var(--surface-2);color:var(--ink-2);
   font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;white-space:nowrap}
 .ctl:hover{background:var(--surface-3);color:var(--ink)}
 .ctl svg{width:14px;height:14px;color:var(--ink-3);flex:none}
 /* у кнопки типов вместо слова три кружка, и поля ей нужны ровные со всех сторон */
-.ctl--dots{padding:7px 8px}
+.ctl--dots{padding:0 8px}
 /* счёт включённых типов появляется только когда что-то выключено: три залитых круга
    и так значат «показано всё» */
 .ctl__n{font-variant-numeric:tabular-nums}
@@ -1665,18 +1715,29 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      У шторки с жёсткой высотой (.is-tall) наоборот: тело обязано растянуться на остаток,
      иначе под коротким шагом осталась бы пустая полоса */
   .panel:not(.is-section):not(.is-tall) .panel__body{flex:0 1 auto}
-  .toolbar{left:16px;right:16px;top:16px;gap:8px}
+  /* Безопасную зону здесь однажды потеряли: правило стоит позже основного, специфичность
+     та же, и «top:16px» молча съедал env() целиком — кнопка охвата лезла под часы */
+  .toolbar{left:16px;right:16px;top:calc(16px + env(safe-area-inset-top,0px));gap:8px}
   /* уезжает вверх с уменьшением, а не выключается: display не анимируется, поэтому
      кнопка остаётся в потоке и просто перестаёт ловить нажатия. Длительность та же,
      что у самой шторки, — они двигаются одним движением */
+  .searchrow{display:flex;align-items:center;gap:8px}
+  .searchrow .searchfield{flex:1;min-width:0}
+  .searchrow__cancel{flex:none;padding:4px 2px}
+  /* пока клавиатура открыта, шторка занимает всё до её верхнего края, а таббар уходит:
+     показывать его под клавиатурой незачем */
+  .app.is-kb .rail{display:none}
+  .app.is-kb .panel.is-home{top:0;bottom:var(--kb);height:auto;max-height:none;border-radius:0}
+  .app.is-kb .sheet-grip{display:none}
   .scopetop{display:flex;flex:1;height:42px;padding:0 12px;transform-origin:50% 0;transition:transform .22s ease,opacity .22s ease}
   .app.is-homeopen .scopetop{transform:translateY(-160%) scale(.92);opacity:0;pointer-events:none}
   /* центр не по экрану, а по свободной полосе между низом «Категорий» (10+42) и верхом
      свёрнутой шторки (76 над таббаром в 66): (52 + 100dvh - 142) / 2 */
-  .zoomctl{top:calc(50dvh - 45px)}
+  .zoomctl{top:calc(50dvh - 45px + env(safe-area-inset-top,0px)/2)}
   .scalebar{display:none}
   /* над таббаром и свёрнутой домашней шторкой: 66 + 70 + отступ */
-  .mapmeta{bottom:calc(66px + var(--home-peek) + 8px)}
+  /* высота таббара — переменная, а не число: безопасную зону он тоже занимает */
+  .mapmeta{bottom:calc(var(--rail-h) + env(safe-area-inset-bottom,0px) + var(--home-peek) + 8px)}
 }
 </style>
 <style>/* Собственные стили каталога. Всё с приставкой ds-, чтобы не столкнуться с продуктовыми */
@@ -2140,6 +2201,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.19.2";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.20.0";</script>
 </body>
 </html>
