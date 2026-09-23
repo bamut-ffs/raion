@@ -135,16 +135,20 @@
        а они у Apple в тёмной теме стоят вплотную */
     --line:#38383a;
     --line-2:#48484a;
-    --road:#333336;
-    --road-2:#2b2b2e;
-    --road-edge:#3d3d40;
-    --build:#1e1e21;
-    --build-2:#232326;
-    --park:#1f2a1d;
-    --park-2:#243020;
-    --park-ink:#8ba382;
-    --water:#1b2a33;
-    --water-edge:#0f1b21;
+    /* Тёмная карта: вода синяя и зелень зелёная, как у тёмных карт Apple и Яндекса, а дороги
+       тише воды — иначе сетка улиц читается первой, и река выглядит магистралью. Обводка
+       дороги темнее заливки. Значения одни в обоих тёмных блоках: раньше в явной «Тёмной»
+       вода и парки оставались серыми с монохромных времён, а в «Системной» были цветными */
+    --road:#2c2c30;
+    --road-2:#232327;
+    --road-edge:#19191c;
+    --build:#1c1c1f;
+    --build-2:#222225;
+    --park:#1b2e20;
+    --park-2:#213625;
+    --park-ink:#7fa383;
+    --water:#1d3446;
+    --water-edge:#6f93ab;
     /* тёмная тема берёт колонку Default (dark): там цвета уже осветлены под тёмный фон,
        а иконки поверх остаются тёмными — на светящейся заливке белое слепит */
     --act:#ff9230;
@@ -184,16 +188,20 @@
      а они у Apple в тёмной теме стоят вплотную */
   --line:#38383a;
   --line-2:#48484a;
-  --road:#333336;
-  --road-2:#2b2b2e;
-  --road-edge:#3d3d40;
-  --build:#1e1e21;
-  --build-2:#232326;
-  --park:#252528;
-  --park-2:#2a2a2d;
-  --park-ink:#9a9a9a;
-  --water:#2e2e31;
-  --water-edge:#18181b;
+  /* Тёмная карта: вода синяя и зелень зелёная, как у тёмных карт Apple и Яндекса, а дороги
+     тише воды — иначе сетка улиц читается первой, и река выглядит магистралью. Обводка
+     дороги темнее заливки. Значения одни в обоих тёмных блоках: раньше в явной «Тёмной»
+     вода и парки оставались серыми с монохромных времён, а в «Системной» были цветными */
+  --road:#2c2c30;
+  --road-2:#232327;
+  --road-edge:#19191c;
+  --build:#1c1c1f;
+  --build-2:#222225;
+  --park:#1b2e20;
+  --park-2:#213625;
+  --park-ink:#7fa383;
+  --water:#1d3446;
+  --water-edge:#6f93ab;
   /* тёмная тема берёт колонку Default (dark): там цвета уже осветлены под тёмный фон,
      а иконки поверх остаются тёмными — на светящейся заливке белое слепит */
   --act:#ff9230;
@@ -229,8 +237,11 @@
    отступа и так нет, правило там ничего не меняет */
 :root{padding:0}
 html,body{height:100%}
+/* цвет полосы под часами на айфоне — см. syncTint() */
+:root{--tint:var(--ground)}
+:root.is-dimmed{--tint:color-mix(in srgb,var(--ground) 45%,#000)}
 body{
-  margin:0;background:var(--ground);color:var(--ink);
+  margin:0;background:var(--tint);color:var(--ink);transition:background-color .2s ease;
   font-family:'Golos Text',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   font-size:var(--f-m10);line-height:var(--l-m10);-webkit-font-smoothing:antialiased;
   overscroll-behavior:none;overflow:hidden;
@@ -270,7 +281,8 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    таббар оказался на самом деле; стоило разойтись — появлялся второй отступ.
 */
 :root{--chrome-b:49px; --vh:100dvh; --kb:0px}
-.app{display:flex;position:fixed;left:0;top:0;width:100%;height:var(--vh);overflow:hidden}
+.app{display:flex;position:fixed;left:0;top:0;width:100%;height:var(--vh);overflow:hidden;
+  background:var(--tint);transition:background-color .2s ease}
 /* компактный рейл: иконка сверху, подпись снизу — единый стиль для десктопа и мобильного таббара */
 /* свой слой выше панели: панель теперь абсолютная и при сворачивании уезжает влево ровно на
    место рейла — без этого она ложилась бы поверх навигации и прятала её.
@@ -432,33 +444,45 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   position:absolute;left:14px;top:-24px;transform:translate(0,-50%);
   display:flex;flex-direction:column;align-items:flex-start;text-align:left;
   background:var(--surface);border:1px solid var(--line);border-radius:var(--r-s);
-  padding:3px 7px;font-size:var(--f-xs10);line-height:var(--l-xs10);white-space:nowrap;max-width:184px;
+  padding:3px 7px;font-size:var(--f-xs10);line-height:var(--l-xs10);white-space:nowrap;max-width:140px;
   box-shadow:var(--shadow-1);pointer-events:none;
 }
-.pin__label--l{left:auto;right:14px}
-.pin__label b,.pin__label span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.pin__label b,.pin__label span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pin__label b{font-weight:600}
 .pin__label span{font-weight:500;color:var(--ink-3)}
 /* Точка — событие, которому не хватило места на булавку. Видно его всё равно: точка своего
    цвета, нажатие открывает событие. Зона нажатия шире самой точки */
 .pindot{
-  pointer-events:auto;position:absolute;left:0;top:0;display:block;width:10px;height:10px;border-radius:50%;
-  transform:translate(-50%,-50%);box-shadow:0 0 0 2px #fff,0 1px 3px rgba(0,0,0,.28);transition:opacity .18s ease;
+  pointer-events:auto;position:absolute;left:0;top:0;display:block;width:12px;height:12px;border-radius:50%;
+  transform:translate(-50%,-50%);box-shadow:0 0 0 2px #fff,0 1px 3px rgba(0,0,0,.28);transition:opacity .18s ease,transform .14s ease;
 }
 .pindot::after{content:'';position:absolute;inset:-8px;border-radius:50%}
 .pindot--act{background:var(--act)}
 .pindot--offer{background:var(--offer)}
 .pindot--find{background:var(--find)}
 /* Встреча идёт прямо сейчас: расходящееся кольцо вокруг капли */
-.pin__live{
-  position:absolute;left:0;top:-24px;width:34px;height:34px;border-radius:50%;pointer-events:none;
-  transform:translate(-50%,-50%);animation:pinlive 1.8s ease-out infinite;
+/* Волна расходится от точки касания — кончика булавки, то есть от самого места на карте,
+   а не от середины капли: оттуда она почти целиком пряталась под булавкой. Две волны
+   со сдвигом в полцикла, плотно у точки и растворяется к краю */
+.pin__live{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;--live:var(--act)}
+.pin__live--offer{--live:var(--offer)}
+.pin__live--find{--live:var(--find)}
+.pin__live::before,.pin__live::after{
+  content:'';position:absolute;left:-50px;top:-50px;width:100px;height:100px;border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--live) 55%,transparent) 0%,color-mix(in srgb,var(--live) 30%,transparent) 45%,transparent 70%);
+  transform:scale(.1);opacity:0;animation:pinlive 2.4s ease-out infinite;
 }
-.pin__live--act{background:color-mix(in srgb,var(--act) 45%,transparent)}
-.pin__live--offer{background:color-mix(in srgb,var(--offer) 45%,transparent)}
-.pin__live--find{background:color-mix(in srgb,var(--find) 45%,transparent)}
-@keyframes pinlive{from{transform:translate(-50%,-50%) scale(.9);opacity:.9}to{transform:translate(-50%,-50%) scale(2);opacity:0}}
-@media (prefers-reduced-motion:reduce){.pin__live{animation:none;transform:translate(-50%,-50%) scale(1.5);opacity:.35}}
+.pin__live::after{animation-delay:1.2s}
+@keyframes pinlive{0%{transform:scale(.1);opacity:.95}100%{transform:scale(1);opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  .pin__live::before{animation:none;transform:scale(.6);opacity:.45}
+  .pin__live::after{display:none}
+}
+/* Наведение на десктопе: точка или булавка без подписи показывает подпись поверх всех
+   соседних меток, точка при этом вырастает. Раскладка не перестраивается — соседи стоят */
+.marker.is-hover{z-index:7}
+.marker--dot.is-hover .pindot{transform:translate(-50%,-50%) scale(1.5)}
+.pin__label--dot{top:0;left:12px}
 .halo{
   position:absolute;left:0;top:0;border-radius:50%;transform:translate(-50%,-50%);
   background:color-mix(in srgb,var(--offer) 16%,transparent);
@@ -616,12 +640,12 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* ---------- generic bits ---------- */
 /* строка заголовка раздела: подпись слева, переход в полный список справа */
 .secthead{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.headlink{color:var(--brand);font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;white-space:nowrap}
+/* текстовый цвет бренда, а не цвет заливки кнопок; начертание легче заголовка рядом */
+.headlink{color:var(--brand-icon);font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;white-space:nowrap}
 .headlink:hover{text-decoration:underline;text-underline-offset:2px}
-.eyebrow{
-  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:var(--f-xs10);line-height:var(--l-xs10);letter-spacing:.1em;
-  text-transform:uppercase;color:var(--ink-3);
-}
+/* Заголовок группы — тем же стилем, что подпись над полем формы: роль у них одна.
+   Моноширинный капс с разрядкой был единственным в интерфейсе и выглядел слишком тонким */
+.eyebrow{font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;color:var(--ink-2)}
 .chip{
   display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:20px 20px 0 20px;
   font-size:var(--f-s20);line-height:var(--l-s20);font-weight:500;background:var(--surface-3);color:var(--ink-2);white-space:nowrap;
@@ -707,6 +731,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    (парк, площадь) встанет свой значок без переделки слоя */
 .marker--stn{z-index:1}
 .stnmark{width:19px;height:19px;display:block;transform:translate(-50%,-50%);pointer-events:none}
+.stnmark--s{width:16px;height:16px}
 /* имя станции — обычный текст с обводкой фоном, а не плашка: плашки в этом приложении
    принадлежат событиям, и станция не должна выглядеть как ещё одно из них */
 .stnmark__n{
@@ -764,6 +789,19 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .linecircles i{width:10px;height:10px;border-radius:50%;display:block;box-shadow:0 0 0 2px var(--ring)}
 .linecircles i+i{margin-left:-3px}
 .strow:hover .linecircles{--ring:var(--surface-3)}
+/* Раскрытая ветка — это просто раскрытый список, а не выбор: без заливки ни у строки линии,
+   ни у её станций, иначе читалось как «выбрана вся ветка». Серый — только под курсором.
+   Сверху у станций линии нет: под строкой ветки уже её длинная черта. Разделители между
+   станциями начинаются от текста, у последней станции — во всю ширину: ниже следующая ветка */
+.linerow--line.is-on{background:none}
+.linerow--line.is-on:hover{background:var(--surface-2)}
+.districtrow.strow{background:var(--surface)}
+.districtrow.strow:hover{background:var(--surface-2)}
+.strow .linecircles{--ring:var(--surface)}
+.strow:hover .linecircles{--ring:var(--surface-2)}
+.districtrow.strow:first-of-type::before{display:none}
+.districtrow.strow::after,.districtrow.strow:hover::after{left:50px;right:0}
+.districtrow.strow:last-child::after{display:block;left:0;right:0}
 /* станции внутри раскрытой линии сдвинуты: так видно, чему они принадлежат */
 .districtrow--sub{padding-left:32px;background:var(--surface-2)}
 .districtrow .sub{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
@@ -937,15 +975,6 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    там нечего */
 .panel.is-pin.is-shut .panel__body>:not(.pinshort):not(.cover){display:none}
 .pinshort__row{display:flex;align-items:center;gap:12px;min-width:0}
-.pinshort__pic{
-  width:56px;height:56px;border-radius:var(--r-m);flex:none;overflow:hidden;
-  display:grid;place-items:center;color:#fff;
-}
-.pinshort__pic img{width:100%;height:100%;object-fit:cover;display:block}
-.pinshort__pic svg{width:24px;height:24px}
-.pinshort__pic--act{background:var(--act)}
-.pinshort__pic--offer{background:var(--offer)}
-.pinshort__pic--find{background:var(--find)}
 .pinshort__t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .pinshort__n{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -956,7 +985,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   background:var(--surface-2);color:var(--ink-2);
   font-size:var(--f-s20);line-height:var(--l-s20);font-weight:500;white-space:nowrap}
 .stag svg{width:13px;height:13px;color:var(--ink-3);flex:none}
-.stag--me{background:var(--brand-soft);color:var(--brand-ink)}
+/* тот же цвет, что у чипа «Вы участвуете» в списке: --brand-ink один на обе темы и в тёмной
+   сливался с фоном тега */
+.stag--me{background:var(--brand-soft);color:var(--brand-icon)}
 .stag--me svg{color:currentColor}
 .pincard{padding:16px;display:flex;flex-direction:column;gap:12px}
 /* Группы по лестнице — внутри 8, между группами линия с 16 по обе стороны, вертикальное поле
@@ -1028,6 +1059,8 @@ button.person:hover{background:var(--surface-2)}
 .feedlist{display:flex;flex-direction:column}
 /* разделитель между выдачей кадра и совпадениями за ним — серая полоса с подписью, как у Яндекс Карт */
 .nearhead{padding:8px 16px;background:var(--surface-2);font-size:var(--f-s20);line-height:var(--l-s20);font-weight:600;color:var(--ink-2)}
+#searchResults{display:flex;flex-direction:column;min-height:100%}
+.homefloor{margin-top:auto}
 .nearnone{padding:16px;font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)}
 .feed__sort{display:flex;align-items:center;gap:8px;padding:0 4px 4px;color:var(--ink-3);font-size:var(--f-s10);line-height:var(--l-s10);border-bottom:1px solid var(--line)}
 /* Шапка списка приклеена сверху и выезжает поверх содержимого, а не сжимается в потоке.
@@ -1704,9 +1737,12 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
     flex:none;flex-direction:row;justify-content:space-around;align-items:center;
     border-right:none;border-top:1px solid var(--line);padding:3px 8px calc(3px + env(safe-area-inset-bottom,0px));
   }
-  /* плашка активного пункта ниже прежней на четыре пикселя: в 49 точках ей нужны поля сверху
-     и снизу, значок и подпись те же */
-  .rail .navbtn{width:auto;flex:1;padding:2px 4px}
+  /* Активный пункт на телефоне отмечен только цветом значка и подписи: плашка в таббаре была
+     лишней — раздел и так понятен по экрану. Пару раздвинули: неактивные светлее, активный
+     почти чёрный и с полужирной подписью */
+  .rail .navbtn{width:auto;flex:1;padding:4px;color:var(--ink-3)}
+  .rail .navbtn:hover{background:none;color:var(--ink-2)}
+  .rail .navbtn.is-on{background:none;color:var(--ink);font-weight:600}
   .rail .brand,.rail__spacer{display:none}
   /* .work снимаем с position:relative, чтобы абсолютная .panel считалась от .app: тогда шторка
      доезжает до самого низа экрана и ложится поверх таббара, как в мобильных картах */
@@ -1768,14 +1804,11 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .panel.is-home.is-shut{top:calc(var(--vh) - var(--chrome-b) - var(--home-peek))}
   /* в свёрнутом виде своя линия под строкой поиска не нужна: она встала бы в пиксель
      от границы таббара и читалась как вторая полоса */
-  .panel.is-home.is-shut .panel__top{border-bottom:none;
-    /* В свёрнутом виде под полем поиска шторка кончается, и держать полный шаг не за чем:
-     внешнее поле блока больше внутреннего. Высота корешка (--home-peek) уменьшена на
-     те же восемь пикселей, иначе из-под поля показался бы срез первой строки списка */
-    padding-bottom:8px}
-  /* поле меняется вместе с движением шторки, иначе список подпрыгивает на восемь
-     пикселей в момент раскрытия */
-  .panel.is-home .panel__top{transition:padding-bottom .24s ease}
+  /* Ручка со сводкой: по бокам 16 — та же вертикаль, что у поля поиска над картой, сверху
+     и снизу 24. Отступы задаёт зона, у самой строки своих нет: раньше они складывались
+     с полями зоны, и по бокам выходило 32. Корешок меряется сам (homePeekFit) */
+  .panel.is-home .panel__top{padding:24px 16px}
+  .panel.is-home.is-shut .panel__top{border-bottom:none}
   /* Карточка пина живёт в трёх положениях, как в картах: раскрыта, свёрнута до корешка,
      закрыта. В свёрнутом стоит над таббаром — это состояние просмотра карты, и уходить
      из него одним касанием человек вправе, ровно как из домашней шторки */
@@ -1909,7 +1942,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .placedrop:empty{display:none}
   .app.is-noscope .topbar{opacity:0;pointer-events:none;transform:translateY(-160%) scale(.92)}
   /* ручка домашней шторки: сводка «●● N событий · место» под полоской */
-  .homesum{display:flex;align-items:center;gap:8px;padding:2px 16px 12px;min-width:0}
+  .homesum{display:flex;align-items:center;gap:8px;min-width:0}
   .homesum b{font-size:var(--f-h60);line-height:var(--l-h60);font-weight:600;white-space:nowrap}
   .homesum .scopebtn__st{font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)}
   /* Контролы стоят на одном месте во всём приложении и ни от чего не зависят. Прежде их
@@ -2388,6 +2421,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.25.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.26.0";</script>
 </body>
 </html>
