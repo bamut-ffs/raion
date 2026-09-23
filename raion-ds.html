@@ -333,6 +333,8 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 }
 .avatar svg{display:block;width:100%;height:100%}
 .avatar--s{width:24px;height:24px;font-size:10px}
+.navava{display:block;width:22px;height:22px;flex:none;position:relative}
+.avatar--nav{width:22px;height:22px;font-size:9px;display:block}
 .avatar--l{width:42px;height:42px;font-size:15px}
 /* Снимок в форме правки показан кружком того же вида, что увидят соседи, — только крупно:
    кадрирования у нас нет, и человек должен сразу видеть, что попало в кадр */
@@ -676,16 +678,17 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    в светлой теме тёмная заливка со светлыми цифрами, в тёмной наоборот, как у категорийных
    цветов, где значок на светящейся заливке тоже тёмный */
 .tag--solid{background:var(--ink-2);border-color:transparent;color:var(--surface)}
-/* Обращения сервиса к вам: один блок ниже тела карточки. Белое с рамкой — вокруг серые
-   строки содержимого, и залитая плашка сливалась с ними в ещё одну такую же строку */
+/* Обращения сервиса к вам: первым блоком карточки (3.27), залитые бледным брендовым */
 .cardnotes{display:flex;flex-direction:column;gap:8px;margin-top:4px}
 /* Обращение сервиса и карточка уведомления — один объект в двух местах, поэтому метрика
    и типографика у них общие: поле 16, зазор 8, заголовок 16/20, текст 13/18, пара 8.
    Разным остаётся только фон, и это осознанно: в карточке вокруг серые строки содержимого,
    поэтому обращение белое с рамкой; в канале вокруг белая панель, поэтому новое — залитое */
+/* Обращение залито бледным брендовым: оно требует действия, и белое с рамкой терялось
+   среди обычных карточек */
 .cardnote{
   display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:var(--r-m);
-  border:1px solid var(--field-line);background:var(--surface);
+  border:1px solid transparent;background:var(--brand-soft);
   font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-2);
 }
 .cardnote b{display:block;font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;color:var(--ink)}
@@ -695,6 +698,11 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .cardnote p{margin:4px 0 0;color:var(--ink-3);font-size:var(--f-s10);line-height:var(--l-s10)}
 .cardnote .row{display:flex;gap:8px}
 .cardnote .row .btn{flex:1}
+.footrow{display:flex;gap:8px}
+.footrow .btn{flex:1;min-width:0}
+.pcg--notes+.pcg{border-top-color:transparent}
+.cardnotes--short{margin-top:0}
+.cardnotes--short .cardnote{padding:12px}
 /* итог в уведомлении — плашка без обводки: это не действие и не тип, а результат */
 .chip--plate{background:var(--surface);border:none;color:var(--ink-2)}
 /* Сегментед-контрол: одна дорожка, сегменты внутри. Отдельно стоящие чипы не показывали,
@@ -757,6 +765,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .ptag span{overflow:hidden;text-overflow:ellipsis}
 .ptag .metro{width:18px;height:18px;flex:none}
 .ptag--all{padding-left:9px;color:var(--ink-2)}
+.ptags--none{font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)}
 .ptag--all svg{width:14px;height:14px;color:var(--ink-3);flex:none}
 /* На телефоне подсказки — отдельная подложка под полем: серая цвета разделителя, теги на ней
    белые, поле одинаковое со всех сторон. Черта снизу не нужна — край подложки и есть граница */
@@ -968,7 +977,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    известна в любой момент перехода (у обрезанного узла scrollHeight — высота содержимого),
    и по ней ставится верхний край шторки. Сверху 24, а не 16: там лежит ручка */
 .pinshort__in{display:flex;flex-direction:column;gap:10px;padding:24px 16px 12px}
-.panel.is-pin.is-shut .pinshort{max-height:220px;opacity:1}
+.panel.is-pin.is-shut .pinshort{max-height:420px;opacity:1}
 .panel.is-pin .cover{transition:max-height .24s ease,opacity .16s ease}
 .panel.is-pin.is-shut .cover{max-height:0;opacity:0;overflow:hidden}
 /* остальное тело в короткой версии не участвует вовсе: оно ниже сгиба и анимировать
@@ -997,9 +1006,13 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .pcg{display:flex;flex-direction:column;gap:8px}
 .pcg+.pcg{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
 .pcg .cardnotes{margin-top:0}
+/* над группой, которая начинается с карточки (автор, участники, обращение), линию не рисуем:
+   край карточки — заливка или рамка — уже граница, и линия над ним была второй. Отступ прежний */
+.pcg+.pcg:has(> .author:first-child),.pcg+.pcg:has(> .cardnotes:first-child){border-top-color:transparent}
 .pincard h2{font-size:var(--f-h30);line-height:var(--l-h30);font-weight:600;margin:0;text-wrap:balance}
 .pincard p{margin:0;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10);white-space:pre-wrap}
 .metaline{display:flex;flex-wrap:wrap;gap:8px}
+.facts{display:flex;flex-direction:column;gap:8px}
 .factrow{display:flex;gap:12px;align-items:flex-start;font-size:var(--f-h60);line-height:var(--l-h60)}
 .factrow svg{width:16px;height:16px;color:var(--ink-3);flex:none;margin-top:2px}
 .factrow b{font-weight:600}
@@ -1166,6 +1179,8 @@ button.person:hover{background:var(--surface-2)}
 @media (pointer:coarse){
   .input,.textarea,.select{font-size:16px}
 }
+/* у полей поиска свой крестик очистки: системный рисовался бы вторым поверх него */
+input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-search-decoration{-webkit-appearance:none;appearance:none;display:none}
 .input::placeholder,.textarea::placeholder{color:var(--ink-3);opacity:1}
 .input:focus,.textarea:focus,.select:focus{
   outline:none;border-color:var(--focus);
@@ -1743,6 +1758,13 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .rail .navbtn{width:auto;flex:1;padding:4px;color:var(--ink-3)}
   .rail .navbtn:hover{background:none;color:var(--ink-2)}
   .rail .navbtn.is-on{background:none;color:var(--ink);font-weight:600}
+  /* активный аватар цвета не меняет — у фотографии его не поменять, поэтому кольцо */
+  .rail .navbtn.is-on .avatar--nav{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--ink)}
+  /* Счётчик меньше и сдвинут в угол значка: 18 на значке 20 закрывал его половину.
+     Цифра 10 — графика внутри фигуры, а не текст строкой, как счётчики на плашках.
+     Обводка цветом таббара отделяет плашку от значка, как в iOS */
+  .rail .navbtn__badge{top:3px;left:calc(50% + 6px);min-width:16px;height:16px;padding:0 4px;border-radius:8px;
+    font-size:10px;line-height:16px;font-weight:700;box-shadow:0 0 0 2px var(--surface)}
   .rail .brand,.rail__spacer{display:none}
   /* .work снимаем с position:relative, чтобы абсолютная .panel считалась от .app: тогда шторка
      доезжает до самого низа экрана и ложится поверх таббара, как в мобильных картах */
@@ -1763,18 +1785,28 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      полос становится три */
   .panel.is-chat{bottom:0}
   .panel.is-chat .panel__foot,.panel.is-chat .composer{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+  /* С открытой клавиатурой переписка кончается у её верхнего края, а поле ввода стоит вплотную
+     над ней с обычным отступом 12: запас под полоску «домой» спрятан под клавиатурой. Раньше
+     экран оставался во всю высоту, айфон сам подвигал страницу к полю — между полем и
+     клавиатурой зияла пустота, а при прокрутке поле уезжало под клавиатуру */
+  .app.is-kb .panel.is-chat{bottom:var(--kb)}
+  .app.is-kb .panel.is-chat .panel__foot,.app.is-kb .panel.is-chat .composer{padding-bottom:12px}
+  .app.is-kb .panel.is-chat .panel__body{padding-bottom:0}
   .app.is-chat .rail{transform:translateY(100%);pointer-events:none}
   .rail{transition:transform .22s ease}
   .sheet-scrim.is-on{display:block}
   /* после подтверждения места высота жёсткая, а не потолок: иначе второй и третий шаг
      были бы разной высоты и прыгали друг относительно друга */
-  .panel.is-tall{height:calc(var(--vh) - 100px);max-height:none}
+  .panel.is-tall{height:calc(var(--vh) - 64px - env(safe-area-inset-top,0px));max-height:none}
   .panel.is-tall .panel__body{flex:1 1 auto}
   /* палец на карте при выборе места — шторка уезжает вниз почти целиком и открывает карту */
   .panel{transition:transform .22s ease}
   /* на мобильном сдвиг вниз, а не вбок: правило сворачивания сюда не достаёт */
   .work.is-collapsed .panel{transform:none}
   .panel.is-peek{transform:translateY(calc(100% - 12px))}
+  /* снимок предыдущего экрана под свайпом назад: только картинка, в руки не берётся */
+  .panel.panel--under{pointer-events:none}
+  .panel__dim{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:50;border-radius:inherit}
 
   /* Домашняя шторка: развёрнутая — обычный полноэкранный раздел над таббаром; свёрнутая —
      уезжает вниз так, что над таббаром остаётся только строка поиска. Тянется пальцем,
@@ -1783,7 +1815,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      не может его накрыть. Свёрнутая показывает ровно строку поиска, остальное обрезается.
      Развёрнутая встаёт по тому же правилу, что шторка создания — сто пикселей карты сверху */
   .panel.is-home,.panel.is-screen{
-    top:calc(100px + env(safe-area-inset-top,0px));bottom:var(--chrome-b);height:auto;max-height:none;
+    top:calc(64px + env(safe-area-inset-top,0px));bottom:var(--chrome-b);height:auto;max-height:none;
     border-radius:var(--r-l) var(--r-l) 0 0;border-top:1px solid var(--line);
     transition:top .24s ease;
   }
@@ -1793,6 +1825,9 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      кончалась над ним, таббар оставался виден, но лежал под затемнением — и нажатие
      попадало в затемнение, а не в него */
   .panel.is-screen{bottom:0}
+  /* Раскрытый домашний список — на 80, а не на общих 64: над ним поле поиска (16–62 под
+     вырезом), и ручка шторки легла бы прямо на него */
+  .panel.is-home{top:calc(80px + env(safe-area-inset-top,0px))}
   /* при жёсткой высоте тело обязано растянуться, иначе короткий список схлопнется
      и под ним останется пустая плита: общее правило ниже держит обратное для шторок,
      высота которых считается по содержимому */
@@ -1834,7 +1869,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      Короткая стоит на том же нижнем крае, а верхний у неё — по измеренной высоте содержимого
      (--pin-short-h, ставит pinShortFit). Оба положения числовые, поэтому переход между ними
      — движение одного верхнего края, как у домашней шторки */
-  .panel.is-pin{top:calc(100px + env(safe-area-inset-top,0px));bottom:0;height:auto;max-height:none;min-height:0;
+  .panel.is-pin{top:calc(64px + env(safe-area-inset-top,0px));bottom:0;height:auto;max-height:none;min-height:0;
     transition:top .24s ease,transform .22s ease}
   .panel.is-pin.is-shut{top:calc(100% - var(--pin-short-h,240px))}
   /* Край раскрытой карточки задаёт обложка: рамка сверху ложилась второй линией над ней,
@@ -2421,6 +2456,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.26.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.27.0";</script>
 </body>
 </html>
