@@ -696,6 +696,19 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* ряд точек под названием станции: высота задана, чтобы строка узла с двумя линиями
    и строка одиночной станции стояли одинаково */
 .dots{display:flex;align-items:center;gap:4px;height:14px}
+/* Ряд подсказок: теги с переносом, значок внутри. Мельче обычного чипа — их бывает шесть,
+   и они не содержание, а способ перейти */
+.ptags{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px 12px;border-bottom:1px solid var(--line)}
+.ptag{
+  display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px 0 5px;
+  border-radius:999px;background:var(--surface-2);color:var(--ink);
+  font-size:var(--f-s20);line-height:var(--l-s20);font-weight:500;white-space:nowrap;max-width:100%;
+}
+.ptag:hover{background:var(--surface-3)}
+.ptag span{overflow:hidden;text-overflow:ellipsis}
+.ptag .metro{width:18px;height:18px;flex:none}
+.ptag--all{padding-left:9px;color:var(--ink-2)}
+.ptag--all svg{width:14px;height:14px;color:var(--ink-3);flex:none}
 /* строка линии в полном списке: цвет, название, число станций и шеврон */
 .linerow{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;border-bottom:1px solid var(--line)}
 .linerow:hover{background:var(--surface-2)}
@@ -857,6 +870,44 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .is-scrolled .panelhead--over .iconbtn:hover{background:var(--surface-2);color:var(--ink)}
 .is-scrolled .panelhead--over.is-photo .sheet-grip::before{background:var(--line-2)}
 /* снизу больше остальных сторон: под карточкой сразу кнопки действий, и им нужен воздух */
+/* Короткая карточка: строка как в списке чатов и ряд мелких тегов под ней.
+   Обе версии лежат в разметке рядом и меняются не подменой узлов, а состоянием: короткая
+   схлопывается по высоте и гаснет, обложка в том же месте растёт и проявляется. Подменять
+   узлы в этот момент нельзя — переход умрёт, не начавшись, как это уже было с разлётом
+   булавок, подсветкой при наведении и тумблером */
+.pinshort{
+  display:flex;flex-direction:column;gap:10px;overflow:hidden;
+  max-height:0;opacity:0;padding:0 16px;
+  transition:max-height .24s ease,opacity .16s ease,padding .24s ease;
+}
+.panel.is-pin.is-shut .pinshort{max-height:220px;opacity:1;padding:16px 16px 12px}
+.panel.is-pin .cover{transition:max-height .24s ease,opacity .16s ease}
+.panel.is-pin.is-shut .cover{max-height:0;opacity:0;overflow:hidden}
+/* остальное тело в короткой версии не участвует вовсе: оно ниже сгиба и анимировать
+   там нечего */
+.panel.is-pin.is-shut .panel__body>:not(.pinshort):not(.cover){display:none}
+.pinshort__row{display:flex;align-items:center;gap:12px;min-width:0}
+.pinshort__pic{
+  width:56px;height:56px;border-radius:var(--r-m);flex:none;overflow:hidden;
+  display:grid;place-items:center;color:#fff;
+}
+.pinshort__pic img{width:100%;height:100%;object-fit:cover;display:block}
+.pinshort__pic svg{width:24px;height:24px}
+.pinshort__pic--act{background:var(--act)}
+.pinshort__pic--offer{background:var(--offer)}
+.pinshort__pic--find{background:var(--find)}
+.pinshort__t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pinshort__n{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pinshort__s{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap}
+/* теги мельче обычного чипа: их бывает три-четыре, и они не содержание, а опора решения */
+.stags{display:flex;flex-wrap:wrap;gap:6px}
+.stag{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 8px;border-radius:999px;
+  background:var(--surface-2);color:var(--ink-2);
+  font-size:var(--f-s20);line-height:var(--l-s20);font-weight:500;white-space:nowrap}
+.stag svg{width:13px;height:13px;color:var(--ink-3);flex:none}
+.stag--me{background:var(--brand-soft);color:var(--brand-ink)}
+.stag--me svg{color:currentColor}
 .pincard{padding:16px;display:flex;flex-direction:column;gap:12px}
 .pincard h2{font-size:var(--f-h30);line-height:var(--l-h30);font-weight:600;margin:0;text-wrap:balance}
 .pincard p{margin:0;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10);white-space:pre-wrap}
@@ -1073,7 +1124,6 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 }
 .sheet-grip::before{content:'';display:block;width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.85);margin:0 auto;box-shadow:0 1px 2px rgba(0,0,0,.18)}
 /* во весь экран затемнения над шторкой нет — ручке там не на чем лежать */
-.panel.is-full .sheet-grip{display:none}
 @media (min-width:821px){.sheet-grip{display:none}}
 .searchfield{position:relative}
 .searchfield .input{padding-left:38px;padding-right:40px}
@@ -1682,23 +1732,21 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      негде было лежать; ручка переезжает внутрь, и полоска становится не нужна. Углы
      выпрямляем: на телефоне их скругляет сам экран, а в браузере шторка во весь экран
      и обязана быть прямоугольной */
-  .panel.is-pin.is-full{top:0;bottom:var(--chrome-b);height:auto;max-height:none;min-height:0;
-    border-radius:0;border-top:none}
-  .panel.is-pin.is-full .sheet-grip{display:flex;top:env(safe-area-inset-top,0px)}
-  /* кнопки шапки уходят ниже ручки и ниже острова: в этом положении над ними ничего нет */
-  .panel.is-pin.is-full .panelhead--over{padding-top:calc(env(safe-area-inset-top,0px) + 22px)}
   /* Пол карточки: сверху остаётся полоска карты с булавкой и её окружением — карта здесь
      часть ответа, а не фон, — но не половина экрана пустоты, как было при 60dvh */
-  .panel.is-pin:not(.is-shut):not(.is-full){min-height:calc(var(--vh) - 160px)}
+  .panel.is-pin:not(.is-shut){min-height:calc(var(--vh) - 160px)}
   /* Обложка идёт от самого верха и повторяет скругление шторки. Обрезкой по панели этого
      не сделать: ручка лежит выше её края, на затемнении, и обрезка съела бы её */
-  .panel.is-pin:not(.is-full) .cover{border-radius:var(--r-l) var(--r-l) 0 0}
+  .panel.is-pin .cover{border-radius:var(--r-l) var(--r-l) 0 0}
   .panel.is-pin:not(.is-shut) .panel__body{flex:1 1 auto}
   /* Подвал с кнопками не отрезан линией, а растворяется: тот же приём, что у плавающей
      кнопки в фильтрах. Тень не нужна — контраста заливки хватает */
+  /* Растворение под кнопкой — не украшение, а сообщение «ниже ещё есть». Поэтому полоса
+     выше, чем была, и включается только когда под подвалом действительно осталось
+     содержимое: долистали до конца — подвал встаёт на чистую заливку */
   .panel:not(.is-section) .panel__foot{
     border-top:none;
-    background:linear-gradient(to top,var(--surface) 64%,color-mix(in srgb,var(--surface) 0%,transparent));
+    background:var(--surface);
     padding-top:12px;
     /* внизу поле блока по лестнице плюс безопасная зона телефона: на растворяющемся
        подвале двенадцати пикселей не хватало, кнопки стояли у самого края */
@@ -1710,26 +1758,24 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      пикселей подложки ложились над ней белой полосой — казалось, что фотография положена
      поверх шторки. У остальных сверху поле поиска или шапка, им отступ нужен */
   .panel.is-swipe{padding-top:8px}
-  .panel.is-pin{transition:top .24s ease,transform .22s ease}
-  .panel.is-pin.is-shut{
-    top:calc(var(--vh) - var(--chrome-b) - var(--pin-peek));bottom:var(--chrome-b);height:auto;max-height:none;
+  .panel.is-more:not(.is-section) .panel__foot{
+    background:linear-gradient(to top,var(--surface) 62%,color-mix(in srgb,var(--surface) 0%,transparent));
+    padding-top:28px;
   }
-  .panel.is-pin.is-shut .panel__body,.panel.is-pin.is-shut .panel__foot{display:none}
+  .panel.is-pin{transition:top .24s ease,transform .22s ease}
+  /* Высота короткой карточки — по содержимому, а не числом. Числом её задавали, когда
+     внутри был один заголовок; теперь там строка с миниатюрой, теги и кнопка, и любое
+     число пришлось бы держать в голове вручную. По содержимому кнопка гарантированно
+     видна целиком — а это и есть условие, ради которого короткая версия существует */
+  .panel.is-pin.is-shut{top:auto;bottom:var(--chrome-b);height:auto;max-height:none;min-height:0}
   .panel.is-pin.is-shut .panelhead--over{display:none}
-  .pinpeek{display:none}
-  .panel.is-pin.is-shut .pinpeek{display:block}
   /* поля равные: полоса корешка задана числом (--pin-peek), содержимое — названием 20
      и станцией 16, и при полях 0 сверху и 12 снизу двадцать восемь пикселей падали вниз
      пустотой под станцией, а название прижималось к верху */
-  .pinpeek__b{display:flex;align-items:center;gap:12px;padding:16px;width:100%;min-width:0}
-  .pinpeek__b>svg{width:16px;height:16px;color:var(--ink-3);flex:none}
-  .pinpeek__t{flex:1;min-width:0}
-  .pinpeek__n{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .pinpeek__s{display:flex;align-items:center;gap:4px;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap}
   /* обложка стала первым, что видно в шторке, поэтому её верхние углы скругляем сами:
      раньше их прикрывала непрозрачная шапка */
   /* в полном развороте скруглять нечего: шторка занимает весь экран, и её углы выпрямлены */
-  .panel:not(.is-section):not(.is-full) .panel__body>.cover:first-child{border-radius:var(--r-l) var(--r-l) 0 0}
+  .panel:not(.is-section) .panel__body>.cover:first-child{border-radius:var(--r-l) var(--r-l) 0 0}
   /* пока палец на карте — район, категории и таббар уезжают вместе с зумом: экран отдан карте */
   .app.is-peek .rail{opacity:0;pointer-events:none}
   .stage.is-peek .toolbar{opacity:0}
@@ -2047,7 +2093,7 @@ function distText(u){
    круглого числа: «меньше 300 м» верно при любом сдвиге. Активности не смещаются — там точно. */
 /* сколько пикселей домашней шторки видно в свёрнутом виде; та же величина лежит
    в CSS-переменной --home-peek, менять надо обе */
-var HOME_PEEK=70, HOME_TOP=100, PIN_PEEK=68, PIN_FULL_TOP=0;
+var HOME_PEEK=70, HOME_TOP=100;
 /* Высота таббара перестала быть числом: в приложении на домашнем экране в неё входит
    полоса жестов. Меряем сам таббар, а не пересказываем CSS — calc() с env() из стилей
    всё равно не прочитать */
@@ -2608,10 +2654,10 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.22.0';
+var VERSION='3.23.0';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
-var UPDATED='21 сентября 2026';
+var UPDATED='23 сентября 2026';
 var KEY='raion.v1';
 var db=null;
 
@@ -2716,7 +2762,10 @@ var MY_SEED=[
   {d:null,act:1,title:'забег по парку в сб',desc:'пробежали десятку, собрались у главного входа. спасибо всем кто вышел!',start:-9*DAY,limit:10,x:640,y:180,made:20*DAY,status:'archived'},
   {d:'d_sretenka',act:1,title:'Обмен рассадой во дворе',desc:'Разобрали томаты и перцы, осталась мята — пишите, поделюсь.',start:-27*DAY,limit:0,x:380,y:300,made:40*DAY,status:'archived'},
   {d:null,sub:'give_away',title:'велокресло детское',desc:'крепление на раму, ремни целые, до 5 лет',x:260,y:420,made:33*DAY,status:'closed',term:'30d'},
-  {d:'d_kuznec',sub:'need_help',title:'нужен был домкрат',desc:'спасибо соседу из 3 подъезда, выручил',x:560,y:560,made:44*DAY,status:'archived',term:'30d'}
+  {d:'d_kuznec',sub:'need_help',title:'нужен был домкрат',desc:'спасибо соседу из 3 подъезда, выручил',x:560,y:560,made:44*DAY,status:'archived',term:'30d'},
+  /* закрытая находка: без неё в инфографике профиля не было третьего цвета — все свои
+     закрытые дела оказывались встречами и вещами */
+  {d:null,lf:'found',title:'нашёл ключи у детской площадки',desc:'Связка с брелоком-ёлочкой, лежала на бортике песочницы. Хозяйка нашлась на третий день — соседка с пятого этажа.',x:300,y:360,made:30*DAY,status:'archived'}
 ];
 /* Номер набора выводится из самого набора: любая правка текста, имени или числа меняет
    хеш, и демо-данные пересобираются сами. Вручную его поднимать больше не нужно — именно
@@ -4000,10 +4049,12 @@ function syncViewport(){
      системы встают не в первом кадре. Одно такое значение, записанное на старте, и оболочка
      навсегда оставалась короче экрана. innerHeight на iOS от клавиатуры не зависит */
   st.setProperty('--vh',window.innerHeight+'px');
-  /* таббар меряем по факту: это единственный способ не гадать, чем на этом телефоне
-     оказалась безопасная зона и включил ли её в себя dvh */
+  /* Таббар меряем по факту: это единственный способ не гадать, чем на этом телефоне
+     оказалась безопасная зона и включил ли её в себя dvh. Но только когда он таббар:
+     на десктопе это боковая панель во всю высоту, и в переменную уезжало 953 пикселя —
+     мина под всеми отступами шторок, которые на неё опираются */
   var r=$('.rail');
-  if(r&&r.offsetHeight)st.setProperty('--chrome-b',r.offsetHeight+'px');
+  if(r&&r.offsetHeight&&!isDesktopPanel())st.setProperty('--chrome-b',r.offsetHeight+'px');
 }
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize',syncViewport);
@@ -4221,7 +4272,13 @@ function viewSignature(){
 function markMapMoved(){
   if(viewSettle)clearTimeout(viewSettle);
   viewSettle=setTimeout(function(){
-    viewSettle=null; userCam=false;
+    viewSettle=null;
+    /* Пока камера ещё летит, считать рано: список замер бы на полпути и таким остался.
+       Именно это и случалось — открытие карточки показывает вторую колонку, движок
+       сообщает о движении из-за смены размера холста, флаг «переезд по просьбе» гаснет
+       на этом ложном сообщении, а настоящее «долетели» приходит уже без флага */
+    if(glMap&&glMap.isMoving()){markMapMoved(); return}
+    userCam=false;
     var sig=viewSignature();
     if(sig===viewSig)return;
     viewSig=sig;
@@ -4563,12 +4620,12 @@ var ui={
   mineTab:'own', mineSort:null, mineCats:null, mineQuery:'', userTab:'active', typing:false, panelCollapsed:false, searchQuery:'',
   /* вкладка сообщений живёт только в памяти сеанса: вернувшись, человек всегда видит «Все»,
      иначе вчерашний фильтр спрятал бы сегодняшнее сообщение */
-  msgTab:'all', lineOpen:null, when:'', recentPlaces:[], searchFocus:false,
+  msgTab:'all', lineOpen:null, when:'', recentPlaces:[], searchFocus:false, debugOpen:false,
   /* поиск и ветка в списке станций живут только в памяти сеанса: это способ добраться
      до станции, а не настройка — вернувшись, человек должен видеть весь список */
   msgQuery:'',
   /* карточка пина на телефоне: свёрнута до корешка или раскрыта */
-  pinShut:false, pinFull:false
+  pinShut:false
 };
 
 /* Раздел «Сообщения» принимает три вида строк. Личная переписка была всегда; групповая
@@ -5223,15 +5280,14 @@ function nearestOutside(){
   });
   return best?{p:best,u:bd}:null;
 }
-/* Место в выдаче — обычная строка результата: значок вида, название, и всё. Ни счётчика,
-   ни заливки, ни вида переключателя — она не фильтрует, она переносит карту */
+/* Место в подсказке — тег, а не строка. Строками они занимали семь строк экрана и стояли
+   под полосой сортировки, хотя относятся к строке ввода: подсказки дают там, где печатают.
+   Теперь это ряд с переносом, сразу под полем, и заголовка над ним нет — ряд тегов под
+   строкой ввода и так читается подсказкой, а лишняя строка съедала бы то место,
+   которое мы экономим */
 function placeRow(d){
-  return '<button class="districtrow" data-station-toggle="'+d.id+'">'+
-    placeIcon(d)+
-    '<span style="flex:1;min-width:0"><b>'+H(d.name)+'</b>'+
-      (d.kind==='metro'?'<span class="dots">'+lineDotsHTML(d)+'</span>':'')+
-    '</span>'+
-    icon('chev-right')+'</button>';
+  return '<button class="ptag" data-station-toggle="'+d.id+'">'+
+    placeIcon(d)+'<span>'+H(d.name)+'</span></button>';
 }
 /* Пока строка поиска пуста и в работе — показываем недавние, а следом ближайшие к кадру.
    На первом запуске недавних нет, и список целиком из ближайших: то же, что было раньше,
@@ -5266,10 +5322,9 @@ function homeResultsHTML(){
   var ql=q.toLowerCase();
   var places=(ui.searchFocus||ql)?placeSuggest(ql):[];
   var placesHTML=places.length
-    ? '<div class="eyebrow" style="padding:12px 16px 4px">'+(ql?'Места':((ui.recentPlaces||[]).length?'Недавние и рядом':'Рядом'))+'</div>'+
-      places.map(placeRow).join('')+
-      (ql?'':'<div class="stclear"><button class="linkbtn" data-act="open-stations">Все станции · '+DISTRICTS.length+'</button></div>')+
-      '<div class="divider divider--lg"></div>'
+    ? '<div class="ptags">'+places.map(placeRow).join('')+
+      (ql?'':'<button class="ptag ptag--all" data-act="open-stations">'+icon('list')+'<span>Все станции</span></button>')+
+      '</div>'
     : '';
   var head=((isDesktopPanel()||ui.homeOpen)?'<div class="feedhead"><div class="scoperow">'+
     '<button class="scopebtn" data-act="open-scope">'+scopeBtnHTML()+'</button></div>':'<div class="feedhead">')+
@@ -5335,12 +5390,18 @@ function homeResultsHTML(){
       '<div class="hint">'+H(ct.charAt(0).toUpperCase()+ct.slice(1))+'</div>'+
       '<button class="linkbtn" data-act="open-archive">Открыть архив</button>'+
     '</div>':'';
-  return head+placesHTML+body+tail;
+  /* Подсказки стоят первыми — сразу под полем ввода, выше кнопки охвата и сортировки */
+  return placesHTML+head+body+tail;
 }
 function viewHome(){
   var top=(isDesktopPanel()?'':'<span class="sheet-grip" data-grip="1" aria-hidden="true"></span>')+
     '<div class="searchfield">'+icon('search','searchfield__ic')+
-      '<input class="input" id="searchInput" placeholder="Поиск по названию и описанию" value="'+H(ui.searchQuery||'')+'" autocomplete="off">'+
+      /* Подсказки слов и автоисправление в поиске мешают: имя станции или соседа система
+         норовит «поправить». Заодно на телефоне пропадает полоса подсказок над клавиатурой
+         и освобождается место. Клавиша возврата становится «Найти» */
+      '<input class="input" id="searchInput" type="search" inputmode="search" enterkeyhint="search" '+
+        'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" '+
+        'placeholder="Поиск по названию и описанию" value="'+H(ui.searchQuery||'')+'">'+
       searchClearHTML()+
     '</div>';
   return {title:'Район', home:true, top:top, body:'<div id="searchResults">'+homeResultsHTML()+'</div>'};
@@ -5386,6 +5447,21 @@ function renderDetail(p){
    Меряем вместо того, чтобы угадывать: порог — это нижний край заголовка карточки минус
    высота самой шапки. Слушатель вешается на свежий узел тела при каждой перерисовке,
    старый уходит вместе с ним */
+/* Растворение под кнопкой значит «ниже ещё есть», поэтому включается по факту, а не всегда.
+   Долистали до конца — подвал встаёт на чистую заливку, и подсказка перестаёт врать */
+function bindMoreBelow(root,bodyEl){
+  if(!root)return;
+  root.classList.remove('is-more');
+  if(!bodyEl)return;
+  var upd=function(){
+    var more=bodyEl.scrollHeight-bodyEl.clientHeight-bodyEl.scrollTop>4;
+    root.classList.toggle('is-more',more);
+  };
+  bodyEl.addEventListener('scroll',upd);
+  upd();
+  /* содержимое может доехать позже — фотографии грузятся и меняют высоту */
+  setTimeout(upd,300);
+}
 function bindFadeTitle(root,bodyEl,on){
   if(!root)return;
   root.classList.remove('is-scrolled');
@@ -5621,7 +5697,7 @@ function tabSave(){
   var t=tabOf(ui.panel);
   /* запоминаем не только экран, но и состояние шторки: иначе возврат на карту складывал
      раскрытый список, хотя вы его не складывали */
-  if(t!=='create')tabState[t]={panel:ui.panel,homeOpen:ui.homeOpen,pinShut:ui.pinShut,pinFull:ui.pinFull};
+  if(t!=='create')tabState[t]={panel:ui.panel,homeOpen:ui.homeOpen,pinShut:ui.pinShut};
 }
 /* Две колонки включаются, только когда они не съедают больше половины экрана */
 function isTwoCol(){return window.innerWidth>=1440}
@@ -5726,8 +5802,10 @@ function renderPanel(){
   var pinSheet=!isDesktopPanel()&&!!main&&main.type==='pin';
   el.classList.toggle('is-home',homeSheet);
   el.classList.toggle('is-pin',pinSheet);
+  /* Состояний у карточки два: короткая и раскрытая. Полноэкранное убрано — оно было
+     третьей ступенью жеста и ничего не добавляло: раскрытая карточка и так почти во весь
+     экран, а третья ступень делала жест непредсказуемым */
   el.classList.toggle('is-shut',(homeSheet&&!ui.homeOpen)||(pinSheet&&ui.pinShut));
-  el.classList.toggle('is-full',pinSheet&&!ui.pinShut&&!!ui.pinFull);
   /* таббар уходит только в переписке — остальные вложенные экраны у нас шторки
      поверх карты, они не «проваливаются», а наезжают */
   /* Таббар уходит там, где есть куда печатать: полю ввода и клавиатуре нужно место.
@@ -5760,7 +5838,11 @@ function renderPanel(){
      это возврат, а не закрытие. У разделов («Чаты», «Профиль») возвращаться некуда,
      поэтому там только заголовок. На десктопе шапка появляется лишь у экранов с возвратом —
      у разделов она дублировала бы пункт меню */
+  /* Знак называет то, что нажатие сделает. Закроется и покажет карту — крестик; откроет
+     другой экран — шеврон. Раньше шеврон стоял почти везде и обещал экран, которого нет */
   var hasBack=!!v.back||(!v.home&&!v.section);
+  var goesBack=!!(main&&(oneUp(main)||(main.type==='pin'&&main.origin&&main.origin.type!=='list')));
+  var backIcon=goesBack?'back':'close';
   if(!head&&!v.home&&(hasBack||!isDesktopPanel())){
     /* по центру только на телефоне: на десктопе шапка есть лишь у вложенных экранов
        в узкой колонке, и центрированное название там оторвалось бы от стрелки */
@@ -5769,7 +5851,7 @@ function renderPanel(){
         '<span class="chathead__n'+(v.fadeTitle?' chathead__n--fade':'')+'">'+v.title+'</span>'+
         (v.sub?"<span class=\"chathead__p\">"+(v.subHTML||H(v.sub))+"</span>":"")+
       '</span>';
-    var bk=hasBack?'<button class="iconbtn" data-act="back" aria-label="Назад">'+icon('back')+'</button>':'';
+    var bk=hasBack?'<button class="iconbtn" data-act="back" aria-label="'+(goesBack?'Назад':'Закрыть')+'">'+icon(backIcon)+'</button>':'';
     head=ctr
       ? '<div class="chathead chathead--center">'+
           '<span class="chathead__side">'+bk+'</span>'+txt+
@@ -5796,16 +5878,6 @@ function renderPanel(){
   if(pinSheet)head='<span class="sheet-grip" data-grip="1" aria-hidden="true"></span>'+head;
   /* карточка пина уносит шапку на обложку: там она лежит слоем поверх, а не полосой над */
   if(v.overHead&&head)head='<div class="panelhead--over'+(v.overPhoto?' is-photo':'')+'">'+head+'</div>';
-  /* Корешок стоит снаружи плавающей шапки: в свёрнутом виде та скрыта целиком, и всё, что
-     внутри неё, скрылось бы вместе с ней. Наружу торчит он, а не обложка — название и
-     станция это ровно то, по чему пин узнают, не раскрывая */
-  if(pinSheet){
-    var pp=pin(main.id);
-    if(pp)head='<div class="pinpeek"><span class="sheet-grip" data-grip="1" aria-hidden="true"></span>'+
-      '<button class="pinpeek__b" data-act="pin-expand">'+
-        '<span class="pinpeek__t"><span class="pinpeek__n">'+H(pp.title)+'</span>'+
-        '<span class="pinpeek__s">'+stationTag(landmarkOf(pp))+'</span></span>'+icon('chev-up')+'</button></div>'+head;
-  }
   el.innerHTML=head+
     (v.top?'<div class="panel__top'+(v.topFlush?' panel__top--flush':'')+'">'+v.top+'</div>':'')+
     '<div class="panel__body" id="panelBody">'+v.body+'</div>'+
@@ -5831,8 +5903,12 @@ function renderPanel(){
   /* восстанавливаем до v.after(): у переписки свой доводчик, прокручивающий в конец,
      и он должен выигрывать у памяти списка */
   if(newBody)newBody.scrollTop=(key===lastPanelKey)?keepScroll:(panelScroll[key]||0);
+  /* Раскладка колонок тоже меняет кадр: вторая колонка сужает полосу карты. Спрашиваем
+     после отрисовки — отпечаток кадра не даст пересчитать дважды и зациклиться */
+  markMapMoved();
   lastPanelKey=key;
   bindFadeTitle(el,newBody,v.fadeTitle);
+  bindMoreBelow(el,newBody);
   fixHang(el);
   playReveals(el);
   hscrollInit(el);
@@ -5881,6 +5957,15 @@ function viewPin(id){
      Белое с рамкой, потому что вокруг серые строки содержимого — заливкой отсюда
      не отделиться, она бы слилась со строкой автора и строкой участников */
   var notes=[];
+  /* Напоминание живёт в теле события, а не над кнопкой: это настройка, а не действие,
+     и рядом с главной кнопкой она с ней спорила. В короткой карточке его не видно —
+     и это правильно: сначала решают, потом настраивают */
+  var remindRow=(act&&p.status==='active'&&p.starts_at>now())
+    ? '<div class="switchrow"><span class="switchrow__txt">'+
+        '<b>Напомнить о встрече</b><span>Одно сообщение за час до начала</span>'+
+      '</span><button class="switch'+(remindOn(p.id)?' is-on':'')+'" data-act="remind" data-id="'+p.id+'"'+
+      ' role="switch" aria-checked="'+(remindOn(p.id)?'true':'false')+'" aria-label="Напомнить о встрече"><i></i></button></div>'
+    : '';
   var facts='';
   if(act){
     /* у закрытого «уже прошло» повторяло бы строку «В архиве с 14 сентября» ниже */
@@ -6028,8 +6113,34 @@ function viewPin(id){
       '</div>'+icon('chev-right')+
     '</button>';
   }
-  var body=cover+'<div class="pincard">'+chips+
-    '<h2>'+H(p.title)+'</h2><p>'+H(p.description)+'</p>'+photos+facts+author+partBtn+people+
+  /* Короткая версия карточки — то, чем решают: идти или нет. Строка как в списке чатов
+     (миниатюра, название, вторая строка), под ней мелкие теги и прибитая внизу кнопка.
+     Она лежит в разметке рядом с полной, а не вместо неё: переход между состояниями —
+     смена класса на живых узлах, и перерисовки в этот момент нет */
+  var shortSub=act
+    ? (isNow(p)?'идёт сейчас':whenAbs(p.starts_at))
+    : (closed?'в архиве':'опубликовано '+agoText(p.created_at));
+  var shortTags='';
+  if(!closed&&dist!=null)shortTags+='<span class="stag">'+distChipHTML(p,dist,true)+'</span>';
+  if(act&&p.status==='active'){
+    var jn=joinedOf(p.id).length;
+    shortTags+='<span class="stag">'+icon('people')+'Участники '+jn+(p.participant_limit?'/'+p.participant_limit:'')+'</span>';
+  }
+  if(mine)shortTags+='<span class="stag stag--me">'+icon('user')+'Вы автор</span>';
+  else if(isJoined(mr))shortTags+='<span class="stag stag--me">'+icon('check')+'Вы участвуете</span>';
+  else if(mr&&mr.status==='interested')shortTags+='<span class="stag stag--me">'+icon('clock')+'Заявка отправлена</span>';
+  var short='<div class="pinshort">'+
+    '<span class="pinshort__row">'+
+      '<span class="pinshort__pic pinshort__pic--'+ptype(p).cls+'">'+
+        (photoOf(p)?'<img src="'+photoOf(p)+'" alt="">':icon(pinGlyph(p)))+
+      '</span>'+
+      '<span class="pinshort__t"><span class="pinshort__n">'+H(p.title)+'</span>'+
+        '<span class="pinshort__s">'+H(shortSub)+'</span></span>'+
+    '</span>'+
+    (shortTags?'<span class="stags">'+shortTags+'</span>':'')+
+  '</div>';
+  var body=short+cover+'<div class="pincard">'+chips+
+    '<h2>'+H(p.title)+'</h2><p>'+H(p.description)+'</p>'+photos+facts+remindRow+author+partBtn+people+
     (notes.length?'<div class="cardnotes">'+notes.join('')+'</div>':'')+
   '</div>';
 
@@ -6079,15 +6190,6 @@ function viewPin(id){
   /* В шапке было «Услуга или вещь · Сокольники» — оба слова дословно повторяли чипы строкой
      ниже. Теперь там название самого пина, и проявляется оно только при прокрутке, когда
      заголовок карточки уехал вверх: в покое шапка пустая, кроме стрелки и меню */
-  /* Напоминание — не кнопка, а настройка, поэтому и выглядит настройкой: тумблер с
-     пояснением над главным действием. Вторая строка отвечает на вопрос, который значок
-     задавал и не отвечал: это разовый будильник, а не подписка, и заспамить себя нельзя */
-  if(act&&p.status==='active'&&p.starts_at>now()){
-    foot='<div class="switchrow switchrow--foot"><span class="switchrow__txt">'+
-        '<b>Напомнить о встрече</b><span>Одно сообщение за час до начала</span>'+
-      '</span><button class="switch'+(remindOn(p.id)?' is-on':'')+'" data-act="remind" data-id="'+p.id+'"'+
-      ' role="switch" aria-checked="'+(remindOn(p.id)?'true':'false')+'" aria-label="Напомнить о встрече"><i></i></button></div>'+foot;
-  }
   return {title:H(p.title),fadeTitle:true,overHead:true,overPhoto:!!photoOf(p),body:body,foot:foot,
     action:'<button class="iconbtn chathead__act" data-act="pin-menu" data-id="'+p.id+'" aria-label="Ещё">'+icon('dots')+'</button>'};
 }
@@ -6409,7 +6511,8 @@ function viewCreate(){
              оказывался в четверти сантиметра от названия */
           (d.stOpen?icon('search','searchfield__ic')
                    :'<span class="searchfield__pic">'+placeIcon(district(curSt))+'</span>')+
-          '<input class="input" id="placeStInput" data-place-open="1" autocomplete="off" placeholder="Найти ориентир" value="'+
+          '<input class="input" id="placeStInput" data-place-open="1" type="search" inputmode="search" enterkeyhint="search" '+
+            'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Найти ориентир" value="'+
             H(d.stOpen?(d.stQ||''):district(curSt).name)+'">'+
         '</div>'+
         '<span class="hint">'+(d.outArea
@@ -6499,7 +6602,10 @@ function viewCreate(){
   return {title:draftTitle(d),body:body,foot:foot,tall:d.step>1,top:steps,topFlush:true,
     head:'<div class="chathead chathead--center">'+
       '<span class="chathead__side">'+nav+'</span>'+
-      '<span class="chathead__txt"><span class="chathead__n">Новое событие</span></span>'+
+      /* Шапка собирается здесь же, поэтому заголовок берётся из той же функции, что и
+         title панели: раньше тут стояла константа, и смена заголовка по выбранному типу
+         до экрана не доходила вовсе */
+      '<span class="chathead__txt"><span class="chathead__n">'+H(draftTitle(d))+'</span></span>'+
       '<span class="chathead__side chathead__side--r">'+
         '<button class="iconbtn" data-act="create-close" aria-label="Закрыть">'+icon('close')+'</button>'+
       '</span></div>',
@@ -6726,21 +6832,21 @@ function viewProfile(){
   var soon=planned.length
     ? /* блок фактов над этим заголовком уже отдал свои 24 снизу: добавить сюда ещё 24
        значит поставить между ними 48, а в лестнице такого шага нет */
-    '<div class="eyebrow" style="padding:0 16px 8px">Ближайшее</div>'+mineRows(planned,m)
+    '<div class="eyebrow" style="padding:0 16px 8px">Ближайшее</div>'+mineRows(planned,m)+
+      goLink('active','Все текущие дела',active.length)
     : '';
-  /* Счётчик стоит у названия, а не у шеврона: это часть имени строки — «текущих дел
-     двенадцать», — а не второе действие справа. Плашка залитая, та же, что у счётчика
-     участников в шапке события: она переворачивается по теме сама.
-     Пустая строка не показывается вовсе: переход в пустой экран ничего не сообщает,
-     а появится он ровно тогда, когда будет что смотреть */
-  function goRow(era,label,n){
+  /* В профиле было четыре блока про две сущности: «Ближайшее» — витрина текущих дел,
+     «Законченные дела» — витрина архива, и под ними ещё две строки, ведущие туда же.
+     Теперь каждый блок сам ведёт в свой раздел ссылкой, а строки убраны.
+     Ссылка названа тем, куда ведёт, а не «Подробнее»: под двумя блоками подряд «Подробнее»
+     повторилось бы дважды и не сказало бы, что откроется. Число переехало в неё же —
+     и осталось в одном месте, а не в двух */
+  function goLink(era,label,n){
     if(!n)return '';
-    return '<button class="listrow" data-act="open-mine" data-id="'+era+'">'+
-      '<span class="listrow__body"><span class="listrow__t">'+label+
-        '<span class="tag tag--solid" style="margin-left:8px">'+n+'</span></span></span>'+
-      '<span class="listrow__r">'+icon('chev-right')+'</span></button>';
+    return '<div class="stclear"><button class="linkbtn" data-act="open-mine" data-id="'+era+'">'+
+      H(label)+' · '+n+'</button></div>';
   }
-  var rows=goRow('active','Текущие дела',active.length)+goRow('archive','Архив',archive.length);
+  var rows='';
   /* Совсем пустой профиль: вместо двух отсутствующих строк одно состояние, которое называет
      суть и даёт единственное действие. Слова другие, чем у пустого района: там «здесь пока
      пусто» про район, здесь — про вас, и одинаковый текст слил бы два разных состояния */
@@ -6749,7 +6855,7 @@ function viewProfile(){
     'или отдать то, что вам не нужно</p>'+
     '<button class="btn btn--primary btn--sm" data-nav="create">'+icon('plus')+'Создать событие</button></div>';
   /* тот же блок фактов, что в профиле соседа: полоса состава дел, круг знакомств, свежесть */
-  var body=head+profileFacts(m.id,true,my.length>0)+soon+
+  var body=head+profileFacts(m.id,true,my.length>0)+goLink('archive','Весь архив',archive.length)+soon+
     '<div class="divider divider--lg"></div>'+rows;
 
   return {title:'Профиль',body:body,section:true,
@@ -7175,13 +7281,16 @@ function viewSettings(){
   '<div class="divider divider--lg"></div>'+
   /* Замер края экрана стоит в настройках, а не в «О прототипе»: то окно открывается
      логотипом на боковой панели, а на телефоне её нет — и на телефоне же он и нужен */
-  '<div class="pad stack">'+
-    '<div class="eyebrow">Край экрана</div>'+
+  /* Замер нужен редко и не каждому, поэтому лежит свёрнутым: строка с шевроном, числа
+     по нажатию. Раскрытие — общий механизм, анимация достаётся даром */
+  '<button class="linerow'+(ui.debugOpen?' is-on':'')+'" data-act="toggle-debug">'+
+    '<span class="linerow__t"><b>Край экрана</b></span>'+icon(ui.debugOpen?'chev-up':'chev-down')+'</button>'+
+  (ui.debugOpen?'<div data-reveal="screendebug"><div class="pad stack">'+
     '<div class="about__meta">'+
       measureRows().map(function(r){return '<span><b>'+H(r[0])+'</b>'+H(r[1])+'</span>'}).join('')+
     '</div>'+
     '<span class="hint">Отладочное: если снизу или сверху остаётся лишняя полоса, сфотографируйте этот блок</span>'+
-  '</div>'+
+  '</div></div>':'')+
   '<div class="divider divider--lg"></div>'+
   '<div class="pad stack">'+
     '<button class="btn btn--danger" data-act="reset">'+icon('reset')+'Сбросить прототип'+'</button>'+
@@ -7986,7 +8095,10 @@ function pinOrigin(el){
 }
 function openPin(id,origin){
   var p=pin(id); if(!p)return;
-  ui.pinShut=false; ui.pinFull=false;
+  /* С карты карточка открывается короткой: человек пришёл к точке и хочет видеть карту
+     вокруг неё. Из списка, переписки или уведомления карта ему не нужна — там открываем
+     сразу раскрытую */
+  ui.pinShut=!isDesktopPanel()&&!(origin&&origin.type);
   /* Точку отсчёта района карточка не трогает: она принадлежит охвату и задаётся выбором
      станции. Раньше открытие события с другой станции молча переписывало её, от неё зависят
      подпись над картой и счётчики — и фон под шторкой менялся, хотя фильтр оставался прежним */
@@ -8560,6 +8672,7 @@ function onAction(act,el,e){
     case 'user': openPanel({type:'user',id:id,pinctx:el.getAttribute('data-pinctx')||pinCtxOf(ui.panel),prev:ui.panel}); break;
     case 'open-scope': openPanel({type:'scope',prev:ui.panel}); break;
     case 'open-stations': openPanel({type:'stations',prev:ui.panel}); break;
+    case 'toggle-debug': ui.debugOpen=!ui.debugOpen; render(); break;
 
     case 'people': openPanel({type:'people',id:id,prev:ui.panel}); break;
     case 'open-archive': openPanel({type:'archive',prev:ui.panel}); break;
@@ -8755,7 +8868,6 @@ document.addEventListener('click',function(e){
     ui.panel=back?back.panel:(n==='map'?null:{type:n});
     ui.homeOpen=back?!!back.homeOpen:false;
     ui.pinShut=back?!!back.pinShut:false;
-    ui.pinFull=back?!!back.pinFull:false;
     expandPanel(); render();
     return;
   }
@@ -9038,13 +9150,23 @@ function renderOnboard(){
 }
 /* Пока строка поиска в работе, над выдачей стоят места. Это не режим и не экран: ни одной
    новой кнопки, ни «Отмены» — просто выдача отвечает на то, что человек сейчас делает */
+/* Перерисовываем только выдачу, а не панель. Панель пересобирается целиком — вместе с ней
+   исчезает узел поля, и фокус падает на страницу. То есть поле теряло фокус ровно тем
+   действием, которым его получало: нажать и напечатать было невозможно.
+   Тот же капкан, что с анимацией тумблера и подсветкой булавки: нельзя заменять узел,
+   с которым человек в этот момент работает */
+function renderSearchResults(){
+  var res=$('#searchResults'); if(!res)return;
+  res.innerHTML=homeResultsHTML();
+  fixHang(res);
+}
 document.addEventListener('focusin',function(e){
-  if(e.target&&e.target.id==='searchInput'&&!ui.searchFocus){ui.searchFocus=true; renderPanelOnly()}
+  if(e.target&&e.target.id==='searchInput'&&!ui.searchFocus){ui.searchFocus=true; renderSearchResults()}
 });
 document.addEventListener('focusout',function(e){
   if(e.target&&e.target.id==='searchInput')setTimeout(function(){
     if(document.activeElement&&document.activeElement.id==='searchInput')return;
-    ui.searchFocus=false; renderPanelOnly();
+    ui.searchFocus=false; renderSearchResults();
   },140);
 });
 /* Прокрутка выдачи прячет клавиатуру: начал листать — значит набирать закончил.
@@ -9283,12 +9405,19 @@ function pinSheetEl(){
 }
 document.addEventListener('pointerdown',function(e){
   var pn=homeSheetEl(); if(!pn)return;
-  if(!e.target.closest('.panel__top')&&!e.target.closest('.sheet-grip')&&!e.target.closest('.pinpeek'))return;
+  var isPin=!!pinSheetEl();
+  /* Жест принадлежит шторке, пока содержимое наверху и палец пойдёт вниз. Раньше тело
+     всегда отдавали прокрутке, и она отыгрывала пружиной: фотография отрывалась от края
+     и повисала в пустоте, а шторка стояла — хотя двинуться должна была именно она.
+     Решаем в момент касания, а не когда прокрутка уже поехала: остановить её потом нельзя */
+  var inBody=e.target.closest&&e.target.closest('.panel__body');
+  var atTop=!inBody||inBody.scrollTop<=0;
+  var onHandle=e.target.closest('.panel__top')||e.target.closest('.sheet-grip')||e.target.closest('.pinshort');
+  if(!onHandle&&!(isPin&&inBody&&atTop))return;
   /* тянем верхний край, а не всю шторку: нижний остаётся на верху таббара, поэтому
      навигация не уезжает под шторку даже посреди жеста */
-  var isPin=!!pinSheetEl();
-  var peek=isPin?PIN_PEEK:HOME_PEEK;
-  homeDrag={y:e.clientY,moved:0,pin:isPin,open:isPin?!ui.pinShut:ui.homeOpen,
+  var peek=isPin?(pn.offsetHeight||240):HOME_PEEK;
+  homeDrag={y:e.clientY,moved:0,pin:isPin,open:isPin?!ui.pinShut:ui.homeOpen,fromBody:!!(inBody&&!onHandle),
     max:Math.max(HOME_TOP,window.innerHeight-railH()-peek)};
   /* тянуть начинают за ручку, а палец тут же уходит с неё вниз — без захвата указателя
      события перестают приходить и шторка застревает. В поле ввода жест не перехватываем,
@@ -9304,11 +9433,12 @@ document.addEventListener('pointermove',function(e){
   var pn=homeSheetEl(); if(!pn)return;
   var dy=e.clientY-homeDrag.y;
   if(Math.abs(dy)>homeDrag.moved)homeDrag.moved=Math.abs(dy);
-  var base=homeDrag.open?(homeDrag.pin&&ui.pinFull?PIN_FULL_TOP:HOME_TOP):homeDrag.max;
-  /* из свёрнутой карточки тянут дальше вниз — она уезжает за край и закрывается */
+  /* жест начат в теле: вниз ведёт шторку, вверх отдаём прокрутке и больше не вмешиваемся */
+  if(homeDrag.fromBody&&dy<0){homeDrag=null; pn.style.transition=''; pn.style.top=''; return}
+  var base=homeDrag.open?HOME_TOP:homeDrag.max;
+  /* из короткой карточки тянут дальше вниз — она уезжает за край и закрывается */
   var lo=homeDrag.pin?window.innerHeight:homeDrag.max;
-  /* верхняя остановка карточки — самый край экрана: третье положение стало полноэкранным */
-  var hi=homeDrag.pin?PIN_FULL_TOP:HOME_TOP;
+  var hi=HOME_TOP;
   pn.style.top=Math.max(hi,Math.min(lo,base+dy))+'px';
 });
 document.addEventListener('pointerup',function(e){
@@ -9319,16 +9449,15 @@ document.addEventListener('pointerup',function(e){
   if(pn){pn.style.transition=''; pn.style.top=''}
   var dy=e.clientY-d.y;
   if(d.pin){
-    /* Три остановки: корешок, раскрыта, во весь экран. Тянут вниз — на ступень ниже,
-       из корешка ещё ниже это закрытие. Тянут вверх — на ступень выше */
+    /* Две остановки: короткая и раскрытая. Тянут вниз — на ступень ниже, из короткой
+       ещё ниже это закрытие. Тянут вверх — раскрывается. Третья ступень убрана: раскрытая
+       карточка и так почти во весь экран, а лишняя остановка делала жест непредсказуемым */
     if(d.moved<6){ui.pinShut=false; render(); return}
     if(ui.pinShut){
-      if(dy>60){ui.pinShut=false; ui.pinFull=false; dismissSheet(); return}
+      if(dy>60){ui.pinShut=false; dismissSheet(); return}
       if(dy<-40)ui.pinShut=false;
     }else if(dy>60){
-      if(ui.pinFull)ui.pinFull=false; else ui.pinShut=true;
-    }else if(dy<-40){
-      ui.pinFull=true;
+      ui.pinShut=true;
     }
     render(); return;
   }
