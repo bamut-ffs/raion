@@ -90,7 +90,9 @@
      экрана принадлежит браузеру, и env() там возвращает нули */
   /* высота таббара без полосы жестов: сама полоса прибавляется по месту,
      потому что она и есть env() */
-  --rail-h:66px;
+  /* 49 — высота таббара системных приложений iOS. У нас было 66: панель выглядела
+     страницей с меню, а не приложением */
+  --rail-h:49px;
   /* высота верхней полосы экрана: одна на шапку с заголовком и на ряд вкладок, иначе
      в двух колонках рядом стоят две шапки разной высоты и списки под ними разъезжаются */
   --head-h:56px;
@@ -267,7 +269,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    безопасная зона» стояла в семи местах и в каждом обязана была совпасть с тем, чем
    таббар оказался на самом деле; стоило разойтись — появлялся второй отступ.
 */
-:root{--chrome-b:66px; --vh:100dvh; --kb:0px}
+:root{--chrome-b:49px; --vh:100dvh; --kb:0px}
 .app{display:flex;position:fixed;left:0;top:0;width:100%;height:var(--vh);overflow:hidden}
 /* компактный рейл: иконка сверху, подпись снизу — единый стиль для десктопа и мобильного таббара */
 /* свой слой выше панели: панель теперь абсолютная и при сворачивании уезжает влево ровно на
@@ -416,19 +418,47 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Пока открыта карточка, остальные булавки гаснут — но не настолько, чтобы перестать
    различаться: выбранная и так крупнее на четверть и лежит поверх, так что работу делает
    форма, а прозрачность лишь помогает */
-.map.is-selpin .pin,.map.is-selpin .cluster,.map.is-selpin .pin__label,.map.is-selpin .halo{opacity:.55}
+.map.is-selpin .pin,.map.is-selpin .pindot,.map.is-selpin .pin__live,.map.is-selpin .pin__label,.map.is-selpin .halo{opacity:.55}
 .map.is-selpin .marker.is-sel .pin,.map.is-selpin .marker.is-sel .pin__label,
 .map.is-selpin .marker.is-sel .halo{opacity:1}
 /* Переход задан на самой булавке, а не на метке: положение лежит на .marker, и стоило бы
    анимировать его — весь слой поехал бы за картой с отставанием в те же 180 мс */
 .pin{transition:opacity .18s ease,transform .18s ease}
 .cluster,.pin__label{transition:opacity .18s ease}
+/* Подпись — справа от булавки, по центру её капли, выключка влево, как в Яндекс Картах:
+   под булавкой она закрывала то, что под ней, в том числе соседние метки. Вторая строка —
+   только у встреч и только время: для встречи главный вопрос на карте — «когда» */
 .pin__label{
-  position:absolute;left:0;top:8px;transform:translate(-50%,0);
+  position:absolute;left:14px;top:-24px;transform:translate(0,-50%);
+  display:flex;flex-direction:column;align-items:flex-start;text-align:left;
   background:var(--surface);border:1px solid var(--line);border-radius:var(--r-s);
-  padding:3px 7px;font-size:var(--f-xs10);line-height:var(--l-xs10);font-weight:600;white-space:nowrap;max-width:170px;
-  overflow:hidden;text-overflow:ellipsis;box-shadow:var(--shadow-1);pointer-events:none;
+  padding:3px 7px;font-size:var(--f-xs10);line-height:var(--l-xs10);white-space:nowrap;max-width:184px;
+  box-shadow:var(--shadow-1);pointer-events:none;
 }
+.pin__label--l{left:auto;right:14px}
+.pin__label b,.pin__label span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.pin__label b{font-weight:600}
+.pin__label span{font-weight:500;color:var(--ink-3)}
+/* Точка — событие, которому не хватило места на булавку. Видно его всё равно: точка своего
+   цвета, нажатие открывает событие. Зона нажатия шире самой точки */
+.pindot{
+  pointer-events:auto;position:absolute;left:0;top:0;display:block;width:10px;height:10px;border-radius:50%;
+  transform:translate(-50%,-50%);box-shadow:0 0 0 2px #fff,0 1px 3px rgba(0,0,0,.28);transition:opacity .18s ease;
+}
+.pindot::after{content:'';position:absolute;inset:-8px;border-radius:50%}
+.pindot--act{background:var(--act)}
+.pindot--offer{background:var(--offer)}
+.pindot--find{background:var(--find)}
+/* Встреча идёт прямо сейчас: расходящееся кольцо вокруг капли */
+.pin__live{
+  position:absolute;left:0;top:-24px;width:34px;height:34px;border-radius:50%;pointer-events:none;
+  transform:translate(-50%,-50%);animation:pinlive 1.8s ease-out infinite;
+}
+.pin__live--act{background:color-mix(in srgb,var(--act) 45%,transparent)}
+.pin__live--offer{background:color-mix(in srgb,var(--offer) 45%,transparent)}
+.pin__live--find{background:color-mix(in srgb,var(--find) 45%,transparent)}
+@keyframes pinlive{from{transform:translate(-50%,-50%) scale(.9);opacity:.9}to{transform:translate(-50%,-50%) scale(2);opacity:0}}
+@media (prefers-reduced-motion:reduce){.pin__live{animation:none;transform:translate(-50%,-50%) scale(1.5);opacity:.35}}
 .halo{
   position:absolute;left:0;top:0;border-radius:50%;transform:translate(-50%,-50%);
   background:color-mix(in srgb,var(--offer) 16%,transparent);
@@ -584,6 +614,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .pad.stack{padding:24px 16px}
 
 /* ---------- generic bits ---------- */
+/* строка заголовка раздела: подпись слева, переход в полный список справа */
+.secthead{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.headlink{color:var(--brand);font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;white-space:nowrap}
+.headlink:hover{text-decoration:underline;text-underline-offset:2px}
 .eyebrow{
   font-family:'JetBrains Mono',ui-monospace,monospace;font-size:var(--f-xs10);line-height:var(--l-xs10);letter-spacing:.1em;
   text-transform:uppercase;color:var(--ink-3);
@@ -719,6 +753,17 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   font-size:var(--f-s10);line-height:var(--l-s10);white-space:nowrap}
 .linerow__v .metro{width:18px;height:18px}
 .linedot--l{width:12px;height:12px;vertical-align:0}
+/* строка линии в «Всех станциях» — старшая: значок метро в цвет ветки и заголовок крупнее */
+.linerow svg.linerow__m{width:22px;height:22px}
+.linerow--line .linerow__t b{font-size:var(--f-h50);line-height:var(--l-h50)}
+/* строка станции — младшая: без значка, обычным начертанием, отступ до текста линии (16+22+12) */
+.districtrow.strow{padding-left:50px}
+.districtrow.strow b{font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;color:var(--ink)}
+.strow .strow__l{display:flex;align-items:center;gap:8px;margin-top:0}
+.linecircles{display:inline-flex;align-items:center;flex:none;--ring:var(--surface-2)}
+.linecircles i{width:10px;height:10px;border-radius:50%;display:block;box-shadow:0 0 0 2px var(--ring)}
+.linecircles i+i{margin-left:-3px}
+.strow:hover .linecircles{--ring:var(--surface-3)}
 /* станции внутри раскрытой линии сдвинуты: так видно, чему они принадлежат */
 .districtrow--sub{padding-left:32px;background:var(--surface-2)}
 .districtrow .sub{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
@@ -754,6 +799,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    и иначе фильтр со станцией прятались бы за свайп. Правило стоит после общего,
    иначе оно проигрывает ему по порядку */
 .scopetop{display:none}
+.topbar{display:none}
 .btn{
   display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:var(--r-m);
   font-size:var(--f-m20);line-height:var(--l-m20);font-weight:600;transition:opacity .12s,background .12s;width:100%;
@@ -913,15 +959,13 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .stag--me{background:var(--brand-soft);color:var(--brand-ink)}
 .stag--me svg{color:currentColor}
 .pincard{padding:16px;display:flex;flex-direction:column;gap:12px}
-.pcg{display:contents}
-/* Телефон: группы по лестнице — внутри 8, между группами линия с 16 по обе стороны,
-   вертикальное поле карточки 24. Горизонтальное остаётся 16: оно держит вертикаль текста */
-@media (max-width:820px){
-  .pincard{padding:24px 16px;gap:0}
-  .pcg{display:flex;flex-direction:column;gap:8px}
-  .pcg+.pcg{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
-  .pcg .cardnotes{margin-top:0}
-}
+/* Группы по лестнице — внутри 8, между группами линия с 16 по обе стороны, вертикальное поле
+   карточки 24. Горизонтальное остаётся 16: оно держит вертикаль текста. Сначала было только
+   на телефоне, в 3.25 — и на десктопе: карточка одна, раскладка одна */
+.pincard{padding:24px 16px;gap:0}
+.pcg{display:flex;flex-direction:column;gap:8px}
+.pcg+.pcg{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.pcg .cardnotes{margin-top:0}
 .pincard h2{font-size:var(--f-h30);line-height:var(--l-h30);font-weight:600;margin:0;text-wrap:balance}
 .pincard p{margin:0;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10);white-space:pre-wrap}
 .metaline{display:flex;flex-wrap:wrap;gap:8px}
@@ -982,6 +1026,9 @@ button.person:hover{background:var(--surface-2)}
 
 /* ---------- feed ---------- */
 .feedlist{display:flex;flex-direction:column}
+/* разделитель между выдачей кадра и совпадениями за ним — серая полоса с подписью, как у Яндекс Карт */
+.nearhead{padding:8px 16px;background:var(--surface-2);font-size:var(--f-s20);line-height:var(--l-s20);font-weight:600;color:var(--ink-2)}
+.nearnone{padding:16px;font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)}
 .feed__sort{display:flex;align-items:center;gap:8px;padding:0 4px 4px;color:var(--ink-3);font-size:var(--f-s10);line-height:var(--l-s10);border-bottom:1px solid var(--line)}
 /* Шапка списка приклеена сверху и выезжает поверх содержимого, а не сжимается в потоке.
    Сжимаясь, она укорачивала список, браузер подтягивал прокрутку, и получалась борьба:
@@ -1609,11 +1656,14 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-160%) scale(.92);
   overflow:hidden;
   opacity:0;pointer-events:none;
-  background:var(--ink);color:var(--ground);padding:12px 16px;border-radius:var(--r-m);
-  font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;box-shadow:var(--shadow-2);z-index:60;
+  /* Тост — служебное сообщение, а не содержание: кегль служебной подписи, поля и ширина
+     меньше, текст по центру. Прежде он был набран основным текстом и на длинных фразах
+     вырастал в три строки поверх карты */
+  background:var(--ink);color:var(--ground);padding:8px 12px;border-radius:var(--r-m);
+  font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;box-shadow:var(--shadow-1);z-index:60;
   transition:opacity .22s ease,transform .22s ease;
-  max-width:min(440px,88vw);
-  display:flex;align-items:center;gap:12px;
+  max-width:min(320px,88vw);text-align:center;
+  display:flex;align-items:center;justify-content:center;gap:12px;
 }
 .toast.is-on{opacity:1;transform:translateX(-50%) translateY(0) scale(1);pointer-events:auto}
 /* Цвет действия — тот же, которым набран текст тоста, а не брендовый: синий на тёмной плашке
@@ -1652,9 +1702,11 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
     /* единственное место, где высота таббара задаётся формулой: всё остальное меряет его */
     position:absolute;left:0;right:0;bottom:0;width:auto;height:calc(var(--rail-h) + env(safe-area-inset-bottom,0px));
     flex:none;flex-direction:row;justify-content:space-around;align-items:center;
-    border-right:none;border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));
+    border-right:none;border-top:1px solid var(--line);padding:3px 8px calc(3px + env(safe-area-inset-bottom,0px));
   }
-  .rail .navbtn{width:auto;flex:1;padding:4px}
+  /* плашка активного пункта ниже прежней на четыре пикселя: в 49 точках ей нужны поля сверху
+     и снизу, значок и подпись те же */
+  .rail .navbtn{width:auto;flex:1;padding:2px 4px}
   .rail .brand,.rail__spacer{display:none}
   /* .work снимаем с position:relative, чтобы абсолютная .panel считалась от .app: тогда шторка
      доезжает до самого низа экрана и ложится поверх таббара, как в мобильных картах */
@@ -1839,14 +1891,27 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
     content:'';position:absolute;left:0;right:0;top:0;height:22px;z-index:5;pointer-events:none;
     background:linear-gradient(var(--ground),rgba(0,0,0,0));
   }
-  /* Полоску жестов рисует iOS поверх нашего таббара и цвет берёт по тому, что под ней.
-     На белом она терялась — подкладываем под неё чуть более тёмную полосу */
-  .rail::after{
-    content:'';position:absolute;left:0;right:0;bottom:0;pointer-events:none;
-    height:env(safe-area-inset-bottom,0px);background:var(--surface-2);
-  }
-  .scopetop{display:flex;flex:1;height:42px;padding:0 12px;transform-origin:50% 0;transition:transform .22s ease,opacity .22s ease}
-  .app.is-homeopen .scopetop{transform:translateY(-160%) scale(.92);opacity:0;pointer-events:none}
+  /* Верх экрана на телефоне — поле поиска и кнопка фильтра (3.25). Прежде здесь стояла кнопка
+     сводки, которая при раскрытии шторки уезжала внутрь неё, — у каждого элемента теперь одно
+     место: поиск и фильтр наверху, сводка на ручке шторки. Слой выше шторок: подсказки мест
+     выпадают под полем поверх раскрытого списка */
+  .toolbar{z-index:21}
+  .topbar{display:flex;flex:1;gap:8px;align-items:flex-start;position:relative;
+    transform-origin:50% 0;transition:transform .22s ease,opacity .22s ease}
+  .topbar .searchfield{flex:1;min-width:0}
+  .topbar .searchfield .input{box-shadow:var(--shadow-2);border-color:var(--line)}
+  .filterbtn{width:46px;height:46px;flex:none;display:grid;place-items:center;color:var(--ink-2);position:relative}
+  .filterbtn svg{width:18px;height:18px}
+  /* фильтр что-то отсекает — точка на кнопке, иначе пустой список выглядел бы пустым районом */
+  .filterbtn.is-dirty::after{content:'';position:absolute;top:9px;right:9px;width:8px;height:8px;border-radius:50%;
+    background:var(--brand);box-shadow:0 0 0 2px var(--surface)}
+  .placedrop{position:absolute;left:0;right:0;top:calc(100% + 8px);border-radius:var(--r-m);overflow:hidden;box-shadow:var(--shadow-2)}
+  .placedrop:empty{display:none}
+  .app.is-noscope .topbar{opacity:0;pointer-events:none;transform:translateY(-160%) scale(.92)}
+  /* ручка домашней шторки: сводка «●● N событий · место» под полоской */
+  .homesum{display:flex;align-items:center;gap:8px;padding:2px 16px 12px;min-width:0}
+  .homesum b{font-size:var(--f-h60);line-height:var(--l-h60);font-weight:600;white-space:nowrap}
+  .homesum .scopebtn__st{font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)}
   /* Контролы стоят на одном месте во всём приложении и ни от чего не зависят. Прежде их
      положение считалось от верха шторки, а верх был взят числом под свёрнутое состояние —
      и в создании события, где шторка занимает пол-экрана, кнопки упирались в неё.
@@ -2323,6 +2388,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.24.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.25.0";</script>
 </body>
 </html>
