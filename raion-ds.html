@@ -614,7 +614,6 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   background:var(--surface);border:1px solid var(--line);color:var(--ink-3);white-space:nowrap;
 }
 .tag svg{width:11px;height:11px}
-.tag--line{background:var(--surface);border:1px solid var(--line);color:var(--ink-3)}
 /* Счётчик в шапке залит: белый с рамкой там терялся на сером. Пара переворачивается сама —
    в светлой теме тёмная заливка со светлыми цифрами, в тёмной наоборот, как у категорийных
    цветов, где значок на светящейся заливке тоже тёмный */
@@ -668,8 +667,6 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .segctl--cat button.is-on{background:var(--surface);box-shadow:var(--shadow-1);font-weight:600}
 .segctl--cat i{width:14px;height:14px;border-radius:50%;flex:none;border:2px solid transparent;display:block}
 /* значок метро в чипе крупнее прочих иконок: на 13px белая обводка тоньше пикселя и мажется */
-.chip-metro{width:15px;height:15px;flex:none}
-.chip .chip-metro{width:15px;height:15px}
 /* точка в цвет линии — для мелких мест, где значок метро превращался в грязь */
 /* Станция метро — наш значок, а не подпись карты: заливка кружка приходит из color,
    поэтому цвет линии меняется одной строкой, а на будущий ориентир другого вида
@@ -702,6 +699,13 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .ptag .metro{width:18px;height:18px;flex:none}
 .ptag--all{padding-left:9px;color:var(--ink-2)}
 .ptag--all svg{width:14px;height:14px;color:var(--ink-3);flex:none}
+/* На телефоне подсказки — отдельная подложка под полем: серая цвета разделителя, теги на ней
+   белые, поле одинаковое со всех сторон. Черта снизу не нужна — край подложки и есть граница */
+@media (max-width:820px){
+  .ptags{padding:16px;background:var(--line);border-bottom:none}
+  .ptag{background:var(--surface)}
+  .ptag:hover{background:var(--surface-2)}
+}
 /* строка линии в полном списке: цвет, название, число станций и шеврон */
 .linerow{display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;border-bottom:1px solid var(--line)}
 .linerow:hover{background:var(--surface-2)}
@@ -710,6 +714,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .linerow__t b{display:block;font-size:var(--f-m10);line-height:var(--l-m10);font-weight:600;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .linerow svg{width:16px;height:16px;color:var(--ink-3);flex:none}
+/* значение справа от названия строки: значок станции и имя, как в чипах */
+.linerow__v{display:inline-flex;align-items:center;gap:6px;min-width:0;color:var(--ink-2);
+  font-size:var(--f-s10);line-height:var(--l-s10);white-space:nowrap}
+.linerow__v .metro{width:18px;height:18px}
 .linedot--l{width:12px;height:12px;vertical-align:0}
 /* станции внутри раскрытой линии сдвинуты: так видно, чему они принадлежат */
 .districtrow--sub{padding-left:32px;background:var(--surface-2)}
@@ -778,7 +786,6 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* крупный разделитель между группами: там, где волосок не отделяет, а только царапает */
 .divider--lg{height:8px;background:var(--surface-2)}
 /* выбранные станции чипами: их видно все разом, и снять любую можно одним нажатием */
-.stchips{display:flex;flex-wrap:wrap;gap:8px;padding:16px}
 .stchip{width:auto;border:1px solid var(--line);gap:6px}
 .stchip svg{width:12px;height:12px;color:var(--ink-3)}
 .stchip:hover{background:var(--surface-2)}
@@ -792,14 +799,19 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* тумблер вернулся вместе с оповещениями о пропажах: это единственная механика, где сервис
    пишет тому, кто ни на что не подписывался, и выключатель к ней обязателен */
 /* тумблер прижат к верху: против двух-трёх строк пояснения по центру он смотрелся криво */
-.switchrow{display:flex;align-items:flex-start;gap:16px;padding:4px}
+/* Своего поля у строки нет: четыре пикселя со всех сторон сдвигали текст вправо от соседних
+   строк, а тумблер не доходил до правого края карточек и кнопок — строка выпадала из сетки */
+.switchrow{display:flex;align-items:flex-start;gap:16px}
 /* в подвале карточки тумблер стоит над кнопкой и отделён от неё линией: подвал приклеен,
    и без линии строка читалась бы как часть самой кнопки */
-.switchrow--foot{align-items:center;padding:0 4px 12px;margin-bottom:4px;border-bottom:1px solid var(--line)}
-.switchrow .switch{margin-top:-2px}
+.switchrow--foot{align-items:center;padding:0 0 12px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+/* центр тумблера на центре строки заголовка: сама строка 18, тумблер 25 */
+.switchrow .switch{margin-top:calc((var(--l-h60) - 25px) / 2)}
 .switchrow__txt{flex:1;min-width:0}
 .switchrow b{display:block;font-size:var(--f-h60);line-height:var(--l-h60);font-weight:600}
-.switchrow span{display:block;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);margin-top:4px}
+/* только пояснение внутри текста: обёртка текста тоже span, и прежнее «.switchrow span» сдвигало
+   весь текстовый блок на четыре пикселя вниз — тумблер казался выровненным криво */
+.switchrow__txt span{display:block;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);margin-top:4px}
 .switch{
   flex:none;width:42px;height:25px;padding:2px;border-radius:999px;
   background:var(--surface-3);border:1px solid var(--line-2);position:relative;
@@ -838,7 +850,6 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .cover--offer .cover__glyph{color:var(--offer)}
 .cover--find .cover__glyph{color:var(--find)}
 /* статус переехал вниз: сверху теперь стоят кнопки, вынесенные на саму обложку */
-.cover__status{position:absolute;right:16px;bottom:12px}
 /* Шапка карточки лежит поверх обложки, а не отдельной полосой над ней: кнопки стоят прямо
    на фотографии, на тех же отступах, что и раньше. Пока карточка не прокручена, шапка
    прозрачная; на фотографии под кнопки подкладывается градиент — тёмная иконка на светлом
@@ -868,12 +879,12 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    схлопывается по высоте и гаснет, обложка в том же месте растёт и проявляется. Подменять
    узлы в этот момент нельзя — переход умрёт, не начавшись, как это уже было с разлётом
    булавок, подсветкой при наведении и тумблером */
-.pinshort{
-  display:flex;flex-direction:column;gap:10px;overflow:hidden;
-  max-height:0;opacity:0;padding:0 16px;
-  transition:max-height .24s ease,opacity .16s ease,padding .24s ease;
-}
-.panel.is-pin.is-shut .pinshort{max-height:220px;opacity:1;padding:16px 16px 12px}
+.pinshort{overflow:hidden;max-height:0;opacity:0;transition:max-height .24s ease,opacity .16s ease}
+/* Поля живут на внутренней обёртке, а не на самой полосе: так полная высота короткой версии
+   известна в любой момент перехода (у обрезанного узла scrollHeight — высота содержимого),
+   и по ней ставится верхний край шторки. Сверху 24, а не 16: там лежит ручка */
+.pinshort__in{display:flex;flex-direction:column;gap:10px;padding:24px 16px 12px}
+.panel.is-pin.is-shut .pinshort{max-height:220px;opacity:1}
 .panel.is-pin .cover{transition:max-height .24s ease,opacity .16s ease}
 .panel.is-pin.is-shut .cover{max-height:0;opacity:0;overflow:hidden}
 /* остальное тело в короткой версии не участвует вовсе: оно ниже сгиба и анимировать
@@ -902,6 +913,15 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .stag--me{background:var(--brand-soft);color:var(--brand-ink)}
 .stag--me svg{color:currentColor}
 .pincard{padding:16px;display:flex;flex-direction:column;gap:12px}
+.pcg{display:contents}
+/* Телефон: группы по лестнице — внутри 8, между группами линия с 16 по обе стороны,
+   вертикальное поле карточки 24. Горизонтальное остаётся 16: оно держит вертикаль текста */
+@media (max-width:820px){
+  .pincard{padding:24px 16px;gap:0}
+  .pcg{display:flex;flex-direction:column;gap:8px}
+  .pcg+.pcg{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+  .pcg .cardnotes{margin-top:0}
+}
 .pincard h2{font-size:var(--f-h30);line-height:var(--l-h30);font-weight:600;margin:0;text-wrap:balance}
 .pincard p{margin:0;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10);white-space:pre-wrap}
 .metaline{display:flex;flex-wrap:wrap;gap:8px}
@@ -951,7 +971,6 @@ button.person:hover{background:var(--surface-2)}
 /* метки прижаты к правому краю: слева читается столбец имён, справа — столбец меток,
    и глазу не приходится искать их на разном отступе у каждой строки */
 .person__tags{margin-left:auto;flex:none;display:flex;align-items:center;gap:8px}
-.person__s{margin-left:auto;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
 /* дорожка белая, а не surface-3: строка участников под курсором красится ровно
    в surface-3, и дорожка сливалась с ней — полоса теряла второй конец */
 .progress{height:5px;border-radius:3px;background:var(--surface);overflow:hidden}
@@ -1103,7 +1122,19 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .selectwrap{position:relative}
 .selectwrap .select{padding-right:36px}
 .selectwrap__chev{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--ink-3);pointer-events:none}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* minmax(0,…), а не голое 1fr: колонке 1fr запрещено быть уже содержимого, а поле даты
+   на айфоне не сжимается уже своего текста («24 сент. 2026 г.») — оно распирало колонку,
+   и поле времени уезжало за правый край */
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+/* Дату и время айфон рисует своим элементом со своей минимальной высотой и центровкой:
+   наш line-height до значения не доходит, и поле вырастало до 54 при соседях в 46.
+   Снимаем системный вид, высоту задаём числом той же арифметики (12+20+12+рамки),
+   значение прижимаем влево, как во всех остальных полях формы */
+@media (max-width:820px){
+  .input[type=date],.input[type=time]{-webkit-appearance:none;appearance:none;min-width:0;height:46px;text-align:left}
+  .input[type=date]::-webkit-date-and-time-value,.input[type=time]::-webkit-date-and-time-value{
+    text-align:left;margin:0;min-height:0;line-height:var(--l-m20)}
+}
 /* ручка для перетаскивания домашней шторки — она же подсказка, что шторку можно тянуть */
 /* Ручка стоит первой в шторке и всегда одинаково: раньше у домашней она жила внутри
    верхней зоны с отступом снизу, у остальных — перед шапкой с отступом сверху, и посадка
@@ -1141,9 +1172,16 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .stepseg{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;text-align:left}
 .stepseg__t{font-size:var(--f-s20);line-height:var(--l-s20);font-weight:500;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stepseg.is-now .stepseg__t{color:var(--ink);font-weight:700}
-.stepseg i{display:block;height:3px;border-radius:2px;background:var(--brand-soft);position:relative;overflow:hidden}
+/* Цвет полосы — переменные на самой полосе. До выбора типа она брендовая, после — цвета
+   категории: человек видит, что его выбор принят, тем же языком, что вкладки в сообщениях.
+   Меняется с переходом — полоса перекрашивается у него на глазах, а не подменяется */
+.stepbar{--step-line:var(--brand);--step-soft:var(--brand-soft)}
+.stepbar--act{--step-line:var(--act);--step-soft:var(--act-soft)}
+.stepbar--offer{--step-line:var(--offer);--step-soft:var(--offer-soft)}
+.stepbar--find{--step-line:var(--find);--step-soft:var(--find-soft)}
+.stepseg i{display:block;height:3px;border-radius:2px;background:var(--step-soft);position:relative;overflow:hidden;transition:background .24s ease}
 /* заливка растёт от левого края — поэтому при возврате назад она с правого края и сходит */
-.stepseg i::after{content:'';position:absolute;inset:0;border-radius:2px;background:var(--brand);transform:scaleX(0);transform-origin:left;transition:transform .34s ease}
+.stepseg i::after{content:'';position:absolute;inset:0;border-radius:2px;background:var(--step-line);transform:scaleX(0);transform-origin:left;transition:transform .34s ease,background .24s ease}
 .stepseg.is-on i::after{transform:scaleX(1)}
 .stepseg:disabled{cursor:default}
 /* Контролы выбора говорят одним языком: белый фон, видимая рамка, выбор показывает кольцо.
@@ -1366,7 +1404,6 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .listrow__cover--act{background:var(--act-soft);color:var(--act)}
 .listrow__cover--offer{background:var(--offer-soft);color:var(--offer)}
 .listrow__cover--find{background:var(--find-soft);color:var(--find)}
-.listrow__cover--muted{background:var(--surface-3);color:var(--ink-3)}
 .listrow__cover svg{width:19px;height:19px}
 .listrow__cover--s{width:40px;height:40px}
 .listrow__cover--s svg{width:16px;height:16px}
@@ -1386,7 +1423,6 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .listrow__r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
 /* время в строке чата держится верхнего края: в профиле тот же блок носит шеврон,
    и его поднимать наверх не надо — поэтому модификатор, а не общее правило */
-.listrow__r--top{align-self:flex-start}
 /* имя, время и точка в одной строке; название пина и текст ниже идут во всю ширину */
 .listrow__top{display:flex;align-items:baseline;gap:8px;min-width:0}
 .listrow__top .listrow__t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1405,8 +1441,6 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .unread:empty{min-width:8px;width:8px;height:8px;padding:0;border-radius:50%}
 /* Системный канал даёт точку, а не число: цифра на разделе должна значить ровно одно —
    «вам написал живой человек», иначе ей перестают верить, как «99+» в маркетплейсах */
-.navbtn__badge--dot{min-width:9px;width:9px;height:9px;padding:0;border-radius:50%;font-size:0}
-.tabs button .tabn{margin-left:6px;font-variant-numeric:tabular-nums;opacity:.75}
 /* системное сообщение — не пузырь разговора, а карточка с одним действием */
 /* Уведомление собрано как карточка пина в списке: чип типа, жирное название, пояснение.
    Раньше всё это лежало одним абзацем через двоеточие и читалось тяжело */
@@ -1465,14 +1499,6 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* у станции теперь две подписи — линия и итог месяца; без блочности они шли одной строкой */
 .districtrow>span>span{display:block;margin-top:4px}
 .districtrow .cnt{margin-left:auto;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
-/* поиск слева, выбор ветки справа — одна строка между «Весь город» и списком станций */
-/* линии под строкой поиска нет: ниже в том же блоке лежат выбранные станции и «весь город»,
-   и она резала один блок пополам */
-.stools{display:flex;align-items:center;gap:8px;padding:12px 16px}
-.stools__line{margin-left:auto;min-width:0}
-.stools__line .select{padding:8px 32px 8px 12px;font-size:var(--f-s10);line-height:var(--l-s10)}
-.stools .searchfield .input{padding:8px 36px 8px 38px}
-.stools .searchfield__clear{width:24px;height:24px;right:6px}
 
 /* ---------- chat ---------- */
 .chat{display:flex;flex-direction:column;gap:12px;padding:16px}
@@ -1552,17 +1578,6 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* под домашней шторкой затемняем только карту: дом — состояние просмотра, и уходить
    из него в чаты одним касанием человек вправе, поэтому таббар остаётся живым */
 .sheet-scrim--home{bottom:var(--chrome-b)}
-/* Карта уехала в сторону — предлагаем перенести охват сюда. Само по себе панорамирование
-   охват не меняет: список прыгал бы под рукой, и человек не смог бы просто посмотреть
-   соседний район. Поэтому движение показывает предложение, а решение остаётся за ним */
-.searchhere{
-  position:absolute;left:50%;top:66px;transform:translateX(-50%);z-index:7;
-  display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;
-  background:var(--ink);color:var(--ground);border:none;
-  font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;white-space:nowrap;
-  box-shadow:var(--shadow-2);
-}
-.searchhere:hover{opacity:.9}
 /* плашка с расстоянием на шаге выбора места — тёмная, как всплывающие сообщения */
 /* Плашка занимает тот же слот, что кнопка охвата, и уходит тем же движением. Видна она
    только пока шторка внизу и вы целитесь: как только шторка поднялась, станция
@@ -1727,11 +1742,28 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      и обязана быть прямоугольной */
   /* Пол карточки: сверху остаётся полоска карты с булавкой и её окружением — карта здесь
      часть ответа, а не фон, — но не половина экрана пустоты, как было при 60dvh */
-  .panel.is-pin:not(.is-shut){min-height:calc(var(--vh) - 160px)}
+  /* Раскрытая карточка — одна и та же высота для любого события: верхний край на общей линии
+     высоких шторок (сто пикселей карты плюс вырез — как у домашней и у фильтров), нижний у края
+     экрана. Раньше высота плавала в коридоре между полом и потолком и шла за содержимым,
+     и верх шторки прыгал от события к событию. Пустота между содержимым и кнопками — норма.
+     Короткая стоит на том же нижнем крае, а верхний у неё — по измеренной высоте содержимого
+     (--pin-short-h, ставит pinShortFit). Оба положения числовые, поэтому переход между ними
+     — движение одного верхнего края, как у домашней шторки */
+  .panel.is-pin{top:calc(100px + env(safe-area-inset-top,0px));bottom:0;height:auto;max-height:none;min-height:0;
+    transition:top .24s ease,transform .22s ease}
+  .panel.is-pin.is-shut{top:calc(100% - var(--pin-short-h,240px))}
+  /* Край раскрытой карточки задаёт обложка: рамка сверху ложилась второй линией над ней,
+     с полоской белого фона между ними. У короткой рамка остаётся — под ней карта */
+  .panel.is-pin:not(.is-shut){border-top:none}
+  /* Скругление на самом прокручиваемом теле: пока оно было прямоугольным, стоило сдвинуть
+     прокрутку хоть на пиксель — и верх обложки срезался прямым краем, углы пропадали */
+  .panel.is-pin .panel__body{border-radius:var(--r-l) var(--r-l) 0 0}
+  /* и шапка-наложение: прокрутили — она заливается белым, и прямые углы её заливки
+     торчали поверх скруглённых углов шторки */
+  .panel.is-pin .panelhead--over{border-radius:var(--r-l) var(--r-l) 0 0}
   /* Обложка идёт от самого верха и повторяет скругление шторки. Обрезкой по панели этого
      не сделать: ручка лежит выше её края, на затемнении, и обрезка съела бы её */
   .panel.is-pin .cover{border-radius:var(--r-l) var(--r-l) 0 0}
-  .panel.is-pin:not(.is-shut) .panel__body{flex:1 1 auto}
   /* Подвал с кнопками не отрезан линией, а растворяется: тот же приём, что у плавающей
      кнопки в фильтрах. Тень не нужна — контраста заливки хватает */
   /* Растворение под кнопкой — не украшение, а сообщение «ниже ещё есть». Поэтому полоса
@@ -1740,6 +1772,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .panel:not(.is-section) .panel__foot{
     border-top:none;
     background:var(--surface);
+    position:relative;
     padding-top:12px;
     /* внизу поле блока по лестнице плюс безопасная зона телефона: на растворяющемся
        подвале двенадцати пикселей не хватало, кнопки стояли у самого края */
@@ -1751,17 +1784,27 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      пикселей подложки ложились над ней белой полосой — казалось, что фотография положена
      поверх шторки. У остальных сверху поле поиска или шапка, им отступ нужен */
   .panel.is-swipe{padding-top:8px}
-  .panel.is-more:not(.is-section) .panel__foot{
-    background:linear-gradient(to top,var(--surface) 62%,color-mix(in srgb,var(--surface) 0%,transparent));
-    padding-top:28px;
+  /* Растворение — полоса над подвалом, лежащая поверх низа тела. Раньше оно было заливкой
+     самого подвала, а тело кончалось ровно там, где подвал начинался: под градиентом не было
+     ничего, и он читался плотным белым прямоугольником. Теперь под полосой едет содержимое.
+     Подвал не двигается и не меняет высоту — меняется только прозрачность полосы, поэтому
+     признак «ниже ещё есть» не может сам себя переключить */
+  .panel:not(.is-section) .panel__foot::before{
+    content:'';position:absolute;left:0;right:0;bottom:100%;height:32px;pointer-events:none;
+    background:linear-gradient(to top,var(--surface),color-mix(in srgb,var(--surface) 0%,transparent));
+    opacity:0;transition:opacity .15s;
   }
-  .panel.is-pin{transition:top .24s ease,transform .22s ease}
+  .panel.is-more:not(.is-section) .panel__foot::before{opacity:1}
   /* Высота короткой карточки — по содержимому, а не числом. Числом её задавали, когда
      внутри был один заголовок; теперь там строка с миниатюрой, теги и кнопка, и любое
      число пришлось бы держать в голове вручную. По содержимому кнопка гарантированно
      видна целиком — а это и есть условие, ради которого короткая версия существует */
-  .panel.is-pin.is-shut{top:auto;bottom:var(--chrome-b);height:auto;max-height:none;min-height:0}
-  .panel.is-pin.is-shut .panelhead--over{display:none}
+  /* У короткой карточки шапка с кнопками не нужна, а ручка нужна: без неё не видно, что
+     шторку тянут. Ручка ложится внутрь, к верхнему краю, и серая — белая на карте пропадала */
+  .panel.is-pin.is-shut .panelhead--over{background:none;border-bottom-color:transparent}
+  .panel.is-pin.is-shut .panelhead--over .chathead{display:none}
+  .panel.is-pin.is-shut .sheet-grip{top:0}
+  .panel.is-pin.is-shut .sheet-grip::before{background:var(--line-2);box-shadow:none}
   /* поля равные: полоса корешка задана числом (--pin-peek), содержимое — названием 20
      и станцией 16, и при полях 0 сверху и 12 снизу двадцать восемь пикселей падали вниз
      пустотой под станцией, а название прижималось к верху */
@@ -1779,6 +1822,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      У шторки с жёсткой высотой (.is-tall) наоборот: тело обязано растянуться на остаток,
      иначе под коротким шагом осталась бы пустая полоса */
   .panel:not(.is-section):not(.is-tall) .panel__body{flex:0 1 auto}
+  /* у карточки события высота задана краями, и тело обязано занять всё между ними */
+  .panel.is-pin:not(.is-section):not(.is-tall) .panel__body{flex:1 1 auto;min-height:0}
   /* Безопасную зону здесь однажды потеряли: правило стоит позже основного, специфичность
      та же, и «top:16px» молча съедал env() целиком — кнопка охвата лезла под часы */
   .toolbar{left:16px;right:16px;top:calc(16px + env(safe-area-inset-top,0px));gap:8px}
@@ -2278,6 +2323,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.23.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.24.0";</script>
 </body>
 </html>
