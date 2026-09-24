@@ -784,6 +784,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .ptag .metro{width:18px;height:18px;flex:none}
 .ptag--all{padding-left:9px;color:var(--ink-2)}
 .ptags--none{font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)}
+/* теги ориентира внутри поля формы: без полосы и подложки выпадающего списка поиска */
+.ptags.ptags--field{padding:0;border:none;background:none}
+.ptags--field .ptag{background:var(--surface-2)}
+.ptags--field .ptag:hover{background:var(--surface-3)}
 .ptag--all svg{width:14px;height:14px;color:var(--ink-3);flex:none}
 /* На телефоне подсказки — отдельная подложка под полем: серая цвета разделителя, теги на ней
    белые, поле одинаковое со всех сторон. Черта снизу не нужна — край подложки и есть граница */
@@ -1145,12 +1149,6 @@ button.person:hover{background:var(--surface-2)}
 .districtrow:has(+ .divider--lg)::after{display:none}
 /* открытая во второй колонке строка помечается той же заливкой, что и карточка списка */
 .listrow.is-sel{background:var(--surface-2)}
-/* тип пина в строке чата: место под линию занято всегда, цвет появляется только там,
-   где он что-то сообщает */
-.listrow__rule{position:absolute;left:0;top:16px;bottom:16px;width:4px;border-radius:0 999px 999px 0;background:transparent}
-.listrow__rule--act{background:var(--act)}
-.listrow__rule--offer{background:var(--offer)}
-.listrow__rule--find{background:var(--find)}
 .fcard:hover{background:var(--surface-2)}
 
 /* Выбранная строка — только в двухколоночном режиме, где список виден рядом с карточкой.
@@ -1516,6 +1514,11 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
    и та же. Поэтому поверх обложки встаёт лицо собеседника — у общего чата его нет, и это
    отсутствие и есть признак. Кольцо цветом строки, иначе тёмное лицо слипается с фото */
 .listrow__pic{position:relative;flex:none}
+.listrow__pic--corner::before{content:'';position:absolute;left:0;top:0;width:60px;height:60px;border-radius:var(--r-s)}
+.listrow__pic--act::before{background:var(--act)}
+.listrow__pic--offer::before{background:var(--offer)}
+.listrow__pic--find::before{background:var(--find)}
+.listrow__pic--corner .listrow__cover{position:relative;display:block;border-bottom-left-radius:24px}
 /* лицо в верхнем углу — вровень с именем написавшего: у нижнего края оно стояло
    у превью сообщения, к которому отношения не имеет */
 .listrow__face{position:absolute;right:-3px;top:-3px;box-shadow:0 0 0 2px var(--surface)}
@@ -1556,6 +1559,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* Знак непрочитанного: пилюля того же вида, что счётчик на таббаре и на колоколе — один знак
    на всё приложение. Пустая (без числа) остаётся кружком: так живёт системный канал */
 .listrow__last{display:flex;align-items:center;gap:8px;min-width:0;margin-top:4px}
+.listrow__pinrow{display:flex;align-items:center;gap:8px;min-width:0}
+.listrow__pinrow .listrow__pin{flex:1;min-width:0}
 .listrow__last .listrow__msg{flex:1;min-width:0;margin-top:0}
 .unread{
   flex:none;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--brand);
@@ -1820,13 +1825,15 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   /* Поле ввода лежит внутри подвала, и нижний отступ был у обоих: подвалу общее правило
      шторок давало 24 плюс безопасную зону, полю — ещё 12 плюс её же. Отступ один, у подвала,
      и правило сильнее общего, чтобы оно его больше не перебивало */
-  .panel.is-chat:not(.is-section) .panel__foot{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+  /* переписка на телефоне — полноэкранный раздел, поэтому правило без оговорки про разделы:
+     в 3.28 оно на неё не действовало, и поле вставало вплотную к полоске «домой» */
+  .panel.panel.is-chat .panel__foot{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
   .panel.is-chat .composer{padding-bottom:0}
   /* С открытой клавиатурой переписка кончается у её верхнего края, а поле ввода стоит вплотную
      над ней с обычным отступом 12: запас под полоску «домой» спрятан под клавиатурой. Раньше
      экран оставался во всю высоту, айфон сам подвигал страницу к полю — между полем и
      клавиатурой зияла пустота, а при прокрутке поле уезжало под клавиатуру */
-  .app.is-kb .panel.is-chat:not(.is-section) .panel__foot{padding-bottom:12px}
+  .app.is-kb .panel.panel.is-chat .panel__foot{padding-bottom:12px}
   .app.is-kb .panel.is-chat .panel__body{padding-bottom:0}
   .app.is-chat .rail{transform:translateY(100%);pointer-events:none}
   .rail{transition:transform .22s ease}
@@ -2074,6 +2081,7 @@ svg{width:16px;height:16px}
 <symbol id="i-close" viewBox="0 0 24 24" fill="currentColor"><path d="M12 10.586L16.95 5.63599L18.364 7.04999L13.414 12L18.364 16.95L16.95 18.364L12 13.414L7.04999 18.364L5.63599 16.95L10.586 12L5.63599 7.04999L7.04999 5.63599L12 10.586Z" fill="currentColor"/></symbol>
 <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol>
 <symbol id="i-chev-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></symbol>
+<symbol id="i-sort" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5v14M8 5L5 8M8 5l3 3M16 19V5M16 19l-3-3M16 19l3-3"/></symbol>
 <symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></symbol>
 <symbol id="i-pin" viewBox="0 0 24 24" fill="currentColor"><path d="M18.364 17.364L12 23.728L5.636 17.364C4.37734 16.1054 3.52019 14.5017 3.17293 12.7559C2.82567 11.0101 3.00391 9.20047 3.6851 7.55595C4.36629 5.91142 5.51984 4.50582 6.99988 3.51689C8.47992 2.52796 10.22 2.00012 12 2.00012C13.78 2.00012 15.5201 2.52796 17.0001 3.51689C18.4802 4.50582 19.6337 5.91142 20.3149 7.55595C20.9961 9.20047 21.1743 11.0101 20.8271 12.7559C20.4798 14.5017 19.6227 16.1054 18.364 17.364V17.364ZM12 13C12.5304 13 13.0391 12.7893 13.4142 12.4143C13.7893 12.0392 14 11.5305 14 11C14 10.4696 13.7893 9.9609 13.4142 9.58583C13.0391 9.21076 12.5304 9.00004 12 9.00004C11.4696 9.00004 10.9609 9.21076 10.5858 9.58583C10.2107 9.9609 10 10.4696 10 11C10 11.5305 10.2107 12.0392 10.5858 12.4143C10.9609 12.7893 11.4696 13 12 13Z" fill="currentColor"/></symbol>
 <symbol id="i-people" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22C2 19.8783 2.84285 17.8434 4.34315 16.3431C5.84344 14.8429 7.87827 14 10 14C12.1217 14 14.1566 14.8429 15.6569 16.3431C17.1571 17.8434 18 19.8783 18 22H2ZM10 13C6.685 13 4 10.315 4 7C4 3.685 6.685 1 10 1C13.315 1 16 3.685 16 7C16 10.315 13.315 13 10 13ZM17.363 15.233C18.8926 15.6261 20.2593 16.4918 21.2683 17.7068C22.2774 18.9218 22.8774 20.4242 22.983 22H20C20 19.39 19 17.014 17.363 15.233ZM15.34 12.957C16.178 12.2075 16.8482 11.2893 17.3066 10.2627C17.765 9.23616 18.0013 8.12429 18 7C18.0021 5.63347 17.6526 4.28937 16.985 3.097C18.1176 3.32459 19.1365 3.93737 19.8685 4.8312C20.6004 5.72502 21.0002 6.84473 21 8C21.0003 8.71247 20.8482 9.41676 20.5541 10.0657C20.26 10.7146 19.8305 11.2931 19.2946 11.7625C18.7586 12.2319 18.1285 12.5814 17.4464 12.7874C16.7644 12.9934 16.0462 13.0512 15.34 12.957V12.957Z" fill="currentColor"/></symbol>
@@ -2644,7 +2652,7 @@ function toast(text,label,fn,ic){
 var LANDMARKS=[
   {id:'d_arbatskaya',         name:'Арбатская',               kind:'metro', lines:[3,4],    lat:55.75185, lon:37.60065, stations:[{n:'Арбатская',l:[3,4]}]},
   {id:'d_belorusskaya',       name:'Белорусская',             kind:'metro', lines:[2,5],    lat:55.7767, lon:37.58357, stations:[{n:'Белорусская',l:[2,5]}]},
-  {id:'d_biblioteka_imeni_l', name:'Библиотека имени Ленина', kind:'metro', lines:[1,4,9],  lat:55.75153, lon:37.60864, stations:[{n:'Библиотека имени Ленина',l:[1]},{n:'Александровский сад',l:[4]},{n:'Боровицкая',l:[9]}]},
+  {id:'d_biblioteka_imeni_l', name:'Библиотека им. Ленина', full:'Библиотека имени Ленина', kind:'metro', lines:[1,4,9],  lat:55.75153, lon:37.60864, stations:[{n:'Библиотека им. Ленина',l:[1]},{n:'Александровский сад',l:[4]},{n:'Боровицкая',l:[9]}]},
   {id:'d_dobryninskaya',      name:'Добрынинская',            kind:'metro', lines:[5,9],    lat:55.72853, lon:37.62463, stations:[{n:'Добрынинская',l:[5]},{n:'Серпуховская',l:[9]}]},
   {id:'d_dostoevskaya',       name:'Достоевская',             kind:'metro', lines:[10],     lat:55.78146, lon:37.61507, stations:[{n:'Достоевская',l:[10]}]},
   {id:'d_kievskaya',          name:'Киевская',                kind:'metro', lines:[3,4,5],  lat:55.74368, lon:37.56565, stations:[{n:'Киевская',l:[3,4,5]}]},
@@ -2727,6 +2735,13 @@ PLACES.forEach(toGrid);
 /* Всё, что можно найти по названию и к чему можно переехать: ориентиры плюс районы и город.
    Вид остаётся значком в строке, а не отдельной механикой — ни вкладок, ни фильтра по виду */
 function allPlaces(){return DISTRICTS.concat(PLACES)}
+/* Длинные названия (больше ~18 знаков — там, где подпись на карте начинает переноситься)
+   сокращаются по правилам карт: им., ул., пл., пр-т, б-р, ш., наб. Короткое имя одно на
+   все места — поле, теги, сводку, карту, списки, — а полное хранится рядом, чтобы поиск
+   находил станцию и по «имени», и по «им.» */
+function placeMatch(d,q){
+  return d.name.toLowerCase().indexOf(q)>=0||(!!d.full&&d.full.toLowerCase().indexOf(q)>=0);
+}
 function placeById(id){
   var a=allPlaces();
   for(var i=0;i<a.length;i++)if(a[i].id===id)return a[i];
@@ -2867,7 +2882,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.28.0';
+var VERSION='3.29.0';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
 var UPDATED='24 сентября 2026';
@@ -4258,7 +4273,15 @@ function initGL(){
   /* Один недоехавший тайл не должен ронять приложение: карта живёт дырой, а не падением */
   glMap.on('error',function(){});
   glMap.on('move',syncFromGL);
-  glMap.on('movestart',function(){peekSheet(true)});
+  /* Шторка уезжает вниз, только когда карту двигает палец: при перелётах приложения
+     (к ориентиру, к событию) ей уезжать незачем. Тот же жест снимает признак «выбрано
+     тегом» — точка теперь там, куда навели прицел, а не «примерно у ориентира» */
+  glMap.on('movestart',function(e){
+    if(!(e&&e.originalEvent))return;
+    pickFlight=false;
+    peekSheet(true);
+    if(ui.picking&&ui.draft&&ui.draft.placeSt){ui.draft.placeSt=null; syncPlaceField()}
+  });
   glMap.on('moveend',function(e){
     peekSheet(false); glZoomTo=null;
     /* сдвинул карту сам — выбранное место отпускаем, список снова идёт за кадром */
@@ -4328,15 +4351,34 @@ function fitChatToViewport(){
   var pn=$('#panel'), vv=window.visualViewport, ap=$('#app');
   if(!pn)return;
   var on=!!(vv&&ap&&ap.classList.contains('is-kb')&&pn.classList.contains('is-chat')&&!isDesktopPanel());
+  /* Был у последнего сообщения — после смены высоты остаёшься у него, как в мессенджерах:
+     иначе укороченная шторка срезала низ переписки подвалом. Листал историю — не трогаем */
+  var body=$('#panelBody');
+  var atEnd=!!body&&(body.scrollHeight-body.scrollTop-body.clientHeight<48);
+  function keepEnd(){if(atEnd&&body)body.scrollTop=body.scrollHeight}
   if(!on){
-    if(pn._vvFit){pn.style.top='';pn.style.height='';pn.style.bottom='';pn._vvFit=false}
+    if(pn._vvFit){
+      pn._vvFit=false;
+      /* клавиатура ушла — шторка вытягивается до низа плавно, а не прыжком */
+      if(ap&&!reduceMotion()&&pn.classList.contains('is-chat')){
+        pn.style.transition='top .25s ease, height .25s ease';
+        pn.style.top='0px'; pn.style.height=ap.clientHeight+'px';
+        setTimeout(function(){
+          if(pn._vvFit)return;
+          pn.style.transition=''; pn.style.top=''; pn.style.height=''; pn.style.bottom='';
+        },270);
+      }else{pn.style.top='';pn.style.height='';pn.style.bottom=''}
+      keepEnd();
+    }
     return;
   }
   var top=vv.offsetTop-ap.getBoundingClientRect().top;
+  pn.style.transition='';
   pn.style.top=Math.round(top)+'px';
   pn.style.height=Math.round(vv.height)+'px';
   pn.style.bottom='auto';
   pn._vvFit=true;
+  keepEnd();
 }
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize',syncViewport);
@@ -5783,7 +5825,7 @@ function placeSuggest(q){
     });
   }
   function level(kind){
-    return rank(all.filter(function(d){return d.kind===kind&&(!q||d.name.toLowerCase().indexOf(q)>=0)}));
+    return rank(all.filter(function(d){return d.kind===kind&&(!q||placeMatch(d,q))}));
   }
   if(q)return [].concat(level('city'),level('district'),level('metro')).slice(0,6);
   return [].concat(level('city').slice(0,1),level('district').slice(0,2),level('metro').slice(0,3));
@@ -7208,11 +7250,11 @@ function viewCreate(){
             'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Найти ориентир" value="'+
             H(d.stOpen?(d.stQ||''):district(curSt).name)+'">'+
         '</div>'+
-        '<span class="hint">'+(d.outArea
-          ? 'Событие можно создать только внутри рабочей области — она обведена на карте пунктиром'
-          : 'Подведите карту под прицел или выберите ориентир')+'</span>'+
+        /* теги — внутри поля, сразу под строкой: отдельным блоком они стояли после
+           подсказки и отступа всего блока и уезжали от поля */
+        (d.stOpen?'<div data-reveal="placelist">'+placeTagsHTML(d)+'</div>':'')+
+        '<span class="hint" id="placeHint">'+H(placeHintText(d))+'</span>'+
       '</div></div>';
-    if(d.stOpen)body+='<div data-reveal="placelist">'+placeTagsHTML(d)+'</div>';
     foot='<button class="btn btn--primary" data-act="step" data-step="2"'+((d.x==null||d.outArea)?' disabled':'')+'>Место выбрано'+icon('chev-right')+'</button>';
   }
 
@@ -7229,7 +7271,7 @@ function viewCreate(){
         '<span class="typecard__ic">'+icon('search')+'</span>'+
         '<span><b>Находка или пропажа</b><span>Верните находку хозяину или попросите помощь в поисках</span></span></button>'+
       '</div>'+
-      (!d.type?'':(d.type==='lost_found'
+      (!d.type?'':'<div class="typeparams stack">'+(d.type==='lost_found'
         ? fldLF(d)+
           '<div class="field"><label>Место</label>'+
             '<button class="radio'+(d.noPlace?'':' is-on')+'" data-draft="noPlace" data-val="">'+
@@ -7248,7 +7290,7 @@ function viewCreate(){
         : (act
         ? fldActivity(d)
         : fldOffer(d)+
-          '<div class="demo-note" style="margin:0">'+icon('shield')+'<span>Место покажем кругом ~70 м, точный адрес — в переписке</span></div>')))+
+          '<div class="demo-note" style="margin:0">'+icon('shield')+'<span>Место покажем кругом ~70 м, точный адрес — в переписке</span></div>'))+'</div>')+
     '</div>';
     foot='<button class="btn btn--primary" data-act="step" data-step="3"'+(step2Valid()?'':' disabled')+'>Дальше'+icon('chev-right')+'</button>';
   }
@@ -7566,11 +7608,12 @@ function mineCompute(era){
   var both=!!(own.length&&join.length);
   if(!both)ui.mineTab=own.length?'own':'join';
   var cur=((ui.mineTab==='join')?join:own).slice();
-  /* Порядок называется по ключу, а не по чувству: «сначала ближайшие» это starts_at,
-     «сначала новые» — когда событие появилось. В архиве ближайших не бывает, там пара
-     другая */
-  var sorts=past?[['late','Сначала недавние'],['early','Сначала давние']]
-                :[['soon','Сначала ближайшие'],['new','Сначала новые']];
+  /* Порядок называется по ключу, а не по чувству: «скоро» это starts_at, «новые» — когда
+     событие появилось; те же слова, что у сортировки ленты. В архиве ближайших не бывает:
+     там «новые» — закрытые последними, «старые» — давно. Что это порядок, а не отбор,
+     говорит значок в кнопке */
+  var sorts=past?[['late','Новые'],['early','Старые']]
+                :[['soon','Скоро'],['new','Новые']];
   var sort=ui.mineSort||(past?'late':'soon');
   if(!sorts.some(function(s){return s[0]===sort}))sort=sorts[0][0];
   if(sort==='soon')cur.sort(bySoon);
@@ -7623,7 +7666,7 @@ function viewMine(era){
   var bar='<div class="hscroll"><div class="ctlrow">'+
     '<button class="ctl ctl--dots" data-act="mine-cats" aria-label="Типы событий">'+
       dots+icon('chev-down')+'</button>'+
-    '<button class="ctl" data-act="mine-sort">'+H(c.sortName)+icon('chev-down')+'</button>'+
+    '<button class="ctl" data-act="mine-sort">'+icon('sort')+H(c.sortName)+icon('chev-down')+'</button>'+
   '</div></div>';
   /* Поле поиска отдаём первой полосой панели: та же зона, та же высота и то же место,
      что у поиска на карте и в сообщениях. Запрос свой — в приложении у каждого экрана
@@ -8091,7 +8134,12 @@ function threadRow(t){
        встаёт лицо собеседника; у общего чата его нет, и это отсутствие и есть признак */
     title=(kind==='group')?groupName(pin(t.pin_id)):(u?shortName(u):'Сосед');
     sub=p?p.title:'Событие удалено';
-    cover='<span class="listrow__pic">'+(photoOf(p)
+    /* Тип события на вкладке «Все» несёт уголок: под фотографией лежит квадрат цвета
+       категории, а левый нижний угол фотографии скруглён сильнее — цвет выглядывает из-под
+       него. Полоска слева у строки ушла. У обложки без фото цвет и так в её заливке, а на
+       вкладке одного типа он известен из самой вкладки */
+    var corner=(photoOf(p)&&ui.msgTab==='all')?' listrow__pic--corner listrow__pic--'+ptype(p).cls:'';
+    cover='<span class="listrow__pic'+corner+'">'+(photoOf(p)
       ? '<img class="listrow__cover listrow__cover--lg" src="'+photoOf(p)+'" alt="">'
       : '<span class="listrow__cover listrow__cover--lg listrow__cover--'+(p?ptype(p).cls:'muted')+'">'+icon(p?pinGlyph(p):'pin')+'</span>')+
       ((kind!=='group'&&u)?avatarHTML(u,'avatar--s listrow__face'):'')+
@@ -8110,20 +8158,20 @@ function threadRow(t){
      резервировал ширину на всю высоту строки, и название пина с текстом обрывались на той
      же вертикали, хотя под временем было пусто */
   var open=!!(ui.panel&&ui.panel.type==='thread'&&ui.panel.id===t.id);
-  return '<button class="listrow listrow--chat'+(open?' is-sel':'')+'" data-thread="'+t.id+'">'+
-    '<i class="listrow__rule'+((p&&ui.msgTab==='all')?' listrow__rule--'+ptype(p).cls:'')+'"></i>'+cover+
+  return '<button class="listrow listrow--chat'+(open?' is-sel':'')+'" data-thread="'+t.id+'">'+cover+
     '<span class="listrow__body">'+
       '<span class="listrow__top">'+
         '<span class="listrow__t">'+H(title)+'</span>'+
         '<span class="listrow__time">'+H(m?listTime(m.created_at):'')+'</span>'+
       '</span>'+
-      (kind==='system'?'':'<span class="listrow__pin">'+H(sub)+'</span>')+
-      /* Знак непрочитанного стоит у самой реплики, а не наверху у времени: он про неё.
-         Внутри число — сколько сообщений пришло, пока вас не было. У системного канала
-         число не показываем: цифра в разделе значит «вам написал живой человек»,
-         и разбавлять её уведомлениями сервиса нельзя */
+      /* Счётчик — во второй строке, под временем: правая колонка читается сверху вниз
+         «когда — сколько». На третьей строке он был оторван от времени. Внутри число —
+         сколько сообщений пришло, пока вас не было. У системного канала числа нет: цифра
+         в разделе значит «вам написал живой человек». Второй строкой у него идёт сама реплика */
+      (kind==='system'?'':'<span class="listrow__pinrow"><span class="listrow__pin">'+H(sub)+'</span>'+
+        (unread?'<span class="unread">'+threadUnreadCount(t)+'</span>':'')+'</span>')+
       '<span class="listrow__last"><span class="listrow__msg">'+H(prev)+'</span>'+
-        (unread?'<span class="unread">'+((kind==='system')?'':threadUnreadCount(t))+'</span>':'')+
+        ((unread&&kind==='system')?'<span class="unread"></span>':'')+
       '</span>'+
     '</span></button>';
 }
@@ -8962,7 +9010,7 @@ function placeTagsHTML(d){
     return DISTRICTS.filter(function(x){return x.id===id})[0];
   }).filter(Boolean);
   var plist;
-  if(pq)plist=DISTRICTS.filter(function(x){return x.name.toLowerCase().indexOf(pq)>=0}).slice(0,6);
+  if(pq)plist=DISTRICTS.filter(function(x){return placeMatch(x,pq)}).slice(0,6);
   else{
     var cx=(d.x!=null)?d.x:viewCenterPoint()[0], cy=(d.x!=null)?d.y:viewCenterPoint()[1];
     plist=rec.slice(0,2);
@@ -8971,15 +9019,20 @@ function placeTagsHTML(d){
     }).forEach(function(x){if(plist.length<6&&plist.indexOf(x)<0)plist.push(x)});
   }
   return (plist.length
-      ? '<div class="ptags">'+plist.map(function(x){
+      ? '<div class="ptags ptags--field">'+plist.map(function(x){
           return '<button class="ptag'+((d.placeSt===x.id)?' is-on':'')+'" data-place-st="'+x.id+'">'+placeIcon(x)+'<span>'+H(x.name)+'</span></button>';
         }).join('')+'</div>'
-      : '<div class="ptags ptags--none">Такой станции нет</div>')+
-    /* точка у ориентира приблизительная по сути, и об этом надо сказать до публикации.
-       У встречи это важнее всех: участникам нужен адрес, а его тут не будет */
-    (d.placeSt?'<div class="pad"><div class="demo-note" style="margin:0">'+icon('info')+'<span>'+
-      (d.type==='activity'?'Точка встанет рядом с ориентиром — точное место встречи напишите в описании'
-          :'Точка встанет рядом с ориентиром, примерно')+'</span></div></div>':'');
+      : '<div class="ptags ptags--field ptags--none">Такой станции нет</div>');
+}
+/* Подсказка под полем одна, и её текст по состоянию. Две подсказки — под полем и под тегами —
+   делали одно дело и стояли почти вплотную. Точка у ориентира приблизительная по сути, и об
+   этом надо сказать до публикации; у встречи это важнее всех: участникам нужен адрес */
+function placeHintText(d){
+  if(d.outArea)return 'Событие можно создать только внутри рабочей области — она обведена на карте пунктиром';
+  if(d.placeSt)return d.type==='activity'
+    ? 'Точка встанет рядом с ориентиром — точное место встречи напишите в описании'
+    : 'Точка встанет рядом с ориентиром, примерно';
+  return 'Подведите карту под прицел или выберите ориентир';
 }
 /* Поле ориентира не перерисовывается ни при открытии, ни при наборе. Раньше касание
    перестраивало всю шторку: айфон начинал фокус на старом поле, оно исчезало, и клавиатура
@@ -8994,7 +9047,7 @@ function placeFieldOpen(){
   if(pic)pic.outerHTML=icon('search','searchfield__ic');
   var box=$('#placeField');
   if(box){
-    box.insertAdjacentHTML('afterend','<div data-reveal="placelist">'+placeTagsHTML(d)+'</div>');
+    inp.parentNode.insertAdjacentHTML('afterend','<div data-reveal="placelist">'+placeTagsHTML(d)+'</div>');
     var pl=$('[data-reveal="placelist"]'); if(pl){revealOpen(pl); revealSeen.placelist=1}
   }
   /* пока список открыт, прицел на карте не нужен: карту никто не двигает, а шторка растёт
@@ -9049,12 +9102,28 @@ function centerOnPick(x,y){
   applyView();
 }
 function stationDist(id,x,y){var d=district(id); return Math.sqrt(Math.pow(d.sx-x,2)+Math.pow(d.sy-y,2))}
-/* место черновика: на масштабе станций — «липкая» станция, иначе обычная лестница */
+/* Место черновика — всегда станция: событие привязывается к ней, и поле называет именно то,
+   что в него уйдёт. Прежде на широком кадре поле переходило на лестницу и писало район,
+   а выбрать район тегом было нельзя — одно значение называлось двумя текстами */
 function draftPlace(d){
-  return (d.stickSt&&glMap&&frameWidthM()<FRAME_STATION_M)?district(d.stickSt):placeForPoint(d.x,d.y);
+  return district(d.stickSt||nearestStation(d.x,d.y));
+}
+/* Перелёт к выбранному ориентиру — плавный, а не прыжком. Пока камера летит, точка и поле
+   не пересчитываются: иначе в поле мелькали бы станции, над которыми пролетает прицел.
+   Долетели — точка встаёт под прицел, станция остаётся выбранной (она «липкая») */
+var pickFlight=false;
+function flyPick(x,y,z){
+  if(!glMap||reduceMotion()){centerOnPick(x,y,z);return}
+  pickFlight=true;
+  var o={center:glCenter(x,y),offset:glOffset(viewCX(),pickCenterY()),duration:400};
+  if(z!=null)o.zoom=z;
+  glMap.once('moveend',function(){if(!pickFlight)return; pickFlight=false; updateDraftFromCenter()});
+  glMap.easeTo(o);
+  /* страховка: перелёт прервали, а конца так и не пришло — прицел не должен замереть */
+  setTimeout(function(){if(pickFlight&&!glMap.isMoving()){pickFlight=false; updateDraftFromCenter()}},900);
 }
 function updateDraftFromCenter(){
-  if(!(ui.picking&&ui.draft))return;
+  if(!(ui.picking&&ui.draft)||pickFlight)return;
   var c=toWorld(viewCX(),pickCenterY());
   /* Точка берётся как есть, без подгонки к краю. Прежде она прижималась к границе мира:
      прицел стоял в одном месте, а пин вставал в другом — и человек узнавал об этом только
@@ -9079,7 +9148,9 @@ function updateDraftFromCenter(){
    на каждом кадре перетаскивания нельзя. Пока строка в работе — список открыт и человек
    набирает — значение не трогаем, иначе карта затрёт набранное под пальцами */
 function syncPlaceField(){
-  var d=ui.draft; if(!d||d.stOpen)return;
+  var d=ui.draft; if(!d)return;
+  var ph=$('#placeHint'); if(ph){var ht=placeHintText(d); if(ph.textContent!==ht)ph.textContent=ht}
+  if(d.stOpen)return;
   var inp=$('#placeStInput'); if(!inp)return;
   var pl=(d.x!=null)?draftPlace(d):district(d.district_id||ui.districtId);
   if(inp.value!==pl.name)inp.value=pl.name;
@@ -9197,6 +9268,7 @@ function onAction(act,el,e){
          прицел), потом возвращаем сохранённую точку и подводим под неё карту */
       var kx=ui.draft.x, ky=ui.draft.y, kd=ui.draft.district_id;
       var px=view.tx, py=view.ty;
+      stepAnim=(s>ui.draft.step)?1:(s<ui.draft.step?-1:0);
       ui.draft.step=s; ui.pickPaused=false; render();
       /* выходя из выбора места, камера возвращается в обычные границы — доводим её плавно,
          иначе после подтверждения карта дёргалась бы обратно рывком */
@@ -9372,8 +9444,8 @@ function onAction(act,el,e){
       break;
     case 'mine-sort':
       var msPast=ui.panel&&ui.panel.id==='archive';
-      var msList=msPast?[['late','Сначала недавние'],['early','Сначала давние']]
-                       :[['soon','Сначала ближайшие'],['new','Сначала новые']];
+      var msList=msPast?[['late','Новые'],['early','Старые']]
+                       :[['soon','Скоро'],['new','Новые']];
       var msCur=ui.mineSort||(msPast?'late':'soon');
       menuDialog(el,msList.map(function(o){return {act:'mine-sort-set',id:o[0],label:o[1],on:o[0]===msCur,check:true}}));
       break;
@@ -9606,7 +9678,13 @@ document.addEventListener('click',function(e){
     if(ids.length&&!reduceMotion())zoomAnim.then=function(){playBurst({ids:ids,x:cx,y:cy})};
     askedMove(); zoomAtSmooth(2.2,cx,cy); return;
   }
-  if((el=e.target.closest('[data-type]'))){ui.draft.type=el.getAttribute('data-type');render();return}
+  if((el=e.target.closest('[data-type]'))){
+    var nt=el.getAttribute('data-type'), ot=ui.draft.type, op=$('.typeparams');
+    var old=(op&&ot&&ot!==nt)?{html:op.innerHTML,h:op.offsetHeight}:null;
+    ui.draft.type=nt; render();
+    if(ot!==nt)typeRise(old);
+    return;
+  }
   if((el=e.target.closest('[data-draft]'))){ui.draft[el.getAttribute('data-draft')]=el.getAttribute('data-val');render();return}
   if((el=e.target.closest('[data-subtype]'))){ui.draft.subtype=el.getAttribute('data-subtype');render();return}
   if((el=e.target.closest('[data-usertab]'))){
@@ -9680,7 +9758,8 @@ document.addEventListener('click',function(e){
       dz.x=xy.x; dz.y=xy.y; dz.placeSt=pst; dz.district_id=pst; dz.stickSt=pst;
       var zz=null;
       if(glMap){var fw=frameWidthM(); if(fw>=FRAME_STATION_M*0.9)zz=glMap.getZoom()+Math.log(fw/(FRAME_STATION_M*0.8))/Math.LN2}
-      centerOnPick(xy.x,xy.y,zz);
+      syncPlaceField();
+      flyPick(xy.x,xy.y,zz);
     }
     return;
   }
@@ -10078,12 +10157,19 @@ document.addEventListener('scroll',function(e){
   var t=e.target, a=document.activeElement;
   if(t&&t.id==='panelBody'&&a&&a.id==='searchInput')a.blur();
 },true);
-/* В переписке то же, но по пальцу, а не по событию прокрутки: список сам докручивается вниз
-   после отправки, и такая прокрутка не должна прятать клавиатуру. Набранное остаётся в поле */
+/* В переписке клавиатуру закрывает не само листание, а палец, дотянувший вниз до поля
+   ввода: в Телеграме в этот момент клавиатура поехала бы за пальцем. Тянуть её за пальцем
+   странице айфон не даёт — можно только закрыть, и дальше она уезжает сама. Листать историю
+   с открытой клавиатурой можно. Набранное остаётся в поле */
+var msgDrag=false;
+document.addEventListener('touchstart',function(e){
+  msgDrag=!!(e.target.closest&&e.target.closest('#panelBody')&&$('#panel.is-chat'));
+},{passive:true});
 document.addEventListener('touchmove',function(e){
   var a=document.activeElement;
-  if(!a||a.id!=='msgInput')return;
-  if(e.target.closest&&e.target.closest('#panelBody'))a.blur();
+  if(!msgDrag||!a||a.id!=='msgInput')return;
+  var t=e.touches[0], ft=$('#panel .panel__foot');
+  if(t&&ft&&t.clientY>=ft.getBoundingClientRect().top-8){msgDrag=false; a.blur()}
 },{passive:true});
 document.addEventListener('change',function(e){
   var rg=e.target.getAttribute&&e.target.getAttribute('data-range');
@@ -10232,10 +10318,89 @@ function startApp(){
 
 /* patch: renderPanel включает режим прицела. Шторку на телефоне больше не прячем — на первом
    шаге она низкая, и прицел стоит по центру видимой над ней полосы карты */
+/* Переход между шагами создания. Вперёд: шторка на телефоне растёт до высоты следующего
+   шага, прежнее содержимое уезжает вверх, новое въезжает снизу; назад — зеркально. Шапка
+   с полосой шагов и кнопка внизу стоят на месте. Снимок прежнего содержимого делаем
+   до перерисовки, разъезд — сразу после неё */
+var stepAnim=0, STEP_MS=280, STEP_EASE='cubic-bezier(.2,.7,.3,1)';
+function stepSlide(el,o){
+  var body=$('#panelBody'); if(!el||!body)return;
+  /* раскрытия внутри нового шага не играем: он въезжает целиком */
+  $$('[data-reveal]',body).forEach(function(n){n.style.height='';n.style.overflow='';n.style.transition=''});
+  if(!isDesktopPanel()){
+    var nh=el.offsetHeight;
+    if(Math.abs(nh-o.h)>1){
+      el.style.height=o.h+'px'; void el.offsetHeight;
+      el.style.transition='height '+STEP_MS+'ms '+STEP_EASE;
+      el.style.height=nh+'px';
+      setTimeout(function(){el.style.height='';el.style.transition=''},STEP_MS+40);
+    }
+  }
+  var H=Math.max(body.clientHeight,120);
+  var wrap=document.createElement('div');
+  while(body.firstChild)wrap.appendChild(body.firstChild);
+  body.appendChild(wrap);
+  var g=document.createElement('div');
+  g.innerHTML=o.html;
+  var ided=g.querySelectorAll('[id]'); for(var i=0;i<ided.length;i++)ided[i].removeAttribute('id');
+  g.style.cssText='position:absolute;left:0;right:0;top:'+(-o.scroll)+'px;pointer-events:none';
+  body.style.position='relative'; body.style.overflow='hidden';
+  body.appendChild(g);
+  wrap.style.transform='translateY('+(o.dir*H)+'px)';
+  void body.offsetHeight;
+  var T='transform '+STEP_MS+'ms '+STEP_EASE;
+  wrap.style.transition=T;
+  g.style.transition=T+', opacity '+STEP_MS+'ms ease';
+  wrap.style.transform='';
+  g.style.transform='translateY('+(-o.dir*H)+'px)'; g.style.opacity='0';
+  setTimeout(function(){
+    if(g.parentNode)g.parentNode.removeChild(g);
+    if(wrap.parentNode===body){while(wrap.firstChild)body.insertBefore(wrap.firstChild,wrap); body.removeChild(wrap)}
+    body.style.position=''; body.style.overflow='';
+  },STEP_MS+40);
+}
+/* Набор параметров типа во втором шаге: выбрали тип — набор раскрывается по высоте и
+   въезжает снизу; сменили — прежний уходит вверх, новый приходит снизу */
+function typeRise(old){
+  var np=$('.typeparams'); if(!np||reduceMotion())return;
+  var nh=np.offsetHeight, oh=old?old.h:0;
+  np.style.position='relative'; np.style.overflow='hidden';
+  np.style.height=oh+'px';
+  var wrap=document.createElement('div');
+  wrap.className='stack';
+  while(np.firstChild)wrap.appendChild(np.firstChild);
+  np.appendChild(wrap);
+  var g=null;
+  if(old){
+    g=document.createElement('div'); g.className='stack'; g.innerHTML=old.html;
+    var ided=g.querySelectorAll('[id]'); for(var i=0;i<ided.length;i++)ided[i].removeAttribute('id');
+    g.style.cssText='position:absolute;left:0;right:0;top:0;pointer-events:none';
+    np.appendChild(g);
+  }
+  wrap.style.transform='translateY(24px)'; wrap.style.opacity='0';
+  void np.offsetHeight;
+  var T='transform '+STEP_MS+'ms '+STEP_EASE+', opacity '+STEP_MS+'ms ease';
+  np.style.transition='height '+STEP_MS+'ms '+STEP_EASE;
+  np.style.height=nh+'px';
+  wrap.style.transition=T; wrap.style.transform=''; wrap.style.opacity='';
+  if(g){g.style.transition=T; g.style.transform='translateY(-24px)'; g.style.opacity='0'}
+  setTimeout(function(){
+    if(g&&g.parentNode)g.parentNode.removeChild(g);
+    if(wrap.parentNode===np){while(wrap.firstChild)np.insertBefore(wrap.firstChild,wrap); np.removeChild(wrap)}
+    np.style.height=''; np.style.overflow=''; np.style.position=''; np.style.transition='';
+  },STEP_MS+40);
+}
 var _renderPanel=renderPanel;
 renderPanel=function(){
+  var so=null;
+  if(stepAnim&&!reduceMotion()&&ui.panel&&ui.panel.type==='create'){
+    var pe=$('#panel'), ob=$('#panelBody');
+    if(pe&&ob&&!pe.hidden)so={html:ob.innerHTML,scroll:ob.scrollTop,h:pe.offsetHeight,dir:stepAnim};
+  }
+  stepAnim=0;
   syncPicking();
   _renderPanel();
+  if(so)stepSlide($('#panel'),so);
   syncPickUI();
   if(ui.picking)updateDraftFromCenter();
   fitChatToViewport();

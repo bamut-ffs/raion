@@ -777,6 +777,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .ptag .metro{width:18px;height:18px;flex:none}
 .ptag--all{padding-left:9px;color:var(--ink-2)}
 .ptags--none{font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)}
+/* теги ориентира внутри поля формы: без полосы и подложки выпадающего списка поиска */
+.ptags.ptags--field{padding:0;border:none;background:none}
+.ptags--field .ptag{background:var(--surface-2)}
+.ptags--field .ptag:hover{background:var(--surface-3)}
 .ptag--all svg{width:14px;height:14px;color:var(--ink-3);flex:none}
 /* На телефоне подсказки — отдельная подложка под полем: серая цвета разделителя, теги на ней
    белые, поле одинаковое со всех сторон. Черта снизу не нужна — край подложки и есть граница */
@@ -1138,12 +1142,6 @@ button.person:hover{background:var(--surface-2)}
 .districtrow:has(+ .divider--lg)::after{display:none}
 /* открытая во второй колонке строка помечается той же заливкой, что и карточка списка */
 .listrow.is-sel{background:var(--surface-2)}
-/* тип пина в строке чата: место под линию занято всегда, цвет появляется только там,
-   где он что-то сообщает */
-.listrow__rule{position:absolute;left:0;top:16px;bottom:16px;width:4px;border-radius:0 999px 999px 0;background:transparent}
-.listrow__rule--act{background:var(--act)}
-.listrow__rule--offer{background:var(--offer)}
-.listrow__rule--find{background:var(--find)}
 .fcard:hover{background:var(--surface-2)}
 
 /* Выбранная строка — только в двухколоночном режиме, где список виден рядом с карточкой.
@@ -1509,6 +1507,11 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
    и та же. Поэтому поверх обложки встаёт лицо собеседника — у общего чата его нет, и это
    отсутствие и есть признак. Кольцо цветом строки, иначе тёмное лицо слипается с фото */
 .listrow__pic{position:relative;flex:none}
+.listrow__pic--corner::before{content:'';position:absolute;left:0;top:0;width:60px;height:60px;border-radius:var(--r-s)}
+.listrow__pic--act::before{background:var(--act)}
+.listrow__pic--offer::before{background:var(--offer)}
+.listrow__pic--find::before{background:var(--find)}
+.listrow__pic--corner .listrow__cover{position:relative;display:block;border-bottom-left-radius:24px}
 /* лицо в верхнем углу — вровень с именем написавшего: у нижнего края оно стояло
    у превью сообщения, к которому отношения не имеет */
 .listrow__face{position:absolute;right:-3px;top:-3px;box-shadow:0 0 0 2px var(--surface)}
@@ -1549,6 +1552,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* Знак непрочитанного: пилюля того же вида, что счётчик на таббаре и на колоколе — один знак
    на всё приложение. Пустая (без числа) остаётся кружком: так живёт системный канал */
 .listrow__last{display:flex;align-items:center;gap:8px;min-width:0;margin-top:4px}
+.listrow__pinrow{display:flex;align-items:center;gap:8px;min-width:0}
+.listrow__pinrow .listrow__pin{flex:1;min-width:0}
 .listrow__last .listrow__msg{flex:1;min-width:0;margin-top:0}
 .unread{
   flex:none;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--brand);
@@ -1813,13 +1818,15 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   /* Поле ввода лежит внутри подвала, и нижний отступ был у обоих: подвалу общее правило
      шторок давало 24 плюс безопасную зону, полю — ещё 12 плюс её же. Отступ один, у подвала,
      и правило сильнее общего, чтобы оно его больше не перебивало */
-  .panel.is-chat:not(.is-section) .panel__foot{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+  /* переписка на телефоне — полноэкранный раздел, поэтому правило без оговорки про разделы:
+     в 3.28 оно на неё не действовало, и поле вставало вплотную к полоске «домой» */
+  .panel.panel.is-chat .panel__foot{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
   .panel.is-chat .composer{padding-bottom:0}
   /* С открытой клавиатурой переписка кончается у её верхнего края, а поле ввода стоит вплотную
      над ней с обычным отступом 12: запас под полоску «домой» спрятан под клавиатурой. Раньше
      экран оставался во всю высоту, айфон сам подвигал страницу к полю — между полем и
      клавиатурой зияла пустота, а при прокрутке поле уезжало под клавиатуру */
-  .app.is-kb .panel.is-chat:not(.is-section) .panel__foot{padding-bottom:12px}
+  .app.is-kb .panel.panel.is-chat .panel__foot{padding-bottom:12px}
   .app.is-kb .panel.is-chat .panel__body{padding-bottom:0}
   .app.is-chat .rail{transform:translateY(100%);pointer-events:none}
   .rail{transition:transform .22s ease}
@@ -2087,6 +2094,7 @@ body.ds-narrow .dsmain{max-width:400px}
 <symbol id="i-close" viewBox="0 0 24 24" fill="currentColor"><path d="M12 10.586L16.95 5.63599L18.364 7.04999L13.414 12L18.364 16.95L16.95 18.364L12 13.414L7.04999 18.364L5.63599 16.95L10.586 12L5.63599 7.04999L7.04999 5.63599L12 10.586Z" fill="currentColor"/></symbol>
 <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol>
 <symbol id="i-chev-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></symbol>
+<symbol id="i-sort" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5v14M8 5L5 8M8 5l3 3M16 19V5M16 19l-3-3M16 19l3-3"/></symbol>
 <symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></symbol>
 <symbol id="i-pin" viewBox="0 0 24 24" fill="currentColor"><path d="M18.364 17.364L12 23.728L5.636 17.364C4.37734 16.1054 3.52019 14.5017 3.17293 12.7559C2.82567 11.0101 3.00391 9.20047 3.6851 7.55595C4.36629 5.91142 5.51984 4.50582 6.99988 3.51689C8.47992 2.52796 10.22 2.00012 12 2.00012C13.78 2.00012 15.5201 2.52796 17.0001 3.51689C18.4802 4.50582 19.6337 5.91142 20.3149 7.55595C20.9961 9.20047 21.1743 11.0101 20.8271 12.7559C20.4798 14.5017 19.6227 16.1054 18.364 17.364V17.364ZM12 13C12.5304 13 13.0391 12.7893 13.4142 12.4143C13.7893 12.0392 14 11.5305 14 11C14 10.4696 13.7893 9.9609 13.4142 9.58583C13.0391 9.21076 12.5304 9.00004 12 9.00004C11.4696 9.00004 10.9609 9.21076 10.5858 9.58583C10.2107 9.9609 10 10.4696 10 11C10 11.5305 10.2107 12.0392 10.5858 12.4143C10.9609 12.7893 11.4696 13 12 13Z" fill="currentColor"/></symbol>
 <symbol id="i-people" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22C2 19.8783 2.84285 17.8434 4.34315 16.3431C5.84344 14.8429 7.87827 14 10 14C12.1217 14 14.1566 14.8429 15.6569 16.3431C17.1571 17.8434 18 19.8783 18 22H2ZM10 13C6.685 13 4 10.315 4 7C4 3.685 6.685 1 10 1C13.315 1 16 3.685 16 7C16 10.315 13.315 13 10 13ZM17.363 15.233C18.8926 15.6261 20.2593 16.4918 21.2683 17.7068C22.2774 18.9218 22.8774 20.4242 22.983 22H20C20 19.39 19 17.014 17.363 15.233ZM15.34 12.957C16.178 12.2075 16.8482 11.2893 17.3066 10.2627C17.765 9.23616 18.0013 8.12429 18 7C18.0021 5.63347 17.6526 4.28937 16.985 3.097C18.1176 3.32459 19.1365 3.93737 19.8685 4.8312C20.6004 5.72502 21.0002 6.84473 21 8C21.0003 8.71247 20.8482 9.41676 20.5541 10.0657C20.26 10.7146 19.8305 11.2931 19.2946 11.7625C18.7586 12.2319 18.1285 12.5814 17.4464 12.7874C16.7644 12.9934 16.0462 13.0512 15.34 12.957V12.957Z" fill="currentColor"/></symbol>
@@ -2489,6 +2497,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.28.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.29.0";</script>
 </body>
 </html>
