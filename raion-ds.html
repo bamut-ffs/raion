@@ -24,6 +24,7 @@
   --ink:#161616;
   --ink-2:#5c5c5c;
   --ink-3:#6f6f6f;
+  --workarea:#8e8e93;   /* пунктир рабочей области на карте */
   --line:#e5e5ea;
   --line-2:#d1d1d6;
   --road:#ffffff;
@@ -130,7 +131,7 @@
     --surface-3:#3a3a3c;
     --ink:#ececec;
     --ink-2:#a1a1a1;
-    --ink-3:#8f8f8f;
+    --ink-3:#8f8f8f; --workarea:#b4b4b8;
     /* линии светлее Gray5: разделитель обязан быть виден и на surface, и на surface-2,
        а они у Apple в тёмной теме стоят вплотную */
     --line:#38383a;
@@ -183,7 +184,7 @@
   --surface-3:#3a3a3c;
   --ink:#ececec;
   --ink-2:#a1a1a1;
-  --ink-3:#8f8f8f;
+  --ink-3:#8f8f8f; --workarea:#b4b4b8;
   /* линии светлее Gray5: разделитель обязан быть виден и на surface, и на surface-2,
      а они у Apple в тёмной теме стоят вплотную */
   --line:#38383a;
@@ -641,10 +642,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 
 /* ---------- generic bits ---------- */
 /* строка заголовка раздела: подпись слева, переход в полный список справа */
-.secthead{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-/* текстовый цвет бренда, а не цвет заливки кнопок; начертание легче заголовка рядом */
-.headlink{color:var(--brand-icon);font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;white-space:nowrap}
-.headlink:hover{text-decoration:underline;text-underline-offset:2px}
+/* Заголовок раздела — стилем заголовка экрана (16/20), цвет серый: он называет раздел,
+   а не спорит с содержимым. Переход справа — «таблетка», по центру строки */
+.secthead{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:28px}
+.secthead__t{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;color:var(--ink-2)}
 /* Заголовок группы — тем же стилем, что подпись над полем формы: роль у них одна.
    Моноширинный капс с разрядкой был единственным в интерфейсе и выглядел слишком тонким */
 .eyebrow{font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;color:var(--ink-2)}
@@ -678,31 +679,41 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    в светлой теме тёмная заливка со светлыми цифрами, в тёмной наоборот, как у категорийных
    цветов, где значок на светящейся заливке тоже тёмный */
 .tag--solid{background:var(--ink-2);border-color:transparent;color:var(--surface)}
-/* Обращения сервиса к вам: первым блоком карточки (3.27), залитые бледным брендовым */
+/* Обращения сервиса к вам: первым блоком карточки (3.27) */
 .cardnotes{display:flex;flex-direction:column;gap:8px;margin-top:4px}
-/* Обращение сервиса и карточка уведомления — один объект в двух местах, поэтому метрика
-   и типографика у них общие: поле 16, зазор 8, заголовок 16/20, текст 13/18, пара 8.
-   Разным остаётся только фон, и это осознанно: в карточке вокруг серые строки содержимого,
-   поэтому обращение белое с рамкой; в канале вокруг белая панель, поэтому новое — залитое */
-/* Обращение залито бледным брендовым: оно требует действия, и белое с рамкой терялось
-   среди обычных карточек */
-.cardnote{
-  display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:var(--r-m);
-  border:1px solid transparent;background:var(--brand-soft);
-  font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-2);
-}
-.cardnote b{display:block;font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;color:var(--ink)}
-/* 4 при интерлиньяже 18. Слипалось раньше не из-за четвёрки, а из-за тесных 13/16:
-   просвет между строками абзаца был меньше, чем нужно, и отступ сверху на его фоне
-   читался как ничто. Интерлиньяж вылечил причину — восьмёрка лечила бы уже здоровое */
-.cardnote p{margin:4px 0 0;color:var(--ink-3);font-size:var(--f-s10);line-height:var(--l-s10)}
-.cardnote .row{display:flex;gap:8px}
-.cardnote .row .btn{flex:1}
+/* Алерт — обращение сервиса к человеку: «Уже вернулось?», «Ещё актуально?», «Подтвердите
+   участие». Одна строка: значок, вопрос с пояснением, действие справа. Прежняя плашка
+   ставила кнопку во всю ширину третьей строкой и выходила тяжёлой плитой, а в тёмной теме
+   бледный брендовый становился мутным. Подложка и значок — цвета категории события,
+   о котором речь: этими же цветами помечены булавки, и алерт сразу читается «про это» */
+.alert{display:flex;align-items:center;gap:12px;padding:12px 12px 12px 16px;border-radius:var(--r-m);
+  background:var(--surface-2)}
+.alert--act{background:var(--act-soft)}
+.alert--offer{background:var(--offer-soft)}
+.alert--find{background:var(--find-soft)}
+.alert__ic{width:20px;height:20px;flex:none;align-self:flex-start;color:var(--ink-3)}
+.alert--act .alert__ic{color:var(--act)}
+.alert--offer .alert__ic{color:var(--offer)}
+.alert--find .alert__ic{color:var(--find)}
+.alert__t{flex:1;min-width:0}
+.alert__t b{display:block;font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;color:var(--ink)}
+.alert__t p{margin:2px 0 0;font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-2)}
+/* две кнопки встают столбиком одной ширины: основная сверху, ближе к вопросу */
+.alert__acts{display:flex;flex-direction:column;gap:8px;flex:none}
+/* «Таблетка» — мелкая кнопка с полным скруглением. Нейтральная лежит на любой из трёх
+   подложек категорий; брендовая мягкая — второстепенный переход («Весь архив ›») */
+.pill{display:inline-flex;align-items:center;justify-content:center;gap:2px;height:28px;padding:0 12px;
+  border-radius:999px;background:var(--surface);color:var(--ink);white-space:nowrap;
+  font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600}
+.pill:hover{opacity:.85}
+.pill--primary{background:var(--brand);color:#fff}
+.pill--brand{background:var(--brand-soft);color:var(--brand-icon);padding-right:8px}
+.pill svg{width:14px;height:14px;flex:none}
 .footrow{display:flex;gap:8px}
 .footrow .btn{flex:1;min-width:0}
 .pcg--notes+.pcg{border-top-color:transparent}
 .cardnotes--short{margin-top:0}
-.cardnotes--short .cardnote{padding:12px}
+
 /* итог в уведомлении — плашка без обводки: это не действие и не тип, а результат */
 .chip--plate{background:var(--surface);border:none;color:var(--ink-2)}
 /* Сегментед-контрол: одна дорожка, сегменты внутри. Отдельно стоящие чипы не показывали,
@@ -840,6 +851,17 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    ними должно быть пусто, а не одинаковые зазоры */
 .scopebtn__st{margin-left:auto;display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .scopebtn:hover{background:var(--surface-2)}
+.scopebtn--static{padding-left:0;padding-right:0;cursor:default}
+.scopebtn--static:hover{background:none}
+.toprow{display:flex;gap:8px;align-items:stretch}
+.toprow .searchfield{flex:1;min-width:0}
+/* кнопка фильтра в панели десктопа: квадрат в высоту поля, рамка как у поля */
+.filterbtn--in{flex:none;width:46px;display:grid;place-items:center;position:relative;color:var(--ink-2);
+  border:1px solid var(--line-2);border-radius:var(--r-m);background:var(--surface)}
+.filterbtn--in:hover{background:var(--surface-2)}
+.filterbtn--in svg{width:18px;height:18px}
+.filterbtn--in.is-dirty::after{content:'';position:absolute;top:7px;right:7px;width:8px;height:8px;border-radius:50%;
+  background:var(--brand);box-shadow:0 0 0 2px var(--surface)}
 .scopebtn b{font-weight:600;color:var(--ink)}
 .scopebtn>svg:last-child{width:14px;height:14px;color:var(--ink-3);flex:none}
 /* кнопка фильтра над картой — только на мобильном: там панель по умолчанию свёрнута,
@@ -1621,6 +1643,10 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* в шапке кегль крупнее, и той же паре нужно меньше воздуха, чем в строке списка */
 .chathead__txt{display:flex;flex-direction:column;gap:3px;min-width:0}
 .chathead__n{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Счётчик рядом с заголовком стоял на базовой линии: низ плашки уходил под неё, строка
+   вырастала с 20 до 24, и подзаголовок съезжал вниз. Теперь плашка 18 вписана в строку
+   сверху: строка остаётся 20, а середина плашки приходится на середину заглавной буквы */
+.chathead__n .tag{height:18px;padding-top:0;padding-bottom:0;vertical-align:top;margin-top:1px;box-sizing:border-box}
 .chathead__p{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* Название в шапке проявляется только когда карточка прокручена и собственный заголовок
    уехал вверх. В покое там пусто: подпись «Услуга или вещь · Сокольники» дословно повторяла
@@ -1784,13 +1810,16 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
      И нижний край там принадлежит содержимому — внизу поле ввода, а с открытой клавиатурой
      полос становится три */
   .panel.is-chat{bottom:0}
-  .panel.is-chat .panel__foot,.panel.is-chat .composer{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+  /* Поле ввода лежит внутри подвала, и нижний отступ был у обоих: подвалу общее правило
+     шторок давало 24 плюс безопасную зону, полю — ещё 12 плюс её же. Отступ один, у подвала,
+     и правило сильнее общего, чтобы оно его больше не перебивало */
+  .panel.is-chat:not(.is-section) .panel__foot{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+  .panel.is-chat .composer{padding-bottom:0}
   /* С открытой клавиатурой переписка кончается у её верхнего края, а поле ввода стоит вплотную
      над ней с обычным отступом 12: запас под полоску «домой» спрятан под клавиатурой. Раньше
      экран оставался во всю высоту, айфон сам подвигал страницу к полю — между полем и
      клавиатурой зияла пустота, а при прокрутке поле уезжало под клавиатуру */
-  .app.is-kb .panel.is-chat{bottom:var(--kb)}
-  .app.is-kb .panel.is-chat .panel__foot,.app.is-kb .panel.is-chat .composer{padding-bottom:12px}
+  .app.is-kb .panel.is-chat:not(.is-section) .panel__foot{padding-bottom:12px}
   .app.is-kb .panel.is-chat .panel__body{padding-bottom:0}
   .app.is-chat .rail{transform:translateY(100%);pointer-events:none}
   .rail{transition:transform .22s ease}
@@ -1804,6 +1833,10 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   /* на мобильном сдвиг вниз, а не вбок: правило сворачивания сюда не достаёт */
   .work.is-collapsed .panel{transform:none}
   .panel.is-peek{transform:translateY(calc(100% - 12px))}
+  /* Между полем поиска (низ на 62) и домашней шторкой (верх на 80) полоса ручки стояла
+     в 5 от поля и в 9 от шторки. Сдвигаем только нарисованную полоску — зона захвата
+     остаётся прежней, 22 над шторкой */
+  .panel.is-home .sheet-grip::before{transform:translateY(2px)}
   /* снимок предыдущего экрана под свайпом назад: только картинка, в руки не берётся */
   .panel.panel--under{pointer-events:none}
   .panel__dim{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:50;border-radius:inherit}
@@ -2456,6 +2489,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.27.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.28.0";</script>
 </body>
 </html>
