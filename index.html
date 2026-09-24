@@ -1732,6 +1732,37 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .modal p{margin:0 0 20px;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10)}
 .modal__foot{padding:0 24px 24px;display:flex;flex-direction:column;gap:8px}
 .brandbig{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+/* Приветствие. Стиль экрана — на этапе стиля; сейчас собрано из наших компонентов */
+.welcome__brand{display:flex;align-items:center;gap:10px}
+.welcome__brand .brand__mark{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--brand);color:#fff}
+.welcome__brand .brand__mark svg{width:19px;height:19px}
+.welcome__brand .brand__name{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:700}
+.welcome__h{margin:0;font-size:var(--f-h30);line-height:var(--l-h30);font-weight:700}
+.welcome__p{margin:8px 0 0;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10)}
+.welcome__types{display:flex;flex-direction:column;gap:8px}
+.welcome__type{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r-m);background:var(--surface-2)}
+.welcome__type svg{width:20px;height:20px;flex:none}
+.welcome__type--act{background:var(--act-soft)} .welcome__type--act svg{color:var(--act)}
+.welcome__type--offer{background:var(--offer-soft)} .welcome__type--offer svg{color:var(--offer)}
+.welcome__type--find{background:var(--find-soft)} .welcome__type--find svg{color:var(--find)}
+.welcome__type b{display:block;font-size:var(--f-m20);line-height:var(--l-m20);font-weight:600}
+.welcome__type span span{display:block;font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-2)}
+.ptags .ptag.is-on{background:var(--brand-soft);color:var(--brand-icon)}
+/* пока открыто приветствие, карта живая, но размыта и не ловит нажатий; меню и кнопки
+   карты спрятаны — нажимать их пока незачем. Размытие уходит плавно: это и есть момент,
+   когда «район открылся» */
+.map{transition:filter .4s ease}
+/* Подсказка — тёмный пузырь поверх интерфейса: светлые карточки и шторки вокруг, и так
+   она не путается с содержимым. Кнопка «Понятно» — текстом, это не действие продукта */
+.hintbub{position:fixed;z-index:30;display:flex;align-items:center;gap:12px;max-width:360px;
+  padding:12px 12px 12px 16px;border-radius:var(--r-m);background:var(--ink);color:var(--surface);
+  font-size:var(--f-s10);line-height:var(--l-s10);box-shadow:var(--shadow-2)}
+.hintbub[hidden]{display:none}
+.hintbub span{flex:1;min-width:0}
+.hintbub button{flex:none;font-weight:600;color:var(--surface);padding:4px}
+.app.is-welcome .map{filter:blur(8px);pointer-events:none}
+.app.is-welcome .rail,.app.is-welcome .panel-collapse{display:none}
+.app.is-welcome .toolbar,.app.is-welcome .zoomctl,.app.is-welcome .mapmeta{opacity:0;pointer-events:none}
 .brandbig .brand__mark{width:38px;height:38px;border-radius:10px}
 .brandbig .brand__mark svg{width:21px;height:21px}
 .codeline{display:flex;gap:8px}
@@ -2168,6 +2199,7 @@ svg{width:16px;height:16px}
     <aside class="panel panel-b" id="panelB" hidden aria-label="Открытое"></aside>
   </div>
   <div class="sheet-scrim" id="sheetScrim"></div>
+  <div class="hintbub" id="hintBubble" role="status" hidden></div>
 </div>
 
 <!-- Настоящий движок карты. Единственный внешний скрипт в проекте: рисовать векторные
@@ -2882,7 +2914,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.30.0';
+var VERSION='3.31.0';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
 var UPDATED='24 сентября 2026';
@@ -4279,13 +4311,14 @@ function initGL(){
   glMap.on('movestart',function(e){
     if(!(e&&e.originalEvent))return;
     pickFlight=false;
+    if(ui.picking)hintDone('create');
     peekSheet(true);
     if(ui.picking&&ui.draft&&ui.draft.placeSt){ui.draft.placeSt=null; syncPlaceField()}
   });
   glMap.on('moveend',function(e){
     peekSheet(false); glZoomTo=null;
     /* сдвинул карту сам — выбранное место отпускаем, список снова идёт за кадром */
-    if(e&&e.originalEvent)dropFocus();
+    if(e&&e.originalEvent){dropFocus(); if(!ui.panel)hintDone('map')}
     if((e&&e.originalEvent)||userCam)markMapMoved();
   });
 
@@ -6432,8 +6465,56 @@ function viewFor(p){
     case 'me': return viewMe();
     case 'settings': return viewSettings();
     case 'edit': return viewEdit(p.id);
+    case 'welcome': return viewWelcome();
   }
   return null;
+}
+/* Приветствие вместо регистрации. Регистрация в прототипе была декорацией — сервера нет,
+   код ненастоящий, — а человек из кейса видит продукт впервые и до карты должен дойти
+   за одно нажатие. Экран один: зачем это, три типа событий, имя и станция. Имя делает
+   демо своим, станция — домом и первым кадром. Станций четыре, все в плотной части демо:
+   с дальней человек мог попасть в пустую зону, а свои демо-события оказались бы на другом
+   конце города. Карта за экраном живая, но размыта — видно, что город настоящий */
+var WELCOME_ST=['d_chisty','d_sretenka','d_kursk','d_kuznec'];
+function welcomeValid(){return (ui.welcomeName||'').trim().length>1}
+function viewWelcome(){
+  var sel=ui.welcomeSt||WELCOME_ST[0];
+  var types=[['act','people','Встречи','Пробежка, футбол, уборка двора'],
+             ['offer','box','Вещи и услуги','Отдать, одолжить, помочь'],
+             ['find','search','Находки и пропажи','Ключи, варежки, потерявшийся кот']];
+  var body='<div class="pad stack welcome">'+
+    '<div class="welcome__brand"><span class="brand__mark">'+icon('map')+'</span><span class="brand__name">Район</span></div>'+
+    '<div><h1 class="welcome__h">Что происходит у вас во дворе</h1>'+
+    '<p class="welcome__p">Соседи договариваются о встречах, вещах и находках — на карте вокруг дома</p></div>'+
+    '<div class="welcome__types">'+types.map(function(t){
+      return '<div class="welcome__type welcome__type--'+t[0]+'">'+icon(t[1])+
+        '<span><b>'+t[2]+'</b><span>'+t[3]+'</span></span></div>';
+    }).join('')+'</div>'+
+    '<div class="field"><label for="welcomeName">Как вас зовут</label>'+
+      '<input class="input" id="welcomeName" maxlength="40" autocomplete="given-name" placeholder="Анна" value="'+H(ui.welcomeName||'')+'">'+
+      '<span class="hint">Соседям покажем имя и первую букву фамилии</span></div>'+
+    '<div class="field"><label>Ваша станция</label>'+
+      '<div class="ptags ptags--field">'+WELCOME_ST.map(function(id){
+        var d=district(id);
+        return '<button class="ptag'+(id===sel?' is-on':'')+'" data-welcome-st="'+id+'">'+placeIcon(d)+'<span>'+H(d.name)+'</span></button>';
+      }).join('')+'</div>'+
+      '<span class="hint">Карта откроется здесь, сменить можно в настройках</span></div>'+
+    '<div class="demo-note" style="margin:0">'+icon('info')+'<span>Это прототип: данные живут только в вашем браузере, соседи демонстрационные</span></div>'+
+  '</div>';
+  var foot='<button class="btn btn--primary" data-act="welcome-go"'+(welcomeValid()?'':' disabled')+'>Открыть район'+icon('chev-right')+'</button>';
+  return {title:'Район', tall:true, noHead:true, body:body, foot:foot};
+}
+function welcomeGo(){
+  var m=me(); if(!m||!welcomeValid())return;
+  var st=ui.welcomeSt||WELCOME_ST[0], d=district(st);
+  m.name=ui.welcomeName.trim(); m.district_id=st; m.home_st=st; m.home_point={x:d.sx,y:d.sy};
+  delete m.welcome; save();
+  ui.districtId=st; ui.welcomeName=''; ui.panel=null;
+  var wn=$('#welcomeName'); if(wn)wn.blur();
+  render();
+  /* первый кадр — все события станции, а не двор вокруг выхода: на обычном масштабе у
+     Курской в кадр попадало одно событие, и район выглядел пустым */
+  askedMove(); if(!(glMap&&fitStationZone(d)))fitOnStation(st);
 }
 function renderPanel(){
   var el=$('#panel');
@@ -6488,7 +6569,7 @@ function renderPanel(){
   var app=$('#app'); if(app)app.classList.toggle('is-homeopen',homeSheet&&ui.homeOpen);
   /* смахивать вниз можно шторки, но не разделы и не создание: там легко потерять
      заполненную форму случайным жестом. У карточки пина свой жест на три положения */
-  var swipeable=!isDesktopPanel()&&!v.home&&!v.section&&!pinSheet&&!(main&&main.type==='create');
+  var swipeable=!isDesktopPanel()&&!v.home&&!v.section&&!pinSheet&&!(main&&(main.type==='create'||main.type==='welcome'));
   el.classList.toggle('is-swipe',swipeable);
   /* затемнение только под мобильными шторками: разделы живут над таббаром и фон не гасят */
   /* на шаге выбора места затемнения нет: под шторкой лежит карта, которую двигают */
@@ -6496,7 +6577,7 @@ function renderPanel(){
   if(homeSheet)sheetScrim(ui.homeOpen,true);
   /* у свёрнутой карточки затемнения нет: под ней карта, ради которой её и свернули */
   else if(pinSheet)sheetScrim(!ui.pinShut,true);
-  else sheetScrim(!v.section&&!isDesktopPanel()&&!ui.picking,false);
+  else sheetScrim(!v.section&&!v.noHead&&!isDesktopPanel()&&!ui.picking,false);
   /* переписка приносит собственную шапку (v.head). Остальным видам шапка нужна только на
      мобильном: на десктопе заголовок дублировал то, что и так видно на экране — район в кнопке
      над картой, раздел в меню, название пина в самой карточке */
@@ -6513,7 +6594,7 @@ function renderPanel(){
   var hasBack=!!v.back||(!v.home&&!v.section);
   var goesBack=!!(main&&(oneUp(main)||(main.type==='pin'&&main.origin&&main.origin.type!=='list')));
   var backIcon=goesBack?'back':'close';
-  if(!head&&!v.home&&(hasBack||!isDesktopPanel())){
+  if(!head&&!v.home&&!v.noHead&&(hasBack||!isDesktopPanel())){
     /* по центру только на телефоне: на десктопе шапка есть лишь у вложенных экранов
        в узкой колонке, и центрированное название там оторвалось бы от стрелки */
     var ctr=!isDesktopPanel();
@@ -8030,11 +8111,10 @@ function viewSettings(){
   })()+
   blocked+
   '<div class="divider divider--lg"></div>'+
-  /* Отладка есть только у тестера (демо-вход): настоящему соседу замеры ни к чему */
-  (isTester()
-    ? '<button class="linerow" data-act="debug-open"><span class="linerow__t"><b>Отладка</b></span>'+icon('chev-right')+'</button>'+
-      '<div class="divider divider--lg"></div>'
-    : '')+
+  /* «О прототипе» — строкой и здесь: на телефоне кнопки в меню нет, а в попапе живут
+     «Показать подсказки заново» и отладка */
+  '<button class="linerow" data-act="about-open"><span class="linerow__t"><b>О прототипе</b></span>'+icon('chev-right')+'</button>'+
+  '<div class="divider divider--lg"></div>'+
   '<div class="pad stack">'+
     '<button class="btn btn--danger" data-act="reset">'+icon('reset')+'Сбросить прототип'+'</button>'+
     '<span class="hint">Сброс удалит ваш профиль, события и переписку из браузера и вернёт демо-данные</span>'+
@@ -8632,11 +8712,6 @@ function safeInset(side){
    ни безопасных зон, ни запуска с домашнего экрана, и воспроизвести отступ там нечем.
    Эти числа отвечают на вопрос прямо — доходит ли приложение до низа окна, доходит ли
    таббар до низа приложения, и совпадает ли окно с экраном */
-/* Тестер — тот, кто вошёл через демо-вход. Признак появился позже самого входа, поэтому
-   профиль, заведённый до него, узнаём по демо-телефону: перерегистрироваться ради
-   отладки не нужно. Настоящему соседу отладочное не показывается вовсе */
-var TESTER_PHONE='+7 900 000-00-00';
-function isTester(){var m=me(); return !!(m&&(m.tester||m.phone===TESTER_PHONE))}
 function measureRows(){
   var vv=window.visualViewport, ap=$('#app'), r=$('.rail');
   var apr=ap?ap.getBoundingClientRect():null, rr=r?r.getBoundingClientRect():null;
@@ -8664,6 +8739,14 @@ function measureRows(){
     ['Клавиатура', cs.getPropertyValue('--kb').trim()||'0px']
   ];
 }
+var verHold=null;
+document.addEventListener('pointerdown',function(e){
+  if(!(e.target.closest&&e.target.closest('#aboutVer')))return;
+  verHold=setTimeout(function(){verHold=null; debugDialog()},650);
+});
+['pointerup','pointercancel','pointerleave'].forEach(function(t){
+  document.addEventListener(t,function(){if(verHold){clearTimeout(verHold);verHold=null}},true);
+});
 /* Отладка — попап, а не блок в настройках: параметров стало много, а нужны они, только
    когда что-то разъехалось на конкретном телефоне. Скриншот попапа отвечает сразу на всё:
    какая сборка, какое окно, где края, чем тыкают */
@@ -8689,8 +8772,11 @@ function aboutDialog(){
       '<span><b>Автор</b>Савиных Сергей</span>'+
       '<span><b>Создан</b>Август 2026 года</span>'+
       '<span><b>Обновлён</b>'+UPDATED+'</span>'+
-      '<span><b>Версия</b>'+VERSION+' — по ТЗ v0.3</span>'+
+      /* Отладка — долгим нажатием на версию: вход теперь у всех демо, и отдельный признак
+         тестера больше не отличает нас от гостя из кейса. Кто знает — найдёт */
+      '<span id="aboutVer" style="user-select:none;-webkit-user-select:none;-webkit-touch-callout:none"><b>Версия</b>'+VERSION+' — по ТЗ v0.3</span>'+
     '</div>'+
+    '<button class="btn btn--line btn--sm" data-act="hints-reset" style="align-self:flex-start">Показать подсказки заново</button>'+
   '</div>';
   setOverlay('<div class="scrim" data-act="scrim"><div class="modal" role="dialog" aria-modal="true">'+
     '<div class="modal__body"><h2>О прототипе</h2>'+body+'</div>'+
@@ -9289,6 +9375,7 @@ function onAction(act,el,e){
       }
       break;
     case 'publish': publish(); break;
+    case 'welcome-go': welcomeGo(); break;
     case 'addphoto': pickPhoto(); break;
     case 'rmphoto': ui.draft.photos.splice(parseInt(el.getAttribute('data-i'),10),1); render(); break;
     case 'remind':
@@ -9603,6 +9690,8 @@ function onAction(act,el,e){
       var hl=(district(homePoint().st).lines||[])[0]; if(hl!=null)ui.lineOpen=hl;
       openPanel({type:'stations',pick:'home',prev:ui.panel}); break;
     case 'debug-open': debugDialog(); break;
+    case 'hints-reset': closeModal(); hintsReset(); break;
+    case 'about-open': aboutDialog(); break;
 
     case 'people': openPanel({type:'people',id:id,prev:ui.panel}); break;
     case 'open-archive': openPanel({type:'archive',prev:ui.panel}); break;
@@ -9633,6 +9722,14 @@ document.addEventListener('click',function(e){
     holdRender(220);
   }
 },true);
+/* «Понятно» у подсказки; отклик в карточке закрывает подсказку про отклик */
+document.addEventListener('click',function(e){
+  var hk=e.target.closest&&e.target.closest('[data-hint-ok]');
+  if(hk){hintDone(hk.getAttribute('data-hint-ok')); return}
+  var hb=$('#hintBubble');
+  if(hb&&hb._k==='card'&&e.target.closest&&e.target.closest('.panel__foot .btn--primary,.panel__foot .btn--brand'))hintDone('card');
+},true);
+window.addEventListener('resize',function(){syncHint()});
 document.addEventListener('click',function(e){
   var el;
   /* стрелка полосы с прокруткой: обработчик один на все полосы, включая те, которых
@@ -9731,8 +9828,16 @@ document.addEventListener('click',function(e){
   /* Прежний обработчик вёл по имени в личную переписку — и в самой переписке не делал
      ничего, потому что открывал ту же. Имя ведёт в профиль, как и было решено; писать
      лично можно оттуда, кнопкой, которая знает, по какому событию заводить разговор */
+  /* станция в приветствии: отмечаем тег на месте, а карта за экраном летит к станции */
+  if((el=e.target.closest('[data-welcome-st]'))){
+    ui.welcomeSt=el.getAttribute('data-welcome-st');
+    $$('[data-welcome-st]').forEach(function(b){b.classList.toggle('is-on',b===el)});
+    askedMove(); flyToStation(ui.welcomeSt);
+    return;
+  }
   if((el=e.target.closest('[data-place-st]'))){
     var pst=el.getAttribute('data-place-st'), xy=null;
+    hintDone('create');
     if(ui.draft){
       var dr=ui.draft;
       /* зерно одно на выбор станции: пока станция та же, точка не прыгает */
@@ -9886,6 +9991,12 @@ document.addEventListener('input',function(e){
     if(ui.draft){placeFieldOpen(); ui.draft.stQ=e.target.value; placeFieldTags()}
     return;
   }
+  /* имя в приветствии — без перерисовки: поле держит фокус, меняется только кнопка */
+  if(e.target.id==='welcomeName'){
+    ui.welcomeName=e.target.value;
+    var wb=$('[data-act="welcome-go"]'); if(wb)wb.disabled=!welcomeValid();
+    return;
+  }
   if(e.target.id==='msgInput'&&ui.panel&&ui.panel.type==='thread'){
     (ui.msgDrafts=ui.msgDrafts||{})[ui.panel.id]=e.target.value;
   }
@@ -9933,7 +10044,7 @@ document.addEventListener('input',function(e){
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){
     if($('#overlay').innerHTML&&$('.scrim'))closeModal();
-    else if(ui.panel){ui.draft=null;closePanel()}
+    else if(ui.panel&&ui.panel.type!=='welcome'){ui.draft=null;closePanel()}
   }
   if(e.key==='Enter'&&e.target.id==='msgInput'&&!e.shiftKey){e.preventDefault();sendMessage()}
   if(e.target.id==='placeStInput'){
@@ -10229,6 +10340,85 @@ function finishOnboard(){
   closeModal(); startApp();
   toast('Добро пожаловать! Это прототип: данные живут только в вашем браузере');
 }
+var FEATURES={register:false};
+/* Онбординг — три подсказки по месту, а не сторис и не тур. Сторис на десктопе чужие и
+   рассказывают механики до того, как их видно; тур блокирует интерфейс, и его проматывают.
+   Подсказка появляется, когда человек впервые дошёл до неочевидной механики, закрывается
+   «Понятно» или самим действием и больше не возвращается. Остальное интерфейс объясняет
+   сам — пустыми состояниями, алертами и подсказками полей */
+var HINTS={
+  map:'Список идёт за картой: подвиньте карту — и увидите, что происходит там',
+  card:'Откликнитесь — у вас с автором появится переписка',
+  create:'Подведите карту под прицел — точка события встанет сюда'
+};
+function hintSeen(k){var m=me(); return !!(m&&m.hints&&m.hints[k])}
+function hintDone(k){
+  var m=me(); if(!m)return;
+  m.hints=m.hints||{};
+  if(!m.hints[k]){m.hints[k]=1; save()}
+  syncHint();
+}
+/* кнопка отклика в открытой карточке — в той колонке, где карточка сейчас */
+function cardMainBtn(){
+  var b=$('#panelB'), sc=(b&&!b.hidden)?b:$('#panel');
+  return sc?sc.querySelector('.panel__foot .btn--primary,.panel__foot .btn--brand'):null;
+}
+function currentHint(){
+  var p=ui.panel;
+  if(p&&p.type==='welcome')return null;
+  if($('#overlay').innerHTML)return null;
+  if(!p&&!hintSeen('map'))return 'map';
+  if(p&&p.type==='pin'&&!hintSeen('card')){
+    var pp=pin(p.id), bt=cardMainBtn();
+    /* только пока вы не откликнулись: после отклика кнопка уже ведёт в переписку */
+    if(pp&&pp.author_id!==db.currentUserId&&pp.status==='active'&&!responseOf(pp.id,db.currentUserId)&&
+       bt&&bt.getBoundingClientRect().height>0)return 'card';
+  }
+  if(p&&p.type==='create'&&ui.draft&&ui.draft.step===1&&!ui.draft.stOpen&&!hintSeen('create'))return 'create';
+  return null;
+}
+function syncHint(){
+  var hb=$('#hintBubble'); if(!hb)return;
+  var k=currentHint();
+  if(!k){hb.hidden=true; hb._k=null; return}
+  if(hb._k!==k){
+    hb.innerHTML='<span>'+H(HINTS[k])+'</span><button type="button" data-hint-ok="'+k+'">Понятно</button>';
+    hb._k=k;
+  }
+  hb.hidden=false;
+  var W=window.innerWidth, st=$('.stage').getBoundingClientRect(), bw;
+  hb.style.left=hb.style.right=hb.style.top=hb.style.bottom=hb.style.width='';
+  if(k==='map'){
+    /* на телефоне — под полем поиска над картой, на десктопе — в углу карты у панели */
+    if(isDesktopPanel()){
+      /* сцена лежит и под панелью — отступаем от правого края открытых колонок */
+      var pb=$('#panelB'), edge=$('#panel').getBoundingClientRect().right;
+      if(pb&&!pb.hidden)edge=Math.max(edge,pb.getBoundingClientRect().right);
+      hb.style.left=(edge+16)+'px'; hb.style.top=(st.top+16)+'px';
+    }
+    else{hb.style.left='16px'; hb.style.right='16px'; hb.style.top=(16+safeInset('top')+46+12)+'px'}
+  }else if(k==='card'){
+    /* над кнопкой отклика, на её ширину */
+    var r=cardMainBtn().getBoundingClientRect();
+    hb.style.left=r.left+'px'; hb.style.width=r.width+'px';
+    hb.style.bottom=(window.innerHeight-r.top+10)+'px';
+  }else{
+    /* над прицелом, над головой булавки */
+    bw=Math.min(300,W-32);
+    var cx=st.left+viewCX(), cy=st.top+pickCenterY();
+    hb.style.width=bw+'px';
+    hb.style.left=Math.max(16,Math.min(W-16-bw,cx-bw/2))+'px';
+    hb.style.bottom=(window.innerHeight-cy+64)+'px';
+  }
+}
+function hintsReset(){var m=me(); if(m){m.hints={}; save()} syncHint()}
+function startWelcome(){
+  var sd=district(WELCOME_ST[0]);
+  var u={id:uid('u'),name:'Сосед',phone:null,district_id:WELCOME_ST[0],demo:false,joined_at:now(),face:null,
+    home_point:{x:sd.sx,y:sd.sy},home_st:WELCOME_ST[0],welcome:true};
+  db.users.push(u); db.currentUserId=u.id; seedMyPins(u.id); save();
+  startApp();
+}
 /* только для отладки: вход без телефона/кода/выбора района, чтобы не тратить на них время тестировщиков */
 function skipOnboard(){
   var sd=district('d_chisty');
@@ -10304,6 +10494,8 @@ function startApp(){
   [60,250,700,1500].forEach(function(ms){setTimeout(syncViewport,ms)});
   var m=me();
   ui.districtId=(m&&m.district_id)||'d_chisty';
+  /* ушли со страницы, не закончив приветствие, — вернулись в него же */
+  if(m&&m.welcome)ui.panel={type:'welcome'};
   drawMap(); bindMap(); render();
   /* Кадр ставим второй раз, уже после render: он открывает панель, и левая часть карты
      уходит под неё. Первый fit целился в середину пустого экрана, и район оказывался
@@ -10401,6 +10593,7 @@ function typeRise(old){
 }
 var _renderPanel=renderPanel;
 renderPanel=function(){
+  var apw=$('#app'); if(apw)apw.classList.toggle('is-welcome',!!(ui.panel&&ui.panel.type==='welcome'));
   /* предложение позвать соседей живёт, пока открыта карточка нового события */
   if(ui.inviteFor&&!(ui.panel&&ui.panel.type==='pin'&&ui.panel.id===ui.inviteFor))ui.inviteFor=null;
   var so=null;
@@ -10412,6 +10605,7 @@ renderPanel=function(){
   syncPicking();
   _renderPanel();
   if(so)stepSlide($('#panel'),so);
+  syncHint();
   syncPickUI();
   if(ui.picking)updateDraftFromCenter();
   fitChatToViewport();
@@ -10738,8 +10932,11 @@ else {migrateCoords(); migrateArea(); geoPins(); migrateDemo(); reanchorDemo(); 
 if(db.currentUserId&&user(db.currentUserId)&&me()&&me().geo)geoStart(function(ok){
   if(!ok){var g=me(); if(g){g.geo=false; save(); render()}}
 });
+/* Регистрация по телефону выключена флагом, а не удалена: её экраны пригодятся для кейса.
+   Без неё демо-аккаунт заводится сразу, а приветствие лишь уточняет имя и станцию */
 if(db.currentUserId&&user(db.currentUserId))startApp();
-else renderOnboard();
+else if(FEATURES.register)renderOnboard();
+else startWelcome();
 
 })();
 </script>
