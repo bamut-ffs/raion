@@ -2882,7 +2882,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.29.0';
+var VERSION='3.30.0';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
 var UPDATED='24 сентября 2026';
@@ -6657,6 +6657,9 @@ function viewPin(id){
      Белое с рамкой, потому что вокруг серые строки содержимого — заливкой отсюда
      не отделиться, она бы слилась со строкой автора и строкой участников */
   var notes=[];
+  if(mine&&ui.inviteFor===p.id&&p.status==='active')
+    notes.push(alertHTML(p,'Позвать соседей?','Отправьте событие в домовой чат или знакомым с района',
+      '<button class="pill" data-act="share" data-id="'+p.id+'">Позвать</button>'));
   /* Напоминание живёт в теле события, а не над кнопкой: это настройка, а не действие,
      и рядом с главной кнопкой она с ней спорила. В короткой карточке его не видно —
      и это правильно: сначала решают, потом настраивают */
@@ -8984,6 +8987,11 @@ function publish(){
   p.world=true;
   db.pins.push(p); save();
   ui.draft=null; ui.pickPaused=false;
+  /* Сразу после публикации — предложение позвать соседей: это момент самой сильной
+     мотивации автора, а его чаты — единственный источник плотности на холодном старте.
+     Никакой рассылки: кнопка открывает системное «Поделиться», и куда отправить, решает
+     человек. Показывается один раз — ушёл с карточки, и предложения больше нет */
+  ui.inviteFor=p.id;
   openPanel({type:'pin',id:p.id});
   if(p.x!=null){
     view.k=Math.min(maxZoom(),Math.max(view.k,view.kFit*2));
@@ -9495,6 +9503,7 @@ function onAction(act,el,e){
     case 'share':
       closeModal();
       var sp=pin(id); if(!sp)break;
+      if(ui.inviteFor===id){ui.inviteFor=null; render()}
       var stxt=sp.title+' — «Район»';
       if(navigator.share){
         navigator.share({title:'Район',text:stxt,url:location.href}).then(null,function(){});
@@ -10392,6 +10401,8 @@ function typeRise(old){
 }
 var _renderPanel=renderPanel;
 renderPanel=function(){
+  /* предложение позвать соседей живёт, пока открыта карточка нового события */
+  if(ui.inviteFor&&!(ui.panel&&ui.panel.type==='pin'&&ui.panel.id===ui.inviteFor))ui.inviteFor=null;
   var so=null;
   if(stepAnim&&!reduceMotion()&&ui.panel&&ui.panel.type==='create'){
     var pe=$('#panel'), ob=$('#panelBody');
