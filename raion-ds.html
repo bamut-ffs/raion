@@ -333,6 +333,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   background-repeat:no-repeat;background-color:var(--surface-3);
 }
 .avatar svg{display:block;width:100%;height:100%}
+.avatar--ini{display:grid;place-items:center;color:#fff;font-size:12px;line-height:1;font-weight:600;letter-spacing:.02em}
 .avatar--s{width:24px;height:24px;font-size:10px}
 .navava{display:block;width:22px;height:22px;flex:none;position:relative}
 .avatar--nav{width:22px;height:22px;font-size:9px;display:block}
@@ -686,18 +687,16 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    ставила кнопку во всю ширину третьей строкой и выходила тяжёлой плитой, а в тёмной теме
    бледный брендовый становился мутным. Подложка и значок — цвета категории события,
    о котором речь: этими же цветами помечены булавки, и алерт сразу читается «про это» */
-.alert{display:flex;align-items:center;gap:12px;padding:12px 12px 12px 16px;border-radius:var(--r-m);
+.alert{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r-m);
   background:var(--surface-2)}
 .alert--act{background:var(--act-soft)}
 .alert--offer{background:var(--offer-soft)}
 .alert--find{background:var(--find-soft)}
-.alert__ic{width:20px;height:20px;flex:none;align-self:flex-start;color:var(--ink-3)}
-.alert--act .alert__ic{color:var(--act)}
-.alert--offer .alert__ic{color:var(--offer)}
-.alert--find .alert__ic{color:var(--find)}
 .alert__t{flex:1;min-width:0}
 .alert__t b{display:block;font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;color:var(--ink)}
-.alert__t p{margin:2px 0 0;font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-2)}
+/* та же пара, что «Сосед / это вы» в карточке автора; подзаголовок основным цветом —
+   серый на цветной подложке терялся, особенно в тёмной теме */
+.alert__t p{margin:4px 0 0;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink)}
 /* две кнопки встают столбиком одной ширины: основная сверху, ближе к вопросу */
 .alert__acts{display:flex;flex-direction:column;gap:8px;flex:none}
 /* «Таблетка» — мелкая кнопка с полным скруглением. Нейтральная лежит на любой из трёх
@@ -711,7 +710,6 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .pill svg{width:14px;height:14px;flex:none}
 .footrow{display:flex;gap:8px}
 .footrow .btn{flex:1;min-width:0}
-.pcg--notes+.pcg{border-top-color:transparent}
 .cardnotes--short{margin-top:0}
 
 /* итог в уведомлении — плашка без обводки: это не действие и не тип, а результат */
@@ -1031,6 +1029,8 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .pincard{padding:24px 16px;gap:0}
 .pcg{display:flex;flex-direction:column;gap:8px}
 .pcg+.pcg{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+/* после алертов линии нет и отступ один: правило стояло выше общего и проигрывало ему */
+.pcg.pcg--notes+.pcg{padding-top:0;border-top:none}
 .pcg .cardnotes{margin-top:0}
 /* над группой, которая начинается с карточки (автор, участники, обращение), линию не рисуем:
    край карточки — заливка или рамка — уже граница, и линия над ним была второй. Отступ прежний */
@@ -1727,6 +1727,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .brandbig{display:flex;align-items:center;gap:12px;margin-bottom:20px}
 /* Приветствие. Стиль экрана — на этапе стиля; сейчас собрано из наших компонентов */
 .welcome__brand{display:flex;align-items:center;gap:10px}
+.welcome__back{display:flex;align-items:center;gap:4px;margin-left:-8px}
 .welcome__brand .brand__mark{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--brand);color:#fff}
 .welcome__brand .brand__mark svg{width:19px;height:19px}
 .welcome__brand .brand__name{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:700}
@@ -1752,9 +1753,13 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   font-size:var(--f-s10);line-height:var(--l-s10);box-shadow:var(--shadow-2)}
 .hintbub[hidden]{display:none}
 .hintbub span{flex:1;min-width:0}
-.hintbub button{flex:none;font-weight:600;color:var(--surface);padding:4px}
+.hintbub .pill{flex:none}
 .app.is-welcome .map{filter:blur(8px);pointer-events:none}
-.app.is-welcome .rail,.app.is-welcome .panel-collapse{display:none}
+/* на десктопе в меню остаётся только знак — разделы пока открывать незачем; на телефоне
+   меню — это таббар, и он прячется целиком */
+.app.is-welcome .rail .navbtn,.app.is-welcome .panel-collapse{display:none}
+@media (max-width:820px){.app.is-welcome .rail{display:none}}
+@media (min-width:821px){.welcome__brand{display:none}}
 .app.is-welcome .toolbar,.app.is-welcome .zoomctl,.app.is-welcome .mapmeta{opacity:0;pointer-events:none}
 .brandbig .brand__mark{width:38px;height:38px;border-radius:10px}
 .brandbig .brand__mark svg{width:21px;height:21px}
@@ -2528,6 +2533,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.31.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.32.0";</script>
 </body>
 </html>
