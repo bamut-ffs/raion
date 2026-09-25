@@ -337,6 +337,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .avatar--s{width:24px;height:24px;font-size:10px}
 .navava{display:block;width:22px;height:22px;flex:none;position:relative}
 .avatar--nav{width:22px;height:22px;font-size:9px;display:block}
+.avatar--nav.avatar--ini{display:grid}
 .avatar--l{width:42px;height:42px;font-size:15px}
 /* Снимок в форме правки показан кружком того же вида, что увидят соседи, — только крупно:
    кадрирования у нас нет, и человек должен сразу видеть, что попало в кадр */
@@ -510,6 +511,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   background:color-mix(in srgb,var(--find) 14%,transparent);
   border-color:color-mix(in srgb,var(--find) 55%,transparent);
 }
+.halo__txt{position:absolute;left:-1px;top:-1px;overflow:visible;
+  font-size:10px;font-weight:600;letter-spacing:.02em;fill:color-mix(in srgb,var(--offer) 80%,var(--ink))}
+.halo--find .halo__txt{fill:color-mix(in srgb,var(--find) 80%,var(--ink))}
 .cluster{
   pointer-events:auto;position:relative;transform:translate(-50%,-50%);display:grid;place-items:center;
   width:40px;height:40px;border-radius:50%;background:var(--surface);border:1.5px solid var(--line-2);
@@ -696,7 +700,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .alert__t b{display:block;font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;color:var(--ink)}
 /* та же пара, что «Сосед / это вы» в карточке автора; подзаголовок основным цветом —
    серый на цветной подложке терялся, особенно в тёмной теме */
-.alert__t p{margin:4px 0 0;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink)}
+.alert .alert__t p{margin:4px 0 0;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink);white-space:normal}
 /* две кнопки встают столбиком одной ширины: основная сверху, ближе к вопросу */
 .alert__acts{display:flex;flex-direction:column;gap:8px;flex:none}
 /* «Таблетка» — мелкая кнопка с полным скруглением. Нейтральная лежит на любой из трёх
@@ -946,8 +950,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Высота обложки — пропорция, а не число: раньше стояло 132px без всякого правила, и на
    широком экране обложка выглядела полоской. Кнопки шапки лежат прямо на снимке и читаются
    благодаря своим плашкам и градиенту сверху, поэтому поле по краям больше не нужно */
+/* ширина всегда полная: при упоре в высоту уступает пропорция, а не ширина */
 .cover{
-  aspect-ratio:16/9;max-height:340px;position:relative;display:grid;place-items:center;
+  width:100%;aspect-ratio:16/9;max-height:340px;position:relative;display:grid;place-items:center;
   overflow:hidden;flex:none;
 }
 /* Снимок заполняет обложку целиком. Прежде он показывался «целиком» с полем по краям —
@@ -1030,11 +1035,12 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .pcg{display:flex;flex-direction:column;gap:8px}
 .pcg+.pcg{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
 /* после алертов линии нет и отступ один: правило стояло выше общего и проигрывало ему */
-.pcg.pcg--notes+.pcg{padding-top:0;border-top:none}
+.pcg.pcg--notes+.pcg{padding-top:0;border-top:none;margin-top:24px}
 .pcg .cardnotes{margin-top:0}
 /* над группой, которая начинается с карточки (автор, участники, обращение), линию не рисуем:
    край карточки — заливка или рамка — уже граница, и линия над ним была второй. Отступ прежний */
-.pcg+.pcg:has(> .author:first-child),.pcg+.pcg:has(> .cardnotes:first-child){border-top-color:transparent}
+/* где линии между группами нет, отступ один — 20, а не 16 до линии и 16 после */
+.pcg+.pcg:has(> .author:first-child),.pcg+.pcg:has(> .cardnotes:first-child){border-top:none;padding-top:0;margin-top:20px}
 .pincard h2{font-size:var(--f-h30);line-height:var(--l-h30);font-weight:600;margin:0;text-wrap:balance}
 .pincard p{margin:0;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10);white-space:pre-wrap}
 .metaline{display:flex;flex-wrap:wrap;gap:8px}
@@ -1181,6 +1187,7 @@ button.person:hover{background:var(--surface-2)}
 .subfield{display:flex;flex-direction:column;gap:8px;padding-left:4px;margin-top:4px}
 .subfield>label{font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;color:var(--ink-3)}
 .field>label{font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;color:var(--ink-2)}
+.field .field__desc{margin-top:-4px}
 .field .hint{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
 /* обязательные поля: их ровно три — заголовок, дата и время. Остальные имеют значения
    по умолчанию, и звёздочка на них обесценила бы саму пометку */
@@ -1585,6 +1592,11 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .sysmsg__go{margin-left:auto;width:16px;height:16px;color:var(--ink-3);flex:none}
 .sysmsg__d{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
 .sysmsg__foot{display:flex;align-items:center;gap:8px}
+.sysmsg__when{display:flex;align-items:center;gap:8px;font-size:var(--f-m20);line-height:var(--l-m20);font-weight:600;color:var(--ink)}
+.sysmsg__when svg{width:16px;height:16px;color:var(--ink-3);flex:none}
+/* кнопки ответа под карточкой, на её ширину, с зазором 4 */
+.sysacts{display:flex;gap:4px;margin-top:-12px}
+.sysacts .btn{flex:1;min-width:0}
 .sysmsg__foot .chip{margin-left:auto}
 .sysmsg .btn{width:auto;align-self:flex-start}
 /* только прямым детям колонки: внутри шапки чип стоит в строке с шевроном, и прижатие
@@ -1748,6 +1760,9 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .map{transition:filter .4s ease}
 /* Подсказка — тёмный пузырь поверх интерфейса: светлые карточки и шторки вокруг, и так
    она не путается с содержимым. Кнопка «Понятно» — текстом, это не действие продукта */
+.kbdiag{position:fixed;left:8px;right:8px;z-index:60;padding:4px 6px;border-radius:6px;pointer-events:none;
+  background:rgba(0,0,0,.72);color:#fff;font:10px/1.35 ui-monospace,Menlo,monospace}
+.kbdiag[hidden]{display:none}
 .hintbub{position:fixed;z-index:30;display:flex;align-items:center;gap:12px;max-width:360px;
   padding:12px 12px 12px 16px;border-radius:var(--r-m);background:var(--ink);color:var(--surface);
   font-size:var(--f-s10);line-height:var(--l-s10);box-shadow:var(--shadow-2)}
@@ -1755,6 +1770,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .hintbub span{flex:1;min-width:0}
 .hintbub .pill{flex:none}
 .app.is-welcome .map{filter:blur(8px);pointer-events:none}
+/* метки внутри карты сами разрешают нажатия, и запрет родителя их не останавливал */
+.app.is-welcome .map *{pointer-events:none!important}
 /* на десктопе в меню остаётся только знак — разделы пока открывать незачем; на телефоне
    меню — это таббар, и он прячется целиком */
 .app.is-welcome .rail .navbtn,.app.is-welcome .panel-collapse{display:none}
@@ -2026,9 +2043,12 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   /* уезжает вверх с уменьшением, а не выключается: display не анимируется, поэтому
      кнопка остаётся в потоке и просто перестаёт ловить нажатия. Длительность та же,
      что у самой шторки, — они двигаются одним движением */
-  /* Под клавиатурой у списка появляется дно в её высоту: ничего не двигается, но последние
-     карточки достаются прокруткой, а не остаются под ней навсегда */
-  .app.is-kb .panel__body{padding-bottom:var(--kb)}
+  /* Домашний список при поиске клавиатура накрывает, поле же живёт над картой, а не в шторке:
+     ему дно в высоту клавиатуры оставляем, чтобы последние находки доставались прокруткой */
+  .app.is-kb .panel.is-home .panel__body{padding-bottom:var(--kb)}
+  /* шторка с набором стоит на клавиатуре, поэтому дна в высоту клавиатуры больше не нужно:
+     оно давало пустоту под полем, которую можно было прокрутить */
+  .app.is-kb .panel:not(.is-section) .panel__foot{padding-bottom:12px}
   /* Шов между полосой статуса и содержимым смягчаем градиентом в цвет фона карты:
      полоса заливается theme-color, то есть тем же цветом, и граница перестаёт быть линией */
   .stage::before{
@@ -2533,6 +2553,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.32.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.33.0";</script>
 </body>
 </html>
