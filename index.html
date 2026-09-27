@@ -720,6 +720,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .alert .alert__t p{margin:4px 0 0;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink);white-space:normal}
 /* две кнопки встают столбиком одной ширины: основная сверху, ближе к вопросу */
 .alert__acts{display:flex;flex-direction:column;gap:8px;flex:none}
+.alert .pill{height:32px}
 /* «Таблетка» — мелкая кнопка с полным скруглением. Нейтральная лежит на любой из трёх
    подложек категорий; брендовая мягкая — второстепенный переход («Весь архив ›») */
 .pill{display:inline-flex;align-items:center;justify-content:center;gap:2px;height:28px;padding:0 12px;
@@ -731,6 +732,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .pill svg{width:14px;height:14px;flex:none}
 .footrow{display:flex;gap:8px}
 .footrow .btn{flex:1;min-width:0}
+/* «Завершить встречу» рядом с «Чатом встречи»: поровну они не помещались, и длинная
+   подпись ломалась на две строки. Ширина по содержимому, поля по бокам 12 */
+.footrow--fit .btn{flex:1 1 auto;width:auto;white-space:nowrap;padding-left:12px;padding-right:12px}
 .cardnotes--short{margin-top:0}
 
 /* итог в уведомлении — плашка без обводки: это не действие и не тип, а результат */
@@ -799,6 +803,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* теги ориентира внутри поля формы: без полосы и подложки выпадающего списка поиска */
 .ptags.ptags--field{padding:0;border:none;background:none}
 .ptags--field .ptag{background:var(--surface-2)}
+/* в поле «Ориентир» теги — отдельная группа под строкой ввода: 16 от неё, а не 8, как
+   заголовок и подсказка. Отступ внутри раскрывающегося блока, чтобы ехал вместе с ним */
+[data-reveal="placelist"]>.ptags.ptags--field{padding-top:8px}
 .ptags--field .ptag:hover{background:var(--surface-3)}
 .ptag--all svg{width:14px;height:14px;color:var(--ink-3);flex:none}
 /* На телефоне подсказки — отдельная подложка под полем: серая цвета разделителя, теги на ней
@@ -911,6 +918,13 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .btn--line:hover{background:var(--surface-2);color:var(--ink)}
 .btn--danger{color:var(--danger);background:transparent}
 .btn--danger:hover{background:var(--surface-2)}
+/* Цвет деструктивного. Необратимое — красная заливка (btn--danger-solid). Обратимое, но
+   с потерей — красный текст на второстепенной кнопке: заметно, но не кричит. Закрытие
+   события и зеркальные ответы («Пойду», «Не закрывать») не красим */
+.btn--danger-soft{background:var(--surface-2);color:var(--danger-solid)}
+.btn--danger-soft:hover{background:var(--surface-3)}
+.linkbtn--danger,.linkbtn--danger:hover{color:var(--danger-solid)}
+.iconbtn--danger,.iconbtn--danger:hover{color:var(--danger-solid)}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
 .btn--sm{padding:8px 12px;font-size:var(--f-s10);line-height:var(--l-s10);width:auto}
 .row{display:flex;gap:8px}
@@ -1259,6 +1273,10 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* системную стрелку у селекта мы убрали, поэтому рисуем свою — без неё он неотличим
    от поля ввода. Насквозь кликабельна, чтобы попадание шло в сам список */
 .selectwrap{position:relative}
+/* кнопка ряда контролов с настоящим select поверх: на телефоне нажатие открывает барабан */
+.ctlpick{position:relative;flex:none;display:flex}
+.ctlpick__sel{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;appearance:none;border:0}
+.ctlpick:hover .ctl{background:var(--surface-3)}
 .selectwrap .select{padding-right:36px}
 .selectwrap__chev{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--ink-3);pointer-events:none}
 /* minmax(0,…), а не голое 1fr: колонке 1fr запрещено быть уже содержимого, а поле даты
@@ -1412,6 +1430,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* Разделы отмечены подчёркиванием, а не плашкой: тонкая линия под рядом служит и границей
    шапки, и дорожкой для указателя, то есть один элемент делает две работы */
 .tabs button{flex:none;white-space:nowrap;position:relative}
+.tabs.tabs--fill button{justify-content:center;min-width:0}
 .tabs button{padding:0 2px;font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;color:var(--ink-3);align-self:stretch;display:flex;align-items:center}
 .tabs{gap:12px}
 /* Полоса с прокруткой вбок — общий элемент, а не часть вкладок: те же края и те же стрелки
@@ -1459,6 +1478,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .hscroll.is-tight .tabs{gap:8px;padding-right:8px;overflow-x:hidden}
 .tabs button:hover{color:var(--ink)}
 .tabs button.is-on{color:var(--ink);font-weight:600}
+.tabs__n{font-size:11px;line-height:1;font-weight:500;color:var(--ink-3);margin-left:1px;position:relative;top:-6px;vertical-align:baseline}
 /* Число на вкладке появляется только когда есть непрочитанное — значит само его наличие
    и есть сигнал внимания, а цвет свободен и может нести тип. Кружок стал лишним */
 .tabs .tag{margin-left:4px;position:relative;top:1px;border-color:transparent;color:var(--ink)}
@@ -1471,7 +1491,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .statbar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--surface-3)}
 /* ненулевая доля всегда видна: одна встреча против двадцати вещей иначе пропадает */
 .statbar i{display:block;min-width:6px}
-.chronicle{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 16px;text-align:center}
+.chronicle{display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px 16px;text-align:center}
 .statlegend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-2)}
 .statlegend span{display:inline-flex;align-items:center;gap:6px}
 .statlegend i{width:8px;height:8px;border-radius:50%;flex:none}
@@ -1519,7 +1539,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .ctl--dots:hover .catdots{--btn-bg:var(--surface-3)}
 /* Выбор внутри всплывающего списка. Пункт с галкой — тот же .menu__i, но галка стоит
    справа и занимает место всегда, иначе строки прыгают при переключении */
-.menu__i .menu__i.is-danger,.menu__i.is-danger svg{color:var(--danger-solid)}
+.menu__i.is-danger,.menu__i.is-danger svg{color:var(--danger-solid)}
+.menu__sep{height:1px;background:var(--line);margin:4px 8px}
 .menu__on{margin-left:auto;width:16px;height:16px;flex:none;color:var(--brand-icon);opacity:0}
 .menu__i.is-on .menu__on{opacity:1}
 .menu__i.is-on{font-weight:600;color:var(--ink)}
@@ -1531,11 +1552,13 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
    и та же. Поэтому поверх обложки встаёт лицо собеседника — у общего чата его нет, и это
    отсутствие и есть признак. Кольцо цветом строки, иначе тёмное лицо слипается с фото */
 .listrow__pic{position:relative;flex:none}
-.listrow__pic--corner::before{content:'';position:absolute;left:0;top:0;width:60px;height:60px;border-radius:var(--r-s)}
-.listrow__pic--act::before{background:var(--act)}
-.listrow__pic--offer::before{background:var(--offer)}
-.listrow__pic--find::before{background:var(--find)}
-.listrow__pic--corner .listrow__cover{position:relative;display:block;border-bottom-left-radius:24px}
+.listrow__cat{position:absolute;left:-3px;bottom:-3px;z-index:1;width:20px;height:20px;border-radius:50%;
+  display:grid;place-items:center;color:#fff;box-shadow:0 0 0 2px var(--surface)}
+.listrow__cat svg{width:12px;height:12px}
+.listrow__cat--act{background:var(--act)}
+.listrow__cat--offer{background:var(--offer)}
+.listrow__cat--find{background:var(--find)}
+.listrow:hover .listrow__cat,.listrow.is-sel .listrow__cat{box-shadow:0 0 0 2px var(--surface-2)}
 /* лицо в верхнем углу — вровень с именем написавшего: у нижнего края оно стояло
    у превью сообщения, к которому отношения не имеет */
 .listrow__face{position:absolute;right:-3px;top:-3px;box-shadow:0 0 0 2px var(--surface)}
@@ -1751,6 +1774,16 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .modal__body{padding:24px}
 .modal h1{font-family:'Unbounded',system-ui,sans-serif;font-size:var(--f-h20);line-height:var(--l-h20);font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
 .modal h2{font-size:var(--f-h30);line-height:var(--l-h30);font-weight:600;margin:0 0 8px}
+/* заголовок со значком справа: значок не прибавляет строке высоты */
+.modal__head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+/* окно исхода: заголовок → варианты 16, варианты → пояснение 16, пояснение → кнопки 24 */
+.modal--close h2{margin-bottom:16px}
+.modal--close .modal__note{margin:16px 0 0}
+/* на узком экране длинные названия («Закрыть предложение») в две колонки не влезают —
+   кнопки встают столбиком, основная сверху */
+@media (max-width:480px){.modal--close .modal__foot .row{flex-direction:column-reverse}}
+.modal__head h2{flex:1;min-width:0;margin:0}
+.modal__head .iconbtn{margin:-6px -8px -6px 0}
 .modal p{margin:0 0 20px;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10)}
 .modal__foot{padding:0 24px 24px;display:flex;flex-direction:column;gap:8px}
 .brandbig{display:flex;align-items:center;gap:12px;margin-bottom:20px}
@@ -1777,16 +1810,35 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .map{transition:filter .4s ease}
 /* Подсказка — тёмный пузырь поверх интерфейса: светлые карточки и шторки вокруг, и так
    она не путается с содержимым. Кнопка «Понятно» — текстом, это не действие продукта */
-.kbdiag{position:fixed;left:8px;right:8px;z-index:60;padding:4px 6px;border-radius:6px;pointer-events:none;
-  background:rgba(0,0,0,.72);color:#fff;font:10px/1.35 ui-monospace,Menlo,monospace}
-.kbdiag[hidden]{display:none}
 .hintbub{position:fixed;z-index:30;display:flex;align-items:center;gap:12px;max-width:360px;
   padding:12px 12px 12px 16px;border-radius:var(--r-m);background:var(--ink);color:var(--surface);
   font-size:var(--f-s10);line-height:var(--l-s10);box-shadow:var(--shadow-2)}
 .hintbub[hidden]{display:none}
+/* Подложка цвета шторки под клавиатурой. У клавиатуры iOS 26 прозрачные углы и фон вокруг
+   панели со стрелками, и сквозь них просвечивала карта. Отдельный слой, не часть шторки:
+   её высоту, положение и отступ до кнопки он не трогает и касаний не ловит */
+.kbunder{position:absolute;left:0;right:0;bottom:0;z-index:19;background:var(--surface);pointer-events:none}
+.kbunder[hidden]{display:none}
+.hintbub{opacity:0;transform:translateY(8px);transition:opacity .15s ease,transform .15s ease}
+.hintbub.is-in{opacity:1;transform:none;transition-duration:.2s}
+.hintbub.is-morph{opacity:1;transform:none;overflow:hidden;padding:8px 16px;
+  transition:left .25s ease,top .25s ease,width .25s ease,height .25s ease,padding .25s ease,opacity .15s ease}
+.hintbub.is-morph>*{opacity:0;transition:opacity .12s ease}
+@media (prefers-reduced-motion:reduce){.hintbub,.hintbub.is-in{transform:none}}
 .hintbub span{flex:1;min-width:0}
 .hintbub .pill{flex:none}
+.map{transition:filter .3s ease}
 .app.is-welcome .map{filter:blur(8px);pointer-events:none}
+@keyframes sheetIn{from{transform:translateY(100%)}to{transform:none}}
+@keyframes sheetOut{from{transform:none}to{transform:translateY(100%)}}
+@keyframes colIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+@keyframes colOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-16px)}}
+.panel.is-enter{animation:colIn .3s ease}
+.panel.is-leave{animation:colOut .25s ease forwards}
+@media (max-width:820px){
+  .panel.is-enter{animation:sheetIn .3s ease}
+  .panel.is-leave{animation:sheetOut .25s ease forwards}
+}
 /* метки внутри карты сами разрешают нажатия, и запрет родителя их не останавливал */
 .app.is-welcome .map *{pointer-events:none!important}
 /* на десктопе в меню остаётся только знак — разделы пока открывать незачем; на телефоне
@@ -1795,6 +1847,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 @media (max-width:820px){.app.is-welcome .rail{display:none}}
 @media (min-width:821px){.welcome__brand{display:none}}
 .app.is-welcome .toolbar,.app.is-welcome .zoomctl,.app.is-welcome .mapmeta{opacity:0;pointer-events:none}
+.mapmeta{transition:opacity .3s ease,bottom .22s ease}
 .brandbig .brand__mark{width:38px;height:38px;border-radius:10px}
 .brandbig .brand__mark svg{width:21px;height:21px}
 .codeline{display:flex;gap:8px}
@@ -1909,7 +1962,11 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .panel{transition:transform .22s ease}
   /* на мобильном сдвиг вниз, а не вбок: правило сворачивания сюда не достаёт */
   .work.is-collapsed .panel{transform:none}
-  .panel.is-peek{transform:translateY(calc(100% - 12px))}
+  /* Шторка уходит целиком: полоска в 12 точек выглядела ручкой, за которую можно что-то
+     сделать, а шторка и так возвращается сама, как только отпускаешь палец */
+  .panel.is-peek{transform:translateY(100%)}
+  /* подпись карты опускается вслед: панели под ней больше нет, и она висела в воздухе */
+  .app.is-peek .mapmeta{bottom:calc(env(safe-area-inset-bottom,0px) + 8px)}
   /* Между полем поиска (низ на 62) и домашней шторкой (верх на 80) полоса ручки стояла
      в 5 от поля и в 9 от шторки. Сдвигаем только нарисованную полоску — зона захвата
      остаётся прежней, 22 над шторкой */
@@ -2232,6 +2289,7 @@ svg{width:16px;height:16px}
     </div>
     <aside class="panel" id="panel" hidden aria-label="Панель"></aside>
     <aside class="panel panel-b" id="panelB" hidden aria-label="Открытое"></aside>
+    <div class="kbunder" id="kbUnder" hidden aria-hidden="true"></div>
   </div>
   <div class="sheet-scrim" id="sheetScrim"></div>
   <div class="hintbub" id="hintBubble" role="status" hidden></div>
@@ -2595,7 +2653,13 @@ function icon(name,cls){return '<svg class="'+(cls||'')+'" aria-hidden="true"><u
    буквы плюс несколько трёхбуквенных предлогов */
 var HANG=/(^|[\s(«"„'])([а-яёa-zA-Z]{1,2}|для|над|под|при|без|про)[ \u00A0]+/g;
 /* тире не начинает строку: пробел перед ним неразрывный */
-function noHang(t){return t.replace(HANG,'$1$2\u00A0').replace(/ ([—–])/g,'\u00A0$1')}
+/* «и вы пришли»: короткие слова подряд цепляются к следующему целиком. За один проход
+   второе слово не ловилось — пробел перед ним съедало первое совпадение, поэтому повторяем,
+   пока строка меняется */
+function noHang(t){
+  for(var i=0;i<4;i++){var t2=t.replace(HANG,'$1$2\u00A0'); if(t2===t)break; t=t2}
+  return t.replace(/ ([—–])/g,'\u00A0$1');
+}
 function fixHang(root){
   if(!root)return;
   var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null,false), n;
@@ -2926,10 +2990,10 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.33.0';
+var VERSION='3.34.0';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
-var UPDATED='25 сентября 2026';
+var UPDATED='27 сентября 2026';
 var KEY='raion.v1';
 var db=null;
 
@@ -3449,6 +3513,54 @@ function migrateArea(){
     p.district_id=home.id; moved=true;
   });
   if(moved)save();
+}
+/* Профили 3.31–3.32 проходили приветствие дважды, и свои демо-события у них заводились
+   по второму разу: две «лампы», два «волейбола», с откликами и перепиской у каждой.
+   Из одноимённых своих демо-событий оставляем первое, лишние уходят со всем, что к ним
+   привязано. Повторные демо-реплики — второе приветствие в уведомлениях, та же фраза
+   в общем чате — схлопываются. Созданное человеком не трогаем: у него нет mine_seed */
+function dedupeDemo(){
+  var changed=false, first={}, gone={};
+  db.pins.forEach(function(p){
+    if(!p.mine_seed)return;
+    var k=p.author_id+'|'+p.title;
+    if(first[k])gone[p.id]=1; else first[k]=p.id;
+  });
+  if(Object.keys(gone).length){
+    db.pins=db.pins.filter(function(p){return !gone[p.id]});
+    db.responses=db.responses.filter(function(r){return !gone[r.pin_id]});
+    var dead={};
+    db.threads=db.threads.filter(function(t){if(gone[t.pin_id]){dead[t.id]=1; return false} return true});
+    db.messages=db.messages.filter(function(m){return !dead[m.thread_id]&&!(m.obj&&gone[m.obj])});
+    db.reports=db.reports.filter(function(r){return !gone[r.pin_id]});
+    changed=true;
+  }
+  /* одна и та же личная демо-переписка, заведённая дважды */
+  var tk={}, dup={};
+  db.threads.forEach(function(t){
+    if(!t.mine_seed||threadKind(t)!=='direct')return;
+    var k=t.pin_id+'|'+t.users.slice().sort().join(',');
+    if(tk[k])dup[t.id]=1; else tk[k]=t.id;
+  });
+  var mk={}, n0=db.messages.length;
+  db.messages=db.messages.filter(function(m){
+    if(dup[m.thread_id])return false;
+    if(!m.mine_seed)return true;
+    var k=[m.thread_id,m.author_id||'',m.sys?1:0,m.title||'',m.text||'',m.obj||''].join('|');
+    if(mk[k])return false; mk[k]=1; return true;
+  });
+  if(Object.keys(dup).length){db.threads=db.threads.filter(function(t){return !dup[t.id]}); changed=true}
+  if(db.messages.length!==n0)changed=true;
+  /* Личная переписка с заблокированным раньше заводилась кнопкой в его профиле и висела
+     пустой: в списке её не видно, а открытой она принимала сообщения. Пустые такие удаляем */
+  var nm={}; db.messages.forEach(function(m){nm[m.thread_id]=1});
+  var nt=db.threads.length;
+  db.threads=db.threads.filter(function(t){
+    if(threadKind(t)!=='direct'||nm[t.id])return true;
+    return !t.users.some(function(u){return u!==db.currentUserId&&blockedWith(u)});
+  });
+  if(db.threads.length!==nt)changed=true;
+  if(changed)save();
 }
 /* Повторные отклики одного соседа на одно событие схлопываем: задвоенное демо (профили,
    прошедшие приветствие дважды) давало 9 участников при восьми местах */
@@ -4417,19 +4529,6 @@ function syncViewport(){
   var r=$('.rail');
   if(r&&r.offsetHeight&&!isDesktopPanel())st.setProperty('--chrome-b',r.offsetHeight+'px');
   fitChatToViewport();
-  kbDiag();
-}
-/* Временная строка замера (п. 15 волны 3.33): что видит приложение, пока открыта клавиатура.
-   Один скриншот с ней отвечает, верно ли понято окно. Убрать после подтверждения на телефоне */
-function kbDiag(){
-  var el=$('#kbDiag'), vv=window.visualViewport;
-  if(!kbOpenNow||!vv||isDesktopPanel()){if(el)el.hidden=true; return}
-  if(!el){el=document.createElement('div'); el.id='kbDiag'; el.className='kbdiag'; document.body.appendChild(el)}
-  var pn=$('#panel'), pr=pn?pn.getBoundingClientRect():null;
-  el.hidden=false;
-  el.textContent='окно '+window.innerHeight+' · видно '+Math.round(vv.height)+' · сдвиг '+Math.round(vv.offsetTop)+
-    ' · база '+kbBase+' · клав '+Math.round(kbBase-vv.height)+' · низ шторки '+(pr?Math.round(pr.bottom):'—');
-  el.style.top=Math.round(vv.offsetTop+safeInset('top')+2)+'px';
 }
 /* Переписка с открытой клавиатурой ставится по видимой части экрана, а не по высоте
    клавиатуры. Высоту мы вычитали из окна, но айфон при фокусе ещё и сдвигает страницу —
@@ -4451,6 +4550,8 @@ function fitChatToViewport(){
   var atEnd=!!body&&(body.scrollHeight-body.scrollTop-body.clientHeight<48);
   function keepEnd(){if(atEnd&&body)body.scrollTop=body.scrollHeight}
   function clearFit(){pn.style.transition=''; pn.style.top=''; pn.style.height=''; pn.style.bottom=''; pn.style.maxHeight=''}
+  var ku=$('#kbUnder');
+  if(ku&&!on)ku.hidden=true;
   if(!on){
     if(pn._vvFit){
       pn._vvFit=false; pn._kbScrolled=false;
@@ -4485,6 +4586,7 @@ function fitChatToViewport(){
     pn.style.bottom='auto'; pn.style.maxHeight='none';
   }
   pn._vvFit=true;
+  if(ku){ku.style.top=(pn.offsetTop+pn.offsetHeight-1)+'px'; ku.hidden=false}
   keepEnd();
   /* поле с курсором — в видимую часть, один раз на открытие клавиатуры */
   if(!pn._kbScrolled&&ae.scrollIntoView){
@@ -4539,8 +4641,10 @@ function blockedList(){
   if(m&&m.blocked)for(var k in m.blocked)if(m.blocked[k]&&user(k))out.push(user(k));
   return out;
 }
+/* События заблокированного скрыты — кроме встреч, куда вас уже приняли: это общее дело
+   с другими соседями, и из него вас блокировка не выкидывает. Верно в обе стороны */
 function hiddenForMe(p){
-  if(blockedWith(p.author_id))return true;
+  if(blockedWith(p.author_id)&&!(isAct(p)&&isJoined(myResponse(p.id))))return true;
   if(reportedByMe(p.id))return true;
   var n=0;
   for(var i=0;i<db.reports.length;i++)if(db.reports[i].pin_id===p.id)n++;
@@ -4983,7 +5087,6 @@ function layoutEvents(items,halos){
     for(var i=0;i<boxes.length;i++){var o=boxes[i]; if(b.l<o.r&&b.r>o.l&&b.t<o.b&&b.b>o.t)return true}
     return false;
   }
-  function inside(b){return b.l>=q.l+2&&b.r<=q.r-2&&b.t>=q.t+2&&b.b<=q.b-2}
   order.forEach(function(e){
     var p=e.p, x=e.s[0], y=e.s[1], cls=ptype(p).cls;
     var at='transform:translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px)';
@@ -4991,10 +5094,11 @@ function layoutEvents(items,halos){
     var pinBox={l:x-18,t:y-44,r:x+18,b:y+2};
     var ls=labelSize(p), w=ls.w, h=ls.h;
     /* Подпись всегда справа. Запасная сторона слева (3.25) прыгала при панораме и закрывала
-       саму булавку; нет места справа — булавка остаётся без подписи */
+       саму булавку. Край экрана подпись не отменяет, а обрезает — как в обычных картах:
+       двигаешь карту, и она выезжает из-за края вместе с булавкой. Отменяет только сосед */
     var labBox={l:x+14,t:y-24-h/2,r:x+14+w,b:y-24+h/2};
     var force=e.sel||e.mine, pinOk=!hit(pinBox);
-    var level=(pinOk||force)?((!hit(labBox)&&inside(labBox))?2:1):0;
+    var level=(pinOk||force)?((!hit(labBox)&&labBox.l<q.r-8)?2:1):0;
     now2[p.id]=level;
     var live=isLiveMark(p)?'<span class="pin__live pin__live--'+cls+'"></span>':'';
     if(!level){
@@ -5368,6 +5472,19 @@ function hscrollPage(wrap,dir){
   }
   to=Math.max(0,Math.min(to,t.scrollWidth-vis));
   if(t.scrollTo)t.scrollTo({left:to,behavior:'smooth'}); else t.scrollLeft=to;
+}
+/* Вкладки, которые помещаются, растягиваются на всю ширину — каждая пропорционально своей
+   длине, текст по центру, полоса под активной на её ширину. Не помещаются — прокрутка,
+   как раньше. Считается при каждой отрисовке: появился счётчик — ряд перестраивается */
+function fitTabs(t){
+  if(!t)return;
+  var bs=t.querySelectorAll('button');
+  t.classList.remove('tabs--fill');
+  Array.prototype.forEach.call(bs,function(b){b.style.flex=''});
+  if(t.scrollWidth>t.clientWidth+1)return;
+  var ws=Array.prototype.map.call(bs,function(b){return b.getBoundingClientRect().width});
+  t.classList.add('tabs--fill');
+  Array.prototype.forEach.call(bs,function(b,i){b.style.flex=ws[i].toFixed(2)+' 1 0px'});
 }
 function scrollTabIntoView(root){
   var t=(root||document).querySelector('.tabs'); if(!t)return;
@@ -5827,6 +5944,17 @@ function feedList(){
 /* Из какого события открыт текущий экран: у карточки это она сама, у переписки и списка
    участников — событие, которому они принадлежат. Нужен, чтобы профиль соседа знал,
    по какому поводу ему писать */
+/* «Назад» перешагивает карточки, которые больше не видны: заблокировали автора из его
+   профиля — возвращаемся туда, откуда открывали карточку */
+function skipHiddenPin(pn){
+  var n=0;
+  while(pn&&pn.type==='pin'&&n++<8){
+    var hp=pin(pn.id);
+    if(hp&&!hiddenForMe(hp))break;
+    pn=(pn.origin&&pn.origin.type!=='list')?pn.origin:null;
+  }
+  return pn;
+}
 function pinCtxOf(pn){
   var n=0;
   while(pn&&n++<8){
@@ -5933,10 +6061,14 @@ function homeList(){
    Переключатель стоял над каждым списком, забирал строку и прятал сортировку, а нужен
    был раз в сто открытий. Охват у летописи тот же, что у списка: выбрана станция —
    её закрытые пины, выбран город — все */
-function archiveList(){
+/* У архива свой выбор категорий, а не фильтр карты: закрытое на карте не лежит, и молча
+   наследовать её фильтр — значит прятать события без видимой причины. allCats — все
+   категории, для кнопки входа: пуст архив или нет, решает не выбор внутри него */
+function arcCatOn(k){return ui.arcCats?ui.arcCats[k]!==false:true}
+function archiveList(allCats){
   var q=(ui.searchQuery||'').trim().toLowerCase();
   var list=db.pins.filter(function(p){
-    if(p.status==='active'||hiddenForMe(p)||!ui.filters[p.type])return false;
+    if(p.status==='active'||hiddenForMe(p)||(!allCats&&!arcCatOn(p.type)))return false;
     if(!inScope(p))return false;
     return !q||p.title.toLowerCase().indexOf(q)>=0||p.description.toLowerCase().indexOf(q)>=0;
   });
@@ -5951,16 +6083,18 @@ function viewArchive(){
   var cs=chronicleOfScope(30);
   var bar=typeBar([['act',cs.met,'Встречи'],['offer',cs.given,'Вещи'],['find',cs.returned,'Находки']]);
   var ct=chronicleText();
-  var body=(bar?'<div class="pad"><div class="eyebrow" style="margin-bottom:16px">За месяц закрыто</div>'+bar+'</div>'
+  /* линия между итогом и выдачей: это разные вещи — сводка района и сам список */
+  var body=(bar?'<div class="pad"><div class="eyebrow" style="margin-bottom:16px">За месяц в районе</div>'+bar+'</div><div class="divider"></div>'
           :(ct?'<div class="pad"><div class="factrow">'+icon('archive')+'<div><b>'+
-      H(ct.charAt(0).toUpperCase()+ct.slice(1))+'</b></div></div></div>':''))+
+      H(ct.charAt(0).toUpperCase()+ct.slice(1))+'</b></div></div></div><div class="divider"></div>':''))+
     (list.length
       ? '<div class="feedlist">'+list.map(function(p){return feedCard(p,true)}).join('')+'</div>'
       : '<div class="empty">'+icon('archive')+'<b>Архив пока пуст</b>'+
         '<p>Сюда попадают закрытые события: встречи, которые прошли, и вещи, которые нашли хозяев</p></div>');
   /* станция в подзаголовке идёт с кружком линии — так же, как в чипах карточек
      и на кнопке охвата; у «Весь город» и у набора станций кружка нет, там линия не одна */
-  return {title:'Архив',sub:scopeName(),subHTML:scopeSubHTML(),back:true,body:body};
+  return {title:'Архив района',sub:scopeName(),subHTML:scopeSubHTML(),back:true,body:body,
+    action:catCtlHTML(arcCatOn,'arc-cats','chathead__act')};
 }
 /* Ближайшее к кадру событие из тех, что в кадр не попали. Пустой кадр иначе не отличить
    от пустого района: человек не знает, здесь тихо или он смотрит не туда, и возит карту
@@ -6138,16 +6272,13 @@ function homeResultsHTML(){
      А число ведёт — оно отвечает на страх «опубликую в пустоту», и рядом с ним уместна
      кнопка «создать», а не «посмотреть всё». Поэтому летопись стала строкой, а сам список
      остался ссылкой внутри неё */
-  var arcN=archiveList().length, ct=q?'':chronicleText();
-  /* Линия во всю ширину, воздух сверху и снизу, ссылка своей строкой: с «·» перед ней
-     получалось три одинаковых разделителя подряд — два внутри перечисления и один снаружи */
-  /* летопись прибита к полу панели, когда список короткий: выдача — колонка не ниже самой
-     панели, а у этого блока сверху отступ «сколько останется». При длинном списке он просто
-     стоит в конце, как раньше */
-  var tail=(arcN&&ct)?'<div class="homefloor"><div class="divider"></div>'+
+  /* Итог месяца отсюда ушёл: в тихом районе он сам пустой, в живом жизнь видна по списку,
+     а цифры стоят в шапке архива. Осталась одна кнопка — вход в архив района. Прибита
+     к полу панели, когда список короткий; при длинном стоит в конце */
+  var arcN=q?0:archiveList(true).length;
+  var tail=arcN?'<div class="homefloor"><div class="divider"></div>'+
     '<div class="chronicle">'+
-      '<div class="hint">'+H(ct.charAt(0).toUpperCase()+ct.slice(1))+'</div>'+
-      '<button class="linkbtn" data-act="open-archive">Открыть архив</button>'+
+      '<button class="btn btn--line btn--sm" data-act="open-archive">'+icon('archive')+'Архив района</button>'+
     '</div></div>':'';
   /* Подсказки стоят первыми — сразу под полем ввода, выше кнопки охвата и сортировки */
   return placesHTML+head+body+nearHTML+tail;
@@ -6323,7 +6454,7 @@ function canSwipeBack(){
   if(p.type==='pin')return true;
   return !!oneUp(p)||!!p.prev||p.type==='mine'||p.type==='me'||p.type==='settings'||
          p.type==='scope'||p.type==='stations'||p.type==='archive'||p.type==='thread'||
-         p.type==='user'||p.type==='people';
+         p.type==='user'||p.type==='people'||p.type==='blocked';
 }
 document.addEventListener('touchstart',function(e){
   backSwipe=null;
@@ -6615,6 +6746,7 @@ function viewFor(p){
     case 'mine': return viewMine(p.id);
     case 'me': return viewMe();
     case 'settings': return viewSettings();
+    case 'blocked': return viewBlocked();
     case 'edit': return viewEdit(p.id);
     case 'welcome': return viewWelcome();
   }
@@ -6667,21 +6799,57 @@ function viewWelcome2(){
   var foot='<button class="btn btn--primary" data-act="welcome-go"'+(welcomeValid()?'':' disabled')+'>Открыть район'+icon('chev-right')+'</button>';
   return {title:'Район', tall:true, noHead:true, body:body, foot:foot};
 }
+/* Пропажа кота переезжает метров на 400 от станции — и оповещение «Рядом пропажа» приходит
+   по обычным правилам: зона пропажи задевает дом. Иначе механику в демо было не увидеть */
+function catNearHome(d){
+  db.pins.forEach(function(p){
+    if(p.seeded&&p.type==='lost_found'&&p.subtype==='lost'&&p.title==='пропал рыжий кот, зовут рыжик'&&p.status==='active'){
+      var off=400/METERS_PER_UNIT;
+      setPlaceXY(p,d.sx+off*0.8,d.sy-off*0.6); p.district_id=d.id;
+    }
+  });
+}
+/* Смена дома в настройках. В демо выбор тот же, что в приветствии: четыре станции плотной
+   части. Свои демо-события — двор вокруг дома, поэтому переезжают вместе с ним, сохраняя
+   раскладку: сдвигаются на разницу между станциями. Созданное руками стоит там, где его
+   поставили, и не двигается */
+function moveHome(st){
+  var m=me(), d=district(st); if(!m||!d)return;
+  var old=district(homePoint().st);
+  if(old&&old.id===st)return;
+  var dx=old?d.sx-old.sx:0, dy=old?d.sy-old.sy:0;
+  db.pins.forEach(function(p){
+    if(p.author_id!==m.id||!p.mine_seed||!old||p.district_id!==old.id)return;
+    if(p.x!=null)setPlaceXY(p,p.x+dx,p.y+dy);
+    if(p.exact_x!=null)setExact(p,p.exact_x+dx,p.exact_y+dy);
+    p.district_id=st;
+  });
+  catNearHome(d);
+  m.home_point={x:d.sx,y:d.sy}; m.home_st=st; m.district_id=st;
+  save();
+  ui.districtId=st;
+  render(); toast('Дом — '+d.name);
+  askedMove(); if(!(glMap&&fitStationZone(d)))fitOnStation(st);
+}
+/* Выход из приветствия: шторка уезжает, размытие спадает — и только потом открывается карта */
 function welcomeGo(){
+  var m=me(); if(!m||!welcomeValid()||ui.wLeaving)return;
+  var wp=$('#panel'), ap=$('#app');
+  if(reduceMotion()||!wp){welcomeGoNow(); return}
+  ui.wLeaving=true;
+  var wn=$('#welcomeName'); if(wn)wn.blur();
+  wp.classList.add('is-leave');
+  if(ap)ap.classList.remove('is-welcome');
+  setTimeout(function(){ui.wLeaving=false; wp.classList.remove('is-leave'); welcomeGoNow()},260);
+}
+function welcomeGoNow(){
   var m=me(); if(!m||!welcomeValid())return;
   var st=ui.welcomeSt||WELCOME_ST[0], d=district(st);
   m.name=ui.welcomeName.trim(); m.district_id=st; m.home_st=st; m.home_point={x:d.sx,y:d.sy};
   delete m.welcome;
   /* Свои демо-события встают у выбранной станции: «мои» — это двор вокруг дома, а не другой
      конец города. Чужие события с вашим участием остаются на своих местах */
-  /* Пропажа кота переезжает метров на 400 от станции — и оповещение «Рядом пропажа» приходит
-     по обычным правилам: зона пропажи задевает дом. Иначе механику в демо было не увидеть */
-  db.pins.forEach(function(p){
-    if(p.seeded&&p.type==='lost_found'&&p.subtype==='lost'&&p.title==='пропал рыжий кот, зовут рыжик'&&p.status==='active'){
-      var off=400/METERS_PER_UNIT;
-      setPlaceXY(p,d.sx+off*0.8,d.sy-off*0.6); p.district_id=st;
-    }
-  });
+  catNearHome(d);
   /* у профиля, заведённого до 3.32, свои события уже есть — второй раз не заводим */
   if(!db.pins.some(function(p){return p.author_id===m.id&&p.mine_seed}))seedMyPins(m.id);
   save();
@@ -7008,7 +7176,7 @@ function viewPin(id){
             '</button>'+
             '<span class="row" style="margin-left:auto;gap:8px">'+
               acceptBtn(p,r)+
-              '<button class="iconbtn iconbtn--34" data-act="decline" data-id="'+r.id+'" aria-label="Отклонить">'+icon('close')+'</button>'+
+              '<button class="iconbtn iconbtn--34 iconbtn--danger" data-act="decline" data-id="'+r.id+'" aria-label="Отклонить">'+icon('close')+'</button>'+
             '</span></div>';
         }).join('')+'</div>'+
         (rest?'<button class="linkbtn" style="margin-top:12px" data-act="people" data-id="'+p.id+'">'+
@@ -7132,8 +7300,8 @@ function viewPin(id){
          а это ровно то, что живёт под тремя точками, а не под пальцем рядом с чатом */
       /* чат — то, чем автор пользуется постоянно, «Завершить» нажимают один раз: чат основной
          и справа, как всякая основная кнопка в паре; «Завершить» контурная слева */
-      var closeBtn='<button class="btn btn--line" data-act="close-pin" data-id="'+p.id+'">'+icon('check')+'Завершить</button>';
-      foot=gt?'<div class="footrow">'+closeBtn+'<button class="btn btn--primary" data-act="open-group" data-id="'+p.id+'">'+icon('chat')+groupName(p)+'</button></div>':closeBtn;
+      var closeBtn='<button class="btn btn--line" data-act="close-pin" data-id="'+p.id+'">'+icon('archive')+H(closeName(p))+'</button>';
+      foot=gt?'<div class="footrow footrow--fit">'+closeBtn+'<button class="btn btn--primary" data-act="open-group" data-id="'+p.id+'">'+icon('chat')+groupName(p)+'</button></div>':closeBtn;
     }else if(act){
       if(mr&&mr.status==='interested'){
         /* заявка ещё не принята: участником человек не стал и в общий чат не попал */
@@ -7247,7 +7415,7 @@ function viewPeople(id){
           '</button>'+
           '<span class="row" style="margin-left:auto;gap:8px">'+
             acceptBtn(p,r)+
-            '<button class="iconbtn iconbtn--34" data-act="decline" data-id="'+r.id+'" aria-label="Отклонить">'+icon('close')+'</button>'+
+            '<button class="iconbtn iconbtn--34 iconbtn--danger" data-act="decline" data-id="'+r.id+'" aria-label="Отклонить">'+icon('close')+'</button>'+
           '</span></div>';
       }).join('')+'</div></div>']);
   }
@@ -7418,11 +7586,8 @@ function fldActivity(d){
     /* выпадающий список вместо четырёх радиокнопок: на телефоне это системный
        барабан выбора. Пояснения вариантов убраны — они пересказывали сами варианты */
     '<div class="field"><label for="f-repeat">Повтор встречи</label>'+
-      '<div class="selectwrap"><select class="select" id="f-repeat" data-field="repeat">'+
-        Object.keys(REPEATS).map(function(k){
-          return '<option value="'+k+'"'+(d.repeat===k?' selected':'')+'>'+H(REPEATS[k].label)+'</option>';
-        }).join('')+
-      '</select>'+icon('chev-down','selectwrap__chev')+'</div>'+
+      pickHTML({id:'f-repeat',attrs:'data-field="repeat"',val:d.repeat,
+        opts:Object.keys(REPEATS).map(function(k){return [k,REPEATS[k].label]})})+
       (d.repeat!=='none'?'<span class="hint">Отклики относятся к ближайшей дате: после неё список участников обнуляется</span>':'')+
     '</div>'+
     '<div class="field"><label for="f-limit">Сколько человек нужно</label>'+
@@ -7798,7 +7963,7 @@ function viewProfile(){
     '<span class="mephoto mephoto--s"><button data-act="open-me" aria-label="Изменить профиль">'+avatarHTML(m,'avatar--l')+
       '<i class="mephoto__b mephoto__b--s">'+icon('pencil')+'</i></button></span>'+
     '<div style="flex:1;min-width:0"><div style="font-size:var(--f-h40);line-height:var(--l-h40);font-weight:600">'+H(m.name)+'</div>'+
-    '<div style="font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)">'+H(m.phone||'без телефона')+'</div></div>'+
+    '<div style="font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)">'+H(m.phone||'Демо-профиль')+'</div></div>'+
     '<span class="headacts">'+(isDesktopPanel()?bell:'')+
       '<button class="iconbtn iconbtn--20" data-act="settings" aria-label="Настройки" title="Настройки">'+icon('gear')+'</button>'+
     '</span></div>';
@@ -7854,6 +8019,19 @@ function viewProfile(){
    тот же переключатель, что над лентой района. Тип — чипы категорий.
    Фильтр здесь собственный, а не общий с картой: общий значил бы, что человек, сняв
    «встречи» в своих событиях, молча перефильтровал себе карту */
+/* Кнопка выбора категорий: кружки выбранных, контурные — выключенные, шеврон. Сужает
+   только список, в шапке которого стоит, и карту не трогает — в отличие от воронки */
+function catCtlHTML(onFn,act,cls){
+  var off='', on='', kn=0, kall=0;
+  for(var k in PIN_TYPES){
+    var kc='var(--'+PIN_TYPES[k].cls+')'; kall++;
+    if(onFn(k)){kn++; on+='<i style="border-color:'+kc+';background:'+kc+'"></i>'}
+    else off+='<i style="border-color:'+kc+'"></i>';
+  }
+  return '<button class="ctl ctl--dots'+(cls?' '+cls:'')+'" data-act="'+act+'" aria-label="Категории">'+
+    '<span class="catdots">'+off+on+'</span>'+(kn<kall?'<span class="ctl__n">'+kn+' из '+kall+'</span>':'')+
+    icon('chev-down')+'</button>';
+}
 function mineCatOn(k){return ui.mineCats?ui.mineCats[k]!==false:true}
 /* Отбор вынесен из отрисовки: по нему же работает ввод в строке поиска, который обновляет
    один список, не перерисовывая панель, — иначе поле теряло бы курсор на каждой букве */
@@ -7896,8 +8074,11 @@ function viewMine(era){
   var m=c.m, past=c.past, q=c.q, own=c.own, join=c.join, both=c.both, cur=c.cur;
 
   var tabs=both?'<div class="hscroll tabswrap"><div class="tabs">'+
-    [['own','Ваши события',own.length],['join',past?'Участвовали':'Участвуете',join.length]]
-    .map(function(t){return '<button data-tab="'+t[0]+'" class="'+(ui.mineTab===t[0]?'is-on':'')+'">'+t[1]+' '+t[2]+'</button>'}).join('')+
+    /* Глаголы в одной форме, число — суперскриптом: оно говорит «сколько всего», и тем же
+       весом, что слово, спорило бы с ним. Четыре вида числа в приложении: кружок — новое,
+       чип — непрочитанное, тег — «из скольких», суперскрипт — «сколько всего» */
+    [['own','Создали',own.length],['join',past?'Участвовали':'Участвуете',join.length]]
+    .map(function(t){return '<button data-tab="'+t[0]+'" class="'+(ui.mineTab===t[0]?'is-on':'')+'">'+t[1]+'<sup class="tabs__n">'+t[2]+'</sup></button>'}).join('')+
   '</div></div>':'';
 
   /* Ряд контролов вместо двух строк переключателей: три типа занимали целую строку,
@@ -7927,7 +8108,7 @@ function viewMine(era){
   var bar='<div class="hscroll"><div class="ctlrow">'+
     '<button class="ctl ctl--dots" data-act="mine-cats" aria-label="Типы событий">'+
       dots+icon('chev-down')+'</button>'+
-    '<button class="ctl" data-act="mine-sort">'+icon('sort')+H(c.sortName)+icon('chev-down')+'</button>'+
+    pickHTML({look:'ctl',ic:'sort',attrs:'data-mine-sort="1"',label:'Сортировка',val:c.sort,opts:c.sorts})+
   '</div></div>';
   /* Поле поиска отдаём первой полосой панели: та же зона, та же высота и то же место,
      что у поиска на карте и в сообщениях. Запрос свой — в приложении у каждого экрана
@@ -7959,13 +8140,14 @@ function viewMe(){
     '<div class="mephoto">'+avatarHTML(m,'avatar--xl')+
       '<button class="mephoto__b" data-act="me-photo" aria-label="Выбрать снимок">'+icon('pencil')+'</button>'+
     '</div>'+
-    (m.avatar?'<div style="text-align:center"><button class="linkbtn" data-act="me-photo-off">Удалить снимок</button></div>':'')+
+    (m.avatar?'<div style="text-align:center"><button class="linkbtn linkbtn--danger" data-act="me-photo-off">Удалить снимок</button></div>':'')+
     '<div class="field"><label for="meName">Имя и фамилия</label>'+
       '<input class="input" id="meName" maxlength="40" value="'+H(m.name)+'">'+
       '<span class="hint">Соседям покажем имя и первую букву фамилии — '+H(shortName(m))+'</span></div>'+
-    '<div class="field"><label>Телефон</label>'+
-      '<input class="input" value="'+H(m.phone||'')+'" disabled>'+
-      '<span class="hint">Телефон подтверждён кодом и в прототипе не меняется</span></div>'+
+    /* у демо-профиля телефона нет, и подпись про подтверждение кодом была бы неправдой */
+    (m.phone?'<div class="field"><label>Телефон</label>'+
+      '<input class="input" value="'+H(m.phone)+'" disabled>'+
+      '<span class="hint">Телефон подтверждён кодом и в прототипе не меняется</span></div>':'')+
   '</div>';
   return {title:'Ваш профиль',back:true,body:body,
     foot:'<button class="btn btn--primary" data-act="me-save">Сохранить</button>'};
@@ -8122,21 +8304,25 @@ function viewUser(id,pinctx){
     /* Кнопка появляется только там, где есть событие, по которому писать: имя в чате
        и список участников её приносят, лента и летопись — нет. Без неё профиль соседа
        стал бы тупиком, ведь имя в переписке теперь ведёт сюда, а не в личку */
-    ((!self&&pinctx&&pin(pinctx))
+    /* с заблокированным — в любую сторону — личной переписки нет, значит и кнопки */
+    ((!self&&pinctx&&pin(pinctx)&&!blockedWith(id))
       ? '<button class="iconbtn iconbtn--20" data-act="dm" data-id="'+H(id)+'" data-pin="'+H(pinctx)+
         '" aria-label="Написать" title="Написать">'+icon('chat')+'</button>' : '')+
     /* Блокировка живёт в меню редких действий — там же, где жалоба у события. Доступна
        в любой момент, знакомства для этого не требуется: закрыться от автора пина, который
        вам не понравился, можно ни разу ему не написав */
-    (self?'':'<button class="iconbtn iconbtn--20" data-act="user-menu" data-id="'+H(id)+
+    ((self||iBlocked(id))?'':'<button class="iconbtn iconbtn--20" data-act="user-menu" data-id="'+H(id)+
       '" aria-label="Ещё" title="Ещё">'+icon('dots')+'</button>')+
     '</div>';
   if(!self&&iBlocked(id)){
     /* У заблокированного показывать нечего: его события у вас скрыты, переписка закрыта.
        Экран остаётся ради одного действия — вернуть всё обратно */
+    /* «⋮» здесь нет: единственное действие экрана — большая кнопка ниже */
+    var bcx=blockCtxText(id);
     return {title:H(shortName(u)),fadeTitle:true,back:true,body:head+
       '<div class="empty">'+icon('shield')+'<b>Сосед заблокирован</b>'+
-      '<p>Его события скрыты у вас, ваши — у него, переписка закрыта. Он об этом не знает</p>'+
+      (bcx?'<span class="hint">'+H(bcx)+'</span>':'')+
+      '<p>Его события скрыты у вас, ваши — у него, личная переписка закрыта. Он об этом не знает</p>'+
       '<button class="btn btn--line btn--sm" data-act="unblock" data-id="'+H(id)+'">Разблокировать</button></div>'};
   }
 
@@ -8232,19 +8418,45 @@ function setTheme(m){
    телефон сам переключается вечером, а в приложении выбрана «Системная» */
 function restyleMap(){if(glMap)try{glMap.setStyle(mapStyle())}catch(e){}}
 try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(!themeCur)restyleMap()})}catch(e){}
+/* Когда и откуда заблокировали — чтобы через месяц узнать «Лену Ш.» не только по имени.
+   У блокировок, сделанных до 3.34, записан один факт, без даты и места */
+function blockCtxText(id){
+  var m=me(), b=m&&m.blocked&&m.blocked[id];
+  if(!b||typeof b!=='object')return '';
+  return [b.at?dateFull(b.at):'',b.ctx||''].filter(Boolean).join(' · ');
+}
+function blockCtxOf(pn){
+  if(!pn)return '';
+  if(pn.type==='thread'){
+    var t=db.threads.filter(function(x){return x.id===pn.id})[0], tp=t&&pin(t.pin_id);
+    return tp?'переписка «'+tp.title+'»':'';
+  }
+  var cp=pinCtxOf(pn), p=cp&&pin(cp);
+  return p?'событие «'+p.title+'»':'';
+}
+/* Список — только указатель: разблокировка живёт в профиле соседа, туда же ведёт и его
+   имя в участниках общей встречи. Одно место действия вместо двух */
+function viewBlocked(){
+  var bl=blockedList();
+  var body=bl.length?bl.map(function(u){
+      var cx=blockCtxText(u.id);
+      return '<button class="listrow" data-act="user" data-id="'+H(u.id)+'">'+avatarHTML(u,'')+
+        '<span class="listrow__body"><span class="listrow__t">'+H(shortName(u))+'</span>'+
+          (cx?'<span class="listrow__s">'+H(cx)+'</span>':'')+'</span>'+icon('chev-right')+'</button>';
+    }).join('')
+    :'<div class="empty">'+icon('shield')+'<b>Никого нет</b></div>';
+  return {title:'Заблокированные',section:true,back:true,body:body};
+}
 function viewSettings(){
   var tm=themeMode();
-  /* Список заблокированных появляется, только когда в нём кто-то есть: пустой раздел
-     про блокировки в настройках у человека, который никого не блокировал, — лишний повод
-     задуматься о том, чего не было */
+  /* Заблокированные — одной строкой с числом, список на своём экране: раздел со списком
+     прямо в настройках рос вместе с числом людей и раздувал экран. Строка появляется,
+     только когда кто-то заблокирован: пустой раздел про блокировки у человека, который
+     никого не блокировал, — лишний повод задуматься о том, чего не было */
   var bl=blockedList();
   var blocked=bl.length?'<div class="divider divider--lg"></div>'+
-    '<div class="eyebrow" style="padding:0 16px 8px">Заблокированные</div>'+
-    bl.map(function(u){
-      return '<div class="listrow">'+avatarHTML(u,'')+
-        '<span class="listrow__body"><span class="listrow__t">'+H(shortName(u))+'</span></span>'+
-        '<button class="btn btn--line btn--sm" data-act="unblock" data-id="'+H(u.id)+'">Разблокировать</button></div>';
-    }).join(''):'';
+    '<button class="linerow" data-act="open-blocked"><span class="linerow__t"><b>Заблокированные</b></span>'+
+      '<span class="linerow__v">'+bl.length+'</span>'+icon('chev-right')+'</button>':'';
   var theme='<div class="field"><label>Тема оформления</label><div class="segctl">'+
     [['auto','Системная'],['light','Светлая'],['dark','Тёмная']].map(function(o){
       return '<button data-theme-set="'+o[0]+'" class="'+(tm===o[0]?'is-on':'')+'">'+o[1]+'</button>';
@@ -8252,9 +8464,9 @@ function viewSettings(){
   var body='<div class="pad stack">'+theme+'</div><div class="divider divider--lg"></div>'+
     '<div class="pad stack">'+
     '<div class="switchrow"><span class="switchrow__txt">'+
-      '<b>Расстояние от моего места</b>'+
-      '<span>Точку берём у браузера и нигде не храним</span>'+
-    '</span><button class="switch'+(geoOn()?' is-on':'')+'" data-act="toggle-geo" role="switch" aria-checked="'+(geoOn()?'true':'false')+'" aria-label="Считать расстояние от меня"><i></i></button></div>'+
+      '<b>Доступ к моей геопозиции</b>'+
+      '<span>Расстояния считаются от вас, а не от дома. Точку берём у браузера и нигде не храним</span>'+
+    '</span><button class="switch'+(geoOn()?' is-on':'')+'" data-act="toggle-geo" role="switch" aria-checked="'+(geoOn()?'true':'false')+'" aria-label="Доступ к моей геопозиции"><i></i></button></div>'+
     '<div class="divider"></div>'+
     '<div class="switchrow"><span class="switchrow__txt">'+
       '<b>Оповещения о пропажах</b>'+
@@ -8279,20 +8491,28 @@ function viewSettings(){
   /* Вместо второго входа в фильтры (первый — над картой) — дом. Он задаётся при регистрации,
      и поменять его было негде, а от него зависят круг оповещений о пропажах и то, куда
      карта возвращается. Строкой с текущим значением, а не кнопкой: здесь важно, что выбрано */
+  /* В демо дом выбирается из тех же четырёх станций, что в приветствии, тегами: свои
+     демо-события переезжают вместе с домом, а за пределами плотной части им было бы
+     пусто. Если дом у старого профиля стоит где-то ещё, его станция тоже в ряду */
   (function(){
-    var hd=district(homePoint().st);
-    return '<button class="linerow" data-act="open-home">'+
-      '<span class="linerow__t"><b>Дом</b></span>'+
-      '<span class="linerow__v">'+placeIcon(hd)+H(hd.name)+'</span>'+icon('chev-right')+'</button>';
+    var cur=homePoint().st, ids=WELCOME_ST.slice();
+    if(ids.indexOf(cur)<0)ids.push(cur);
+    return '<div class="pad"><div class="field"><label>Дом</label><div class="ptags ptags--field">'+
+      ids.map(function(id){
+        var d=district(id);
+        return '<button class="ptag'+(id===cur?' is-on':'')+'" data-home-pick="'+id+'">'+placeIcon(d)+'<span>'+H(d.name)+'</span></button>';
+      }).join('')+'</div></div></div>';
   })()+
   blocked+
   '<div class="divider divider--lg"></div>'+
   /* «О прототипе» — строкой и здесь: на телефоне кнопки в меню нет, а в попапе живут
      «Показать подсказки заново» и отладка */
   '<button class="linerow" data-act="about-open"><span class="linerow__t"><b>О прототипе</b></span>'+icon('chev-right')+'</button>'+
+  '<div class="divider"></div>'+
+  '<button class="linerow" data-act="hints-reset"><span class="linerow__t"><b>Показать подсказки заново</b></span></button>'+
   '<div class="divider divider--lg"></div>'+
   '<div class="pad stack">'+
-    '<button class="btn btn--danger" data-act="reset">'+icon('reset')+'Сбросить прототип'+'</button>'+
+    '<button class="btn btn--danger-solid" data-act="reset">'+icon('reset')+'Сбросить прототип'+'</button>'+
     '<span class="hint">Сброс удалит ваш профиль, события и переписку из браузера и вернёт демо-данные</span>'+
   '</div>';
   return {title:'Настройки',section:true,back:true,body:body};
@@ -8320,8 +8540,8 @@ function threadPinType(t){var p=pin(t.pin_id);return p?p.type:null}
 function threadVisible(t){
   if(threadKind(t)==='system')return true;
   /* Личная переписка с заблокированным закрывается в обе стороны: список её не показывает,
-     написать оттуда некуда. Групповой чат встречи — исключение: событие принадлежит автору,
-     и выкидывать из него кого-то из двоих мы не вправе. Там скрываются только реплики */
+     написать оттуда некуда. Групповой чат встречи — исключение: это общий разговор,
+     и в нём всё остаётся как было, реплики тоже */
   if(threadKind(t)==='direct'){
     for(var i=0;i<t.users.length;i++)
       if(t.users[i]!==db.currentUserId&&blockedWith(t.users[i]))return false;
@@ -8393,12 +8613,11 @@ function threadRow(t){
        встаёт лицо собеседника; у общего чата его нет, и это отсутствие и есть признак */
     title=(kind==='group')?groupName(pin(t.pin_id)):(u?shortName(u):'Сосед');
     sub=p?p.title:'Событие удалено';
-    /* Тип события на вкладке «Все» несёт уголок: под фотографией лежит квадрат цвета
-       категории, а левый нижний угол фотографии скруглён сильнее — цвет выглядывает из-под
-       него. Полоска слева у строки ушла. У обложки без фото цвет и так в её заливке, а на
-       вкладке одного типа он известен из самой вкладки */
-    var corner=(photoOf(p)&&ui.msgTab==='all')?' listrow__pic--corner listrow__pic--'+ptype(p).cls:'';
-    cover='<span class="listrow__pic'+corner+'">'+(photoOf(p)
+    /* Тип события на вкладке «Все» несёт бейдж в левом нижнем углу обложки — зеркально
+       лицу собеседника в правом верхнем: кружок цвета категории с белым значком. У обложки
+       без фото цвет и так в её заливке, а на вкладке одного типа он известен из самой вкладки */
+    var cat=(p&&photoOf(p)&&ui.msgTab==='all')?'<span class="listrow__cat listrow__cat--'+ptype(p).cls+'">'+icon(pinGlyph(p))+'</span>':'';
+    cover='<span class="listrow__pic">'+cat+(photoOf(p)
       ? '<img class="listrow__cover listrow__cover--lg" src="'+photoOf(p)+'" alt="">'
       : '<span class="listrow__cover listrow__cover--lg listrow__cover--'+(p?ptype(p).cls:'muted')+'">'+icon(p?pinGlyph(p):'pin')+'</span>')+
       ((kind!=='group'&&u)?avatarHTML(u,'avatar--s listrow__face'):'')+
@@ -8465,7 +8684,9 @@ function viewChats(){
       '<p>'+(mq?'Попробуйте другое слово'
                :'Переписка открывается, когда вы откликаетесь на событие или пишете его автору')+'</p></div>')+
   '</div></div>';
-  return {title:'Сообщения',top:top,topFlush:true,body:body,section:true,after:function(){scrollTabIntoView($('#panel'))}};
+  return {title:'Сообщения',top:top,topFlush:true,body:body,section:true,after:function(){
+    fitTabs($('#panel .tabs')); scrollTabIntoView($('#panel'));
+  }};
 }
 
 /* Уведомление с вопросом переживает свой ответ: через день оно всё ещё висит в канале и без
@@ -8601,7 +8822,7 @@ function viewThread(id){
       /* второй вход в блокировку: закрыться от собеседника логично прямо из разговора,
          а не через его профиль. В общем чате встречи такой кнопки нет — там собеседник
          не один */
-      ((!isGroup&&u)?'<button class="iconbtn chathead__act" data-act="user-menu" data-id="'+H(u.id)+
+      ((!isGroup&&u)?'<button class="iconbtn chathead__act" data-act="thread-menu" data-id="'+H(u.id)+
         '" aria-label="Ещё" title="Ещё">'+icon('dots')+'</button>':'')+
     '</div>';
 
@@ -8620,10 +8841,8 @@ function viewThread(id){
       var sep='', dl=dayLabel(m.created_at);
       if(dl!==cday){cday=dl; sep='<div class="daysep">'+H(dl)+'</div>'}
       if(m.sys){prevAuthor=null; return sep+'<div class="chatnote">'+H(m.text)+'</div>'}
-      /* Реплика заблокированного в общем чате не исчезает бесследно, а сворачивается:
-         пустота на её месте читалась бы как сбой разговора, а так видно, что реплика была
-         и что скрыли её вы */
-      if(!out&&blockedWith(m.author_id)){prevAuthor=null; return sep+'<div class="chatnote">Сообщение скрыто</div>'}
+      /* Реплики заблокированного в общем чате видны как обычно: это общий разговор встречи,
+         и дыры в нём ломали бы его для всех. Блокировка — про личное */
       if(sep)prevAuthor=m.author_id;
       return sep+'<div class="msg msg--'+(out?'out':'in')+'">'+
         (au?'<button class="msg__a" data-act="user" data-id="'+H(au.id)+'" data-pinctx="'+H(t.pin_id)+'">'+H(shortName(au))+'</button>':'')+
@@ -8862,11 +9081,7 @@ function viewScope(){
   /* Время есть только у встреч: выключили их — блок сворачивается, значение ждёт */
   var when=(anyAct()&&ui.filters.activity)
     ? '<div class="field" data-reveal="when"><label for="f-when">Когда</label>'+
-      '<div class="selectwrap"><select class="select" id="f-when" data-when-sel="1">'+
-        WHEN_STEPS.map(function(o){
-          return '<option value="'+o[0]+'"'+((ui.when||'')===o[0]?' selected':'')+'>'+H(o[1])+'</option>';
-        }).join('')+
-      '</select>'+icon('chev-down','selectwrap__chev')+'</div></div>'
+      pickHTML({id:'f-when',attrs:'data-when-sel="1"',val:ui.when||'',opts:WHEN_STEPS})+'</div>'
     : '';
   /* Чьи события. «Других», а не «соседей»: в демо область — весь центр, и человек с другого
      конца Садового жителю Сухаревской не сосед. Подсказка называет границу выбора */
@@ -8900,7 +9115,9 @@ function viewScope(){
   var act=filtersDirty()
     ? '<button class="iconbtn chathead__act" data-act="filters-reset" aria-label="Сбросить фильтры" title="Сбросить фильтры">'+icon('reset')+'</button>'
     : '';
-  return {title:'Фильтры',body:body,back:true,screen:true,action:act,foot:null,over:done};
+  /* Название говорит, что экран меняет: карту и список, который идёт за картой. Выбор
+     категорий в архиве и в своих делах — другой контрол и карту не трогает */
+  return {title:'Показывать на карте',body:body,back:true,screen:true,action:act,foot:null,over:done};
 }
 
 
@@ -8984,13 +9201,12 @@ function aboutDialog(){
          тестера больше не отличает нас от гостя из кейса. Кто знает — найдёт */
       '<span id="aboutVer" style="user-select:none;-webkit-user-select:none;-webkit-touch-callout:none"><b>Версия</b>'+VERSION+' — по ТЗ v0.3</span>'+
     '</div>'+
-    '<div class="row" style="flex-wrap:wrap;gap:8px">'+
-      '<button class="btn btn--line btn--sm" data-act="share-app">'+icon('share')+'Поделиться прототипом</button>'+
-      '<button class="btn btn--line btn--sm" data-act="hints-reset">Показать подсказки заново</button>'+
-    '</div>'+
   '</div>';
+  /* «Поделиться» — значком на строке заголовка: действие про всё окно, а не про строку
+     данных, под которой оно стояло кнопкой */
   setOverlay('<div class="scrim" data-act="scrim"><div class="modal" role="dialog" aria-modal="true">'+
-    '<div class="modal__body"><h2>О прототипе</h2>'+body+'</div>'+
+    '<div class="modal__body"><div class="modal__head"><h2>О прототипе</h2>'+
+      '<button class="iconbtn iconbtn--20" data-act="share-app" aria-label="Поделиться прототипом" title="Поделиться прототипом">'+icon('share')+'</button></div>'+body+'</div>'+
     '<div class="modal__foot"><button class="btn btn--primary" data-act="modal-no">Понятно</button></div>'+
   '</div></div>');
 }
@@ -9019,7 +9235,7 @@ function chronicleText(){
   if(st.met)out.push(st.met+' '+plural(st.met,'встреча','встречи','встреч'));
   if(st.given)out.push(st.given+' '+plural(st.given,'вещь','вещи','вещей'));
   if(st.returned)out.push(st.returned+' '+plural(st.returned,'находка','находки','находок'));
-  return out.length?('за месяц закрыто: '+out.join(' · ')):'';
+  return out.length?('за месяц в районе: '+out.join(' · ')):'';
 }
 
 /* ============ 9.9 причины закрытия ============ */
@@ -9029,16 +9245,29 @@ function chronicleText(){
 /* Подлежащее — событие или безличное, но не человек: «Отменил» и «Передумал» предлагали
    женщине мужской род. Вещью подлежащее тоже не сделать — название склоняется как угодно,
    и «Нашла нового владельца» хромало на «горшках для цветов» */
+/* Исходы по видам: первым — хороший исход через «Район», он и считается в летописи (done).
+   У находки два варианта: «отдано иначе» у неё не отличалось от «вернули хозяину».
+   У пропажи — действительный залог: «нашли соседи» говорит, кто помог */
 var CLOSE_REASONS={
   activity:[['done','Состоялась'],['noone','Никто не пришёл'],['cancel','Отменена']],
-  need_offer:[['done','Отдано'],['noone','Никто не откликнулся'],['cancel','Оставляю себе']],
-  found:[['done','Вернули хозяину'],['noone','Хозяина не нашли'],['cancel','Отдано иначе']],
-  lost:[['done','Нашлась через сервис'],['noone','Не нашлась'],['cancel','Нашлась сама']]
+  give_away:[['done','Отдано'],['noone','Никто не откликнулся'],['cancel','Оставляю себе']],
+  need_help:[['done','Помогли'],['noone','Никто не откликнулся'],['cancel','Уже не нужно']],
+  offer_service:[['done','Договорились с соседом'],['noone','Никто не откликнулся'],['cancel','Больше не предлагаю']],
+  found:[['done','Вернули хозяину'],['noone','Хозяина не нашли']],
+  lost:[['done','Нашли соседи'],['cancel','Нашли сами'],['noone','Не нашли']]
 };
 function closeReasons(p){
   if(!p)return CLOSE_REASONS.activity;
   if(p.type==='lost_found')return CLOSE_REASONS[p.subtype==='lost'?'lost':'found'];
-  return CLOSE_REASONS[p.type]||CLOSE_REASONS.activity;
+  if(p.type==='need_offer')return CLOSE_REASONS[p.subtype]||CLOSE_REASONS.give_away;
+  return CLOSE_REASONS.activity;
+}
+/* Кнопка закрытия называет, что закрывается: «Завершить» без дополнения на карточке
+   вещи читалось как «завершить сделку». Встречу завершают, остальное закрывают */
+function closeName(p){
+  if(!p||isAct(p))return 'Завершить встречу';
+  if(p.type==='lost_found')return p.subtype==='lost'?'Закрыть пропажу':'Закрыть находку';
+  return {give_away:'Закрыть объявление',need_help:'Закрыть просьбу',offer_service:'Закрыть предложение'}[p.subtype]||'Закрыть объявление';
 }
 function reasonLabel(p){
   if(!p||!p.close_reason)return '';
@@ -9061,18 +9290,16 @@ function closeDialog(p){
   pendingOk=null;
   closeReason=null;
   var rs=closeReasons(p);
-  setOverlay('<div class="scrim" data-act="scrim"><div class="modal" role="dialog" aria-modal="true">'+
+  setOverlay('<div class="scrim" data-act="scrim"><div class="modal modal--close" role="dialog" aria-modal="true">'+
     '<div class="modal__body"><h2>Чем закончилось?</h2>'+
-    '<p>Ответ никому не показывается лично: из него складывается статистика района и архив.</p>'+
     '<div class="opts">'+rs.map(function(r){
       return '<button class="radio" data-act="pick-reason" data-val="'+r[0]+'">'+
         '<span class="radio__dot"></span><span>'+H(r[1])+'</span></button>';
     }).join('')+'</div>'+
-    '<p>Событие уйдёт с карты, новых откликов не будет. Начатые переписки останутся, '+
-      'а вернуть событие можно из архива.</p></div>'+
+    '<p class="modal__note">Событие уйдёт в архив — вернуть можно оттуда. Переписки сохранятся</p></div>'+
     '<div class="modal__foot"><div class="row">'+
-      '<button class="btn btn--line" data-act="modal-close">Отмена</button>'+
-      '<button class="btn btn--primary" data-act="close-reason" data-id="'+p.id+'">Завершить</button>'+
+      '<button class="btn btn--ghost" data-act="modal-close">'+(isAct(p)?'Не завершать':'Не закрывать')+'</button>'+
+      '<button class="btn btn--primary" data-act="close-reason" data-id="'+p.id+'">'+H(closeName(p))+'</button>'+
     '</div></div>'+
   '</div></div>');
 }
@@ -9095,6 +9322,46 @@ var pendingOk=null;
    под ним нет, потому что оно не забирает экран целиком, как модальное окно.
    Сюда же уехала жалоба: в теле карточки она стояла отдельной кнопкой между автором и
    действием, хотя это редкое действие, а не часть сценария */
+/* Выбор одного варианта из списка — один компонент на всё приложение: «Когда», «Повтор
+   встречи», сортировка своих дел. Закрытый вид — кнопка со значением и шевроном. Внутри
+   всегда настоящий select: на телефоне он открывает системный барабан, привычный и крупный.
+   На десктопе системный список выглядит чужим, поэтому нажатие перехватываем и открываем
+   наше меню с галочкой — то же, что у «⋮» и категорий. Выбор пишется обратно в select,
+   и дальше работает обычное событие change: обработчики не знают, кто его вызвал.
+   look:'field' — поле формы, look:'ctl' — кнопка в ряду контролов со значком */
+function pickHTML(o){
+  var opts=o.opts.map(function(x){
+    return '<option value="'+H(x[0])+'"'+(x[0]===o.val?' selected':'')+'>'+H(x[1])+'</option>';
+  }).join('');
+  var sel='<select class="'+(o.look==='ctl'?'ctlpick__sel':'select')+'"'+(o.id?' id="'+o.id+'"':'')+
+    ' data-pick="1" '+(o.attrs||'')+(o.label?' aria-label="'+H(o.label)+'"':'')+'>'+opts+'</select>';
+  if(o.look==='ctl'){
+    var cur=o.opts.filter(function(x){return x[0]===o.val})[0]||o.opts[0];
+    return '<span class="ctlpick"><span class="ctl" aria-hidden="true">'+(o.ic?icon(o.ic):'')+H(cur[1])+icon('chev-down')+'</span>'+sel+'</span>';
+  }
+  return '<div class="selectwrap">'+sel+icon('chev-down','selectwrap__chev')+'</div>';
+}
+var pickSel=null;
+function pickMenu(sel){
+  pickSel=sel;
+  var anchor=sel.closest('.ctlpick')||sel;
+  menuDialog(anchor,Array.prototype.map.call(sel.options,function(op,i){
+    return {act:'pick-set',id:String(i),label:op.text,on:op.selected,check:true};
+  }));
+  /* у поля формы меню во всю его ширину: узкий список под широким полем выглядел чужим */
+  var mn=$('#overlay .menu');
+  if(mn&&!sel.closest('.ctlpick'))mn.style.minWidth=Math.round(anchor.getBoundingClientRect().width)+'px';
+}
+document.addEventListener('mousedown',function(e){
+  var sel=e.target.closest&&e.target.closest('select[data-pick]');
+  if(!sel||!isDesktopPanel())return;
+  e.preventDefault(); sel.focus(); pickMenu(sel);
+},true);
+document.addEventListener('keydown',function(e){
+  var sel=e.target;
+  if(!sel||sel.tagName!=='SELECT'||!sel.getAttribute('data-pick')||!isDesktopPanel())return;
+  if(e.key==='Enter'||e.key===' '||(e.altKey&&e.key==='ArrowDown')){e.preventDefault(); pickMenu(sel)}
+},true);
 function menuDialog(anchor,items){
   pendingOk=null;
   var r=anchor?anchor.getBoundingClientRect():null;
@@ -9106,14 +9373,19 @@ function menuDialog(anchor,items){
         ? 'left:'+Math.round(Math.max(8,r.left))+'px'
         : 'right:'+Math.round(Math.max(8,window.innerWidth-r.right))+'px')
     : 'top:64px;right:12px';
+  /* Деструктивное — красным текстом и отдельной группой внизу: в ровном столбце пунктов
+     его иначе не отличить от «Поделиться», пока не прочитаешь */
+  var safe=items.filter(function(it){return !it.danger}), bad=items.filter(function(it){return it.danger});
+  items=safe.concat(bad);
   setOverlay('<div class="scrim scrim--clear" data-act="scrim"><div class="menu" style="'+pos+'" role="menu">'+
-    items.map(function(it){
+    items.map(function(it,ii){
       /* Три вида пункта: обычное действие со значком, выбор с галкой и переключатель типа
          с цветным кружком. Общего у них поле, высота и наведение — различается только то,
          что стоит по краям */
       /* Необратимое помечается цветом: в меню пункты стоят ровным столбцом, и «Удалить»
          ничем не отличалось бы от «Поделиться», пока не прочитаешь */
-      return '<button class="menu__i'+(it.on?' is-on':'')+(it.danger?' is-danger':'')+'" data-act="'+it.act+'" data-id="'+H(it.id||'')+'" role="menuitem">'+
+      return (safe.length&&bad.length&&ii===safe.length?'<div class="menu__sep"></div>':'')+
+        '<button class="menu__i'+(it.on?' is-on':'')+(it.danger?' is-danger':'')+'" data-act="'+it.act+'" data-id="'+H(it.id||'')+'" role="menuitem">'+
         (it.dot?'<i class="catdot" style="border-color:'+it.dot+(it.on?';background:'+it.dot:'')+'"></i>':(it.icon?icon(it.icon):''))+
         H(it.label)+
         (it.check?'<span class="menu__on">'+icon('check')+'</span>':'')+
@@ -9127,13 +9399,17 @@ function setOverlay(html){
   var o=$('#overlay'); o.innerHTML=html; fixHang(o); syncTint();
 }
 function closeModal(){$('#overlay').innerHTML='';pendingOk=null;syncTint()}
-function confirmDialog(title,text,ok,danger,cb){
+/* Вторая кнопка — зеркало основной, а не «Отмена»: в «Бросить черновик?» отмена читалась
+   как «отменить черновик», в «Не пойдёте?» — как «отменить участие». kind: true —
+   необратимое (красная заливка), 'soft' — обратимое с потерей (красный текст) */
+function confirmDialog(title,text,ok,kind,cb,no){
   pendingOk=cb;
+  var cls=(kind==='soft')?'btn--danger-soft':(kind?'btn--danger-solid':'btn--primary');
   setOverlay('<div class="scrim" data-act="scrim"><div class="modal" role="dialog" aria-modal="true">'+
     '<div class="modal__body"><h2>'+H(title)+'</h2><p>'+H(text)+'</p></div>'+
     '<div class="modal__foot"><div class="row">'+
-      '<button class="btn btn--ghost" data-act="modal-no">Отмена</button>'+
-      '<button class="btn '+(danger?'btn--danger-solid':'btn--primary')+'" data-act="modal-yes">'+H(ok)+'</button>'+
+      '<button class="btn btn--ghost" data-act="modal-no">'+H(no||'Отмена')+'</button>'+
+      '<button class="btn '+cls+'" data-act="modal-yes">'+H(ok)+'</button>'+
     '</div></div></div></div>');
 }
 
@@ -9166,10 +9442,17 @@ function autoReply(threadId){
     if(!(ui.panel&&ui.panel.type==='thread'&&ui.panel.id===threadId))toast(shortName(u)+': новое сообщение');
   },1800+Math.random()*900);
 }
+/* Личная переписка с заблокированным закрыта на самом действии, а не только спрятана из
+   списка: любой путь к ней — профиль, карточка, уведомление, открытый экран — упирается сюда */
+var DM_CLOSED='Личная переписка с этим соседом закрыта';
 function sendMessage(){
   var inp=$('#msgInput'); if(!inp)return;
   var text=inp.value.trim(); if(!text)return;
   var tid=ui.panel.id;
+  var st0=db.threads.filter(function(x){return x.id===tid})[0];
+  if(st0&&threadKind(st0)==='direct'&&st0.users.some(function(u){return u!==db.currentUserId&&blockedWith(u)})){
+    toast(DM_CLOSED); return;
+  }
   db.messages.push({id:uid('msg'),thread_id:tid,author_id:db.currentUserId,text:text,created_at:now()});
   if(ui.msgDrafts)delete ui.msgDrafts[tid];
   save(); inp.value=''; render(); autoReply(tid);
@@ -9304,6 +9587,27 @@ function publish(){
    и ближайшие к прицелу, с запросом — совпадения. Только станции: ориентир — это станция,
    к которой привязывается событие, а «рядом с Москвой» точку не поставить */
 /* Алерт: cls — категория события (act/offer/find), acts — кнопки справа */
+/* Кнопки алерта растут только в свободное место справа — до 120 точек: текст слева
+   сохраняет свою ширину и строк не прибавляет. Свободное место — это то, что остаётся в
+   колонке текста правее самой длинной строки. Зазор до текста не меньше 12 — его держит
+   промежуток алерта. Две кнопки стоят столбиком и растут одинаково */
+function fitAlerts(root){
+  (root||document).querySelectorAll('.alert').forEach(function(a){
+    var t=a.querySelector('.alert__t'), acts=a.querySelector('.alert__acts');
+    if(!t||!acts)return;
+    acts.style.width='';
+    var nat=acts.getBoundingClientRect().width, tr=t.getBoundingClientRect();
+    if(!nat||!tr.width||nat>=120)return;
+    var rg=document.createRange(), right=tr.left;
+    var w=document.createTreeWalker(t,NodeFilter.SHOW_TEXT,null,false), n;
+    while((n=w.nextNode())){
+      rg.selectNodeContents(n);
+      Array.prototype.forEach.call(rg.getClientRects(),function(r){if(r.width)right=Math.max(right,r.right)});
+    }
+    var free=Math.floor(tr.right-right)-1;
+    if(free>0)acts.style.width=Math.min(120,nat+free)+'px';
+  });
+}
 function alertHTML(p,title,text,acts){
   var t=ptype(p);
   /* Значка нет: категорию и так говорит заливка, а в карточке прямо под алертом тег
@@ -9511,7 +9815,7 @@ function onAction(act,el,e){
       if(!filled){ui.draft=null;ui.pickPaused=false;closePanel();break}
       confirmDialog('Бросить черновик?','Заполненное не сохранится, событие не опубликуется','Бросить',true,function(){
         ui.draft=null; ui.pickPaused=false; closePanel();
-      });
+      },'Не бросать');
       break;
     case 'settle':
       var stp=el.getAttribute('data-pin'), stu=id;
@@ -9546,10 +9850,10 @@ function onAction(act,el,e){
         ui.panel=ep||null; expandPanel(); render(); break;
       }
       /* выбор станции и категории открываются поверх чего угодно — возвращаем туда, откуда пришли */
-      if(ui.panel&&(ui.panel.type==='scope'||ui.panel.type==='stations'||ui.panel.type==='user'||ui.panel.type==='people'||ui.panel.type==='archive')){
+      if(ui.panel&&(ui.panel.type==='scope'||ui.panel.type==='stations'||ui.panel.type==='user'||ui.panel.type==='people'||ui.panel.type==='archive'||ui.panel.type==='blocked')){
         /* камера возвращается туда, где вы были до нажатия на значок станции */
         var pc=ui.panel.cam;
-        ui.panel=ui.panel.prev||null; expandPanel(); render();
+        ui.panel=skipHiddenPin(ui.panel.prev||null); expandPanel(); render();
         if(pc){view.k=pc.k; view.tx=pc.tx; view.ty=pc.ty; applyView()}
         break;
       }
@@ -9652,7 +9956,7 @@ function onAction(act,el,e){
       /* Отозвать заявку можно молча: вы пока никому ничего не обещали. А выход из
          набранного состава задевает и автора, и разговор, поэтому спрашиваем */
       if(mr&&mr.status==='interested'){doLeave();break}
-      confirmDialog('Не пойдёте?','Место освободится для другого соседа, и вы выйдете из чата участников','Не пойду',false,doLeave);
+      confirmDialog('Не пойдёте?','Место освободится для другого соседа, и вы выйдете из чата участников','Не пойду','soft',doLeave,'Пойду');
       break;
     case 'respond':
       if(!myResponse(id))db.responses.push({id:uid('rsp'),pin_id:id,user_id:db.currentUserId,status:'interested',created_at:now()});
@@ -9665,12 +9969,16 @@ function onAction(act,el,e){
         toast('Вы в поиске — пишите, где видели');
         break;
       }
+      if(blockedWith(pp.author_id)){save(); toast(DM_CLOSED); break}
       var th=ensureThread(id,pp.author_id);
       save(); openPanel({type:'thread',id:th.id,from:'pin'});
       toast('Открыли переписку с автором');
       break;
     case 'write':
-      var p2=pin(id), th2=ensureThread(id,p2.author_id);
+      var p2=pin(id);
+      if(!p2)break;
+      if(blockedWith(p2.author_id)){toast(DM_CLOSED); break}
+      var th2=ensureThread(id,p2.author_id);
       openPanel({type:'thread',id:th2.id,from:'pin'});
       break;
     /* написать соседу из его профиля: разговор заводится по тому событию, из которого
@@ -9678,6 +9986,7 @@ function onAction(act,el,e){
     case 'dm':
       var dmp=el.getAttribute('data-pin');
       if(!dmp||id===db.currentUserId)break;
+      if(blockedWith(id)){toast(DM_CLOSED); break}
       var dth=ensureThread(dmp,id);
       save(); openPanel({type:'thread',id:dth.id,from:'pin',prev:ui.panel});
       break;
@@ -9713,7 +10022,7 @@ function onAction(act,el,e){
         db.threads=db.threads.filter(function(t){return t.pin_id!==id});
         db.messages=db.messages.filter(function(m){return ths.indexOf(m.thread_id)<0});
         save(); closePanel(); toast('Событие удалено');
-      });
+      },'Не удалять');
       break;
     case 'pin-menu':
       /* жаловаться на себя незачем — у своего пина на этом месте стоит правка */
@@ -9725,8 +10034,8 @@ function onAction(act,el,e){
       }
       else{
         if(mp&&isAct(mp)&&mp.status==='active'&&isJoined(mmr))
-          items.push({act:'leave',icon:'exit',label:'Не пойду',id:id});
-        items.push({act:'report',icon:'flag',label:'Пожаловаться',id:id});
+          items.push({act:'leave',icon:'exit',label:'Не пойду',id:id,danger:true});
+        items.push({act:'report',icon:'flag',label:'Пожаловаться',id:id,danger:true});
       }
       menuDialog(el,items);
       break;
@@ -9765,6 +10074,20 @@ function onAction(act,el,e){
       render();
       var backBtn=$('[data-act="mine-cats"]'); if(backBtn)onAction('mine-cats',backBtn,e);
       break;
+    case 'arc-cats':
+      var acItems=[];
+      for(var ak in PIN_TYPES)acItems.push({act:'arc-cat',id:ak,label:PIN_TYPES[ak].short,
+        dot:'var(--'+PIN_TYPES[ak].cls+')',on:arcCatOn(ak),check:true});
+      menuDialog(el,acItems);
+      break;
+    case 'arc-cat':
+      ui.arcCats=ui.arcCats||{};
+      ui.arcCats[id]=!arcCatOn(id);
+      var anyAc=false; for(var ack in PIN_TYPES)if(arcCatOn(ack))anyAc=true;
+      if(!anyAc)ui.arcCats=null;
+      render();
+      var acBtn=$('[data-act="arc-cats"]'); if(acBtn)onAction('arc-cats',acBtn,e);
+      break;
     case 'mine-sort':
       var msPast=ui.panel&&ui.panel.id==='archive';
       var msList=msPast?[['late','Новые'],['early','Старые']]
@@ -9773,37 +10096,62 @@ function onAction(act,el,e){
       menuDialog(el,msList.map(function(o){return {act:'mine-sort-set',id:o[0],label:o[1],on:o[0]===msCur,check:true}}));
       break;
     case 'mine-sort-set': closeModal(); ui.mineSort=id; render(); break;
+    case 'pick-set':
+      closeModal();
+      var ps=pickSel; pickSel=null;
+      if(ps&&ps.options[+id]&&ps.selectedIndex!==+id){
+        ps.selectedIndex=+id;
+        ps.dispatchEvent(new Event('change',{bubbles:true}));
+      }
+      break;
     case 'mine-clear':
       ui.mineQuery=''; render();
       var mi=$('#mineSearch'); if(mi)mi.focus();
       break;
     case 'user-menu':
-      menuDialog(el,[{act:'block',icon:'shield',label:'Заблокировать',id:id}]);
+      menuDialog(el,[{act:'block',icon:'shield',label:'Заблокировать',id:id,danger:true}]);
+      break;
+    /* в личной переписке первым — вход в профиль собеседника: в разговоре он есть только
+       по имени над репликой, и найти его там непросто */
+    case 'thread-menu':
+      var tmu=user(id);
+      menuDialog(el,[{act:'menu-user',icon:'user',label:'Профиль '+(tmu?shortName(tmu):'соседа'),id:id},
+                     {act:'block',icon:'shield',label:'Заблокировать',id:id,danger:true}]);
+      break;
+    case 'menu-user':
+      closeModal();
+      openPanel({type:'user',id:id,pinctx:pinCtxOf(ui.panel),prev:ui.panel});
       break;
     case 'block':
       closeModal();
       var bu=user(id); if(!bu)break;
       confirmDialog('Заблокировать соседа?',
-        'Его события скроются у вас, ваши — у него, личная переписка закроется. В общих чатах встреч вы оба останетесь, но его реплики скроются. Сосед об этом не узнает',
-        'Заблокировать',true,function(){
-          var bm=me(); bm.blocked=bm.blocked||{}; bm.blocked[id]=1;
+        'Его события скроются у вас, ваши — у него, личная переписка закроется. В общих встречах всё останется как было. Сосед об этом не узнает',
+        'Заблокировать','soft',function(){
+          var bm=me(); bm.blocked=bm.blocked||{};
+          bm.blocked[id]={at:now(),ctx:blockCtxOf(ui.panel)};
           /* Если блокировали прямо из разговора, в нём оставаться нельзя: переписка закрыта,
-             а открытый экран показывал бы её как ни в чём не бывало и принимал бы ввод */
+             а открытый экран показывал бы её как ни в чём не бывало и принимал бы ввод.
+             Экран уходит, результата не видно — поэтому подсказка с возвратом. В профиле
+             экран меняется сам, и возврат стоит на нём же большой кнопкой */
+          var fromThread=false;
           if(ui.panel&&ui.panel.type==='thread'){
             var bt=null;
             for(var bi=0;bi<db.threads.length;bi++)if(db.threads[bi].id===ui.panel.id)bt=db.threads[bi];
-            if(bt&&threadKind(bt)==='direct'&&bt.users.indexOf(id)>=0)openPanel({type:'chats'});
+            if(bt&&threadKind(bt)==='direct'&&bt.users.indexOf(id)>=0){openPanel({type:'chats'}); fromThread=true}
           }
-          save(); render(); toast('Сосед заблокирован','Вернуть',function(){
+          save(); render();
+          if(fromThread)toast('Сосед заблокирован','Вернуть',function(){
             var b2=me(); if(b2&&b2.blocked)delete b2.blocked[id];
             save(); render();
           },'undo');
-        });
+        },'Не блокировать');
       break;
+    /* экран профиля сам превращается в обычный — подсказка о том же была бы пересказом */
     case 'unblock':
       var um=me();
       if(um&&um.blocked)delete um.blocked[id];
-      save(); render(); toast('Сосед разблокирован');
+      save(); render();
       break;
     case 'edit-pin':
       closeModal();
@@ -9826,10 +10174,10 @@ function onAction(act,el,e){
       shareOut('Смотри, какой прототип: соседи договариваются о встречах, вещах и находках на карте вокруг дома');
       break;
     case 'report':
-      confirmDialog('Пожаловаться на событие?','Мы скроем его у вас сразу. Если пожалуются трое соседей, пин уходит с карты района до проверки','Пожаловаться',true,function(){
+      confirmDialog('Пожаловаться на событие?','Мы скроем его у вас сразу. Если пожалуются трое соседей, пин уходит с карты района до проверки','Пожаловаться','soft',function(){
         db.reports.push({id:uid('rep'),pin_id:id,user_id:db.currentUserId,created_at:now()});
         save(); closePanel(); toast('Спасибо, событие скрыто');
-      });
+      },'Не жаловаться');
       break;
     case 'extend':
       var xp=pin(id); if(xp){xp.expires_at=now()+30*DAY; save(); render(); toast('Продлили на месяц')}
@@ -9917,11 +10265,12 @@ function onAction(act,el,e){
       var hl=(district(homePoint().st).lines||[])[0]; if(hl!=null)ui.lineOpen=hl;
       openPanel({type:'stations',pick:'home',prev:ui.panel}); break;
     case 'debug-open': debugDialog(); break;
-    case 'hints-reset': closeModal(); hintsReset(); break;
+    case 'hints-reset': closeModal(); hintsReset(); toast('Подсказки покажутся снова'); break;
     case 'about-open': aboutDialog(); break;
+    case 'open-blocked': openPanel({type:'blocked',prev:ui.panel}); break;
 
     case 'people': openPanel({type:'people',id:id,prev:ui.panel}); break;
-    case 'open-archive': openPanel({type:'archive',prev:ui.panel}); break;
+    case 'open-archive': ui.arcCats=null; openPanel({type:'archive',prev:ui.panel}); break;
     case 'open-mine': openPanel({type:'mine',id:id,prev:ui.panel}); break;
     case 'settings': openPanel({type:'settings'}); break;
     case 'pin-expand': ui.pinShut=false; render(); break;
@@ -9933,7 +10282,7 @@ function onAction(act,el,e){
       confirmDialog('Сбросить прототип?','Ваш профиль, события и переписка будут удалены из браузера, а демо-данные вернутся в исходное состояние','Сбросить',true,function(){
         try{localStorage.removeItem(KEY)}catch(e){}
         location.reload();
-      });
+      },'Не сбрасывать');
       break;
   }
 }
@@ -9958,7 +10307,10 @@ document.addEventListener('click',function(e){
   var hb=$('#hintBubble');
   if(hb&&hb._k==='card'&&e.target.closest&&e.target.closest('.panel__foot .btn--primary,.panel__foot .btn--brand'))hintDone('card');
 },true);
-window.addEventListener('resize',function(){syncHint()});
+window.addEventListener('resize',function(){
+  syncHint(); fitAlerts();
+  if(ui.panel&&ui.panel.type==='chats')fitTabs($('#panel .tabs'));
+});
 document.addEventListener('click',function(e){
   var el;
   /* стрелка полосы с прокруткой: обработчик один на все полосы, включая те, которых
@@ -9980,6 +10332,7 @@ document.addEventListener('click',function(e){
     ui.lineOpen=(ui.lineOpen===ln)?null:ln;
     render(); return;
   }
+  if((el=e.target.closest('[data-home-pick]'))){moveHome(el.getAttribute('data-home-pick')); return}
   /* выбор дома: точка дома — сама станция, как при регистрации. Карту не трогаем */
   if((el=e.target.closest('[data-home-set]'))){
     var hm=me(), hs=district(el.getAttribute('data-home-set'));
@@ -10552,6 +10905,9 @@ document.addEventListener('change',function(e){
     ui.when=e.target.value||'';
     render(); return;
   }
+  if(e.target.getAttribute&&e.target.getAttribute('data-mine-sort')){
+    ui.mineSort=e.target.value; render(); return;
+  }
 });
 document.addEventListener('input',function(e){
   var k=e.target.getAttribute&&e.target.getAttribute('data-onb');
@@ -10613,7 +10969,9 @@ function currentHint(){
   var p=ui.panel;
   if(p&&p.type==='welcome')return null;
   if($('#overlay').innerHTML)return null;
-  if(!p&&!hintSeen('map'))return 'map';
+  /* пока список развёрнут, карты не видно — учить её двигать нечему. Пройденной подсказка
+     от этого не считается: свернул шторку — она вернётся */
+  if(!p&&!hintSeen('map')&&(isDesktopPanel()||!ui.homeOpen))return 'map';
   if(p&&p.type==='pin'&&!hintSeen('card')){
     var pp=pin(p.id), bt=cardMainBtn();
     /* только пока вы не откликнулись: после отклика кнопка уже ведёт в переписку */
@@ -10623,14 +10981,51 @@ function currentHint(){
   if(p&&p.type==='create'&&ui.draft&&ui.draft.step===1&&!ui.draft.stOpen&&!hintSeen('create'))return 'create';
   return null;
 }
+/* Подсказка появляется и уходит плавно: прозрачность и сдвиг на 8. Смена одной на другую —
+   через уход и появление, без прыжка на новое место. Подсказка создания на десктопе лежит
+   поверх плашки расстояния и при первом движении карты превращается в неё: подложка
+   сжимается до размера плашки, текст растворяется, из-под неё проступает расстояние */
+var hintTimer=null;
+function hideHint(hb,then){
+  if(hb.hidden){hb._k=null; if(then)then(); return}
+  if(hb._leaving){if(then)hb._then=then; return}
+  hb._leaving=true; hb._then=then||null;
+  var pi=$('#pickInfo');
+  function done(){
+    hb._leaving=false; hb.hidden=true; hb._k=null;
+    hb.classList.remove('is-in','is-morph'); hb.style.cssText='';
+    var t=hb._then; hb._then=null; if(t)t();
+  }
+  if(reduceMotion()){done(); return}
+  if(hb._k==='create'&&isDesktopPanel()&&pi&&!pi.hidden){
+    var a=hb.getBoundingClientRect(), b=pi.getBoundingClientRect();
+    hb.style.right='auto'; hb.style.bottom='auto';
+    hb.style.left=a.left+'px'; hb.style.top=a.top+'px'; hb.style.width=a.width+'px'; hb.style.height=a.height+'px';
+    hb.classList.add('is-morph'); void hb.offsetWidth;
+    hb.style.left=b.left+'px'; hb.style.top=b.top+'px'; hb.style.width=b.width+'px'; hb.style.height=b.height+'px';
+    hintTimer=setTimeout(function(){hb.style.opacity='0'; hintTimer=setTimeout(done,160)},250);
+    return;
+  }
+  hb.classList.remove('is-in');
+  hintTimer=setTimeout(done,160);
+}
 function syncHint(){
   var hb=$('#hintBubble'); if(!hb)return;
   var k=currentHint();
-  if(!k){hb.hidden=true; hb._k=null; return}
+  if(!k){hideHint(hb); return}
+  if(hb._leaving){
+    /* та же подсказка вернулась, пока уходила, — просто остаётся */
+    if(hb._k===k&&!hb.classList.contains('is-morph')){clearTimeout(hintTimer); hb._leaving=false; hb._then=null; hb.classList.add('is-in')}
+    else{hb._then=syncHint; return}
+  }
+  if(hb._k&&hb._k!==k&&!hb.hidden){hideHint(hb,syncHint); return}
   if(hb._k!==k){
-    hb.innerHTML='<span>'+H(HINTS[k])+'</span><button type="button" class="pill pill--primary" data-hint-ok="'+k+'">Понятно</button>';
+    /* кнопка только у подсказки, которую не снимает само действие: откликаться необязательно */
+    hb.innerHTML='<span>'+H(HINTS[k])+'</span>'+
+      (k==='card'?'<button type="button" class="pill pill--primary" data-hint-ok="'+k+'">Ок</button>':'');
     hb._k=k; fixHang(hb);
   }
+  var fresh=hb.hidden;
   hb.hidden=false;
   var W=window.innerWidth, st=$('.stage').getBoundingClientRect(), bw;
   hb.style.left=hb.style.right=hb.style.top=hb.style.bottom=hb.style.width='';
@@ -10651,13 +11046,15 @@ function syncHint(){
     hb.style.left=r.left+'px'; hb.style.width=r.width+'px';
     hb.style.bottom=(window.innerHeight-r.top+10)+'px';
   }else{
-    /* над прицелом, над головой булавки */
+    /* над прицелом, над головой булавки; на десктопе — поверх плашки расстояния, нижние
+       края вровень: при первом движении карты подсказка в неё и превращается */
     bw=Math.min(320,W-32);
     var cx=st.left+viewCX(), cy=st.top+pickCenterY();
     hb.style.width=bw+'px';
     hb.style.left=Math.max(16,Math.min(W-16-bw,cx-bw/2))+'px';
-    hb.style.bottom=(window.innerHeight-cy+64)+'px';
+    hb.style.bottom=(window.innerHeight-cy+(isDesktopPanel()?68:64))+'px';
   }
+  if(fresh){hb.classList.remove('is-in'); void hb.offsetWidth; hb.classList.add('is-in')}
 }
 /* Текст, с которым событие уходит в мессенджер: по нему сразу понятно, что это и где.
    Карточку под ним мессенджер построит сам — по мета-тегам страницы */
@@ -10868,7 +11265,9 @@ renderPanel=function(){
   /* пока приветствие не пройдено, другие экраны не открываются: иначе можно уйти в приложение
      без имени, и соседи увидят «Сосед» */
   var mw=me(); if(mw&&mw.welcome&&!(ui.panel&&ui.panel.type==='welcome'))ui.panel={type:'welcome'};
-  var apw=$('#app'); if(apw)apw.classList.toggle('is-welcome',!!(ui.panel&&ui.panel.type==='welcome'));
+  var apw=$('#app'), wOn=!!(ui.panel&&ui.panel.type==='welcome');
+  var wEnter=!!(apw&&wOn&&!apw.classList.contains('is-welcome')&&!ui.wLeaving);
+  if(apw&&!ui.wLeaving)apw.classList.toggle('is-welcome',wOn);
   if(ui.sysFresh&&!(ui.panel&&ui.panel.type==='thread'&&ui.panel.id===ui.sysFresh.tid))ui.sysFresh=null;
   /* предложение позвать соседей живёт, пока открыта карточка нового события */
   if(ui.inviteFor&&!(ui.panel&&ui.panel.type==='pin'&&ui.panel.id===ui.inviteFor))ui.inviteFor=null;
@@ -10881,10 +11280,17 @@ renderPanel=function(){
   syncPicking();
   _renderPanel();
   if(so)stepSlide($('#panel'),so);
+  /* приветствие въезжает, а размытие карты нарастает — без щелчка на первом кадре */
+  if(wEnter&&!reduceMotion()){
+    var wp=$('#panel');
+    if(wp){wp.classList.remove('is-enter'); void wp.offsetWidth; wp.classList.add('is-enter');
+      setTimeout(function(){wp.classList.remove('is-enter')},360)}
+  }
   syncHint();
   syncPickUI();
   if(ui.picking)updateDraftFromCenter();
   fitChatToViewport();
+  fitAlerts();
 };
 function syncPickUI(){
   $('#map').classList.toggle('is-pick',ui.picking);
@@ -11202,7 +11608,7 @@ document.addEventListener('pointerup',function(){
 
 db=loadDB();
 if(!db){db=seedDB();save()}
-else {migrateCoords(); migrateArea(); geoPins(); migrateDemo(); reanchorDemo(); flushHeldStored(); dedupeResponses();}
+else {migrateCoords(); migrateArea(); geoPins(); migrateDemo(); reanchorDemo(); flushHeldStored(); dedupeDemo(); dedupeResponses();}
 /* Тумблер человек уже включал — значит разрешение, скорее всего, выдано; поднимаем
    слежение молча. Откажут — тумблер погаснет сам, как и при первом включении */
 if(db.currentUserId&&user(db.currentUserId)&&me()&&me().geo)geoStart(function(ok){

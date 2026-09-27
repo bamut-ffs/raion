@@ -703,6 +703,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .alert .alert__t p{margin:4px 0 0;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink);white-space:normal}
 /* две кнопки встают столбиком одной ширины: основная сверху, ближе к вопросу */
 .alert__acts{display:flex;flex-direction:column;gap:8px;flex:none}
+.alert .pill{height:32px}
 /* «Таблетка» — мелкая кнопка с полным скруглением. Нейтральная лежит на любой из трёх
    подложек категорий; брендовая мягкая — второстепенный переход («Весь архив ›») */
 .pill{display:inline-flex;align-items:center;justify-content:center;gap:2px;height:28px;padding:0 12px;
@@ -714,6 +715,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .pill svg{width:14px;height:14px;flex:none}
 .footrow{display:flex;gap:8px}
 .footrow .btn{flex:1;min-width:0}
+/* «Завершить встречу» рядом с «Чатом встречи»: поровну они не помещались, и длинная
+   подпись ломалась на две строки. Ширина по содержимому, поля по бокам 12 */
+.footrow--fit .btn{flex:1 1 auto;width:auto;white-space:nowrap;padding-left:12px;padding-right:12px}
 .cardnotes--short{margin-top:0}
 
 /* итог в уведомлении — плашка без обводки: это не действие и не тип, а результат */
@@ -782,6 +786,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* теги ориентира внутри поля формы: без полосы и подложки выпадающего списка поиска */
 .ptags.ptags--field{padding:0;border:none;background:none}
 .ptags--field .ptag{background:var(--surface-2)}
+/* в поле «Ориентир» теги — отдельная группа под строкой ввода: 16 от неё, а не 8, как
+   заголовок и подсказка. Отступ внутри раскрывающегося блока, чтобы ехал вместе с ним */
+[data-reveal="placelist"]>.ptags.ptags--field{padding-top:8px}
 .ptags--field .ptag:hover{background:var(--surface-3)}
 .ptag--all svg{width:14px;height:14px;color:var(--ink-3);flex:none}
 /* На телефоне подсказки — отдельная подложка под полем: серая цвета разделителя, теги на ней
@@ -894,6 +901,13 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .btn--line:hover{background:var(--surface-2);color:var(--ink)}
 .btn--danger{color:var(--danger);background:transparent}
 .btn--danger:hover{background:var(--surface-2)}
+/* Цвет деструктивного. Необратимое — красная заливка (btn--danger-solid). Обратимое, но
+   с потерей — красный текст на второстепенной кнопке: заметно, но не кричит. Закрытие
+   события и зеркальные ответы («Пойду», «Не закрывать») не красим */
+.btn--danger-soft{background:var(--surface-2);color:var(--danger-solid)}
+.btn--danger-soft:hover{background:var(--surface-3)}
+.linkbtn--danger,.linkbtn--danger:hover{color:var(--danger-solid)}
+.iconbtn--danger,.iconbtn--danger:hover{color:var(--danger-solid)}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
 .btn--sm{padding:8px 12px;font-size:var(--f-s10);line-height:var(--l-s10);width:auto}
 .row{display:flex;gap:8px}
@@ -1242,6 +1256,10 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* системную стрелку у селекта мы убрали, поэтому рисуем свою — без неё он неотличим
    от поля ввода. Насквозь кликабельна, чтобы попадание шло в сам список */
 .selectwrap{position:relative}
+/* кнопка ряда контролов с настоящим select поверх: на телефоне нажатие открывает барабан */
+.ctlpick{position:relative;flex:none;display:flex}
+.ctlpick__sel{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;appearance:none;border:0}
+.ctlpick:hover .ctl{background:var(--surface-3)}
 .selectwrap .select{padding-right:36px}
 .selectwrap__chev{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--ink-3);pointer-events:none}
 /* minmax(0,…), а не голое 1fr: колонке 1fr запрещено быть уже содержимого, а поле даты
@@ -1395,6 +1413,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* Разделы отмечены подчёркиванием, а не плашкой: тонкая линия под рядом служит и границей
    шапки, и дорожкой для указателя, то есть один элемент делает две работы */
 .tabs button{flex:none;white-space:nowrap;position:relative}
+.tabs.tabs--fill button{justify-content:center;min-width:0}
 .tabs button{padding:0 2px;font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;color:var(--ink-3);align-self:stretch;display:flex;align-items:center}
 .tabs{gap:12px}
 /* Полоса с прокруткой вбок — общий элемент, а не часть вкладок: те же края и те же стрелки
@@ -1442,6 +1461,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .hscroll.is-tight .tabs{gap:8px;padding-right:8px;overflow-x:hidden}
 .tabs button:hover{color:var(--ink)}
 .tabs button.is-on{color:var(--ink);font-weight:600}
+.tabs__n{font-size:11px;line-height:1;font-weight:500;color:var(--ink-3);margin-left:1px;position:relative;top:-6px;vertical-align:baseline}
 /* Число на вкладке появляется только когда есть непрочитанное — значит само его наличие
    и есть сигнал внимания, а цвет свободен и может нести тип. Кружок стал лишним */
 .tabs .tag{margin-left:4px;position:relative;top:1px;border-color:transparent;color:var(--ink)}
@@ -1454,7 +1474,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .statbar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--surface-3)}
 /* ненулевая доля всегда видна: одна встреча против двадцати вещей иначе пропадает */
 .statbar i{display:block;min-width:6px}
-.chronicle{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 16px;text-align:center}
+.chronicle{display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px 16px;text-align:center}
 .statlegend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-2)}
 .statlegend span{display:inline-flex;align-items:center;gap:6px}
 .statlegend i{width:8px;height:8px;border-radius:50%;flex:none}
@@ -1502,7 +1522,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .ctl--dots:hover .catdots{--btn-bg:var(--surface-3)}
 /* Выбор внутри всплывающего списка. Пункт с галкой — тот же .menu__i, но галка стоит
    справа и занимает место всегда, иначе строки прыгают при переключении */
-.menu__i .menu__i.is-danger,.menu__i.is-danger svg{color:var(--danger-solid)}
+.menu__i.is-danger,.menu__i.is-danger svg{color:var(--danger-solid)}
+.menu__sep{height:1px;background:var(--line);margin:4px 8px}
 .menu__on{margin-left:auto;width:16px;height:16px;flex:none;color:var(--brand-icon);opacity:0}
 .menu__i.is-on .menu__on{opacity:1}
 .menu__i.is-on{font-weight:600;color:var(--ink)}
@@ -1514,11 +1535,13 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
    и та же. Поэтому поверх обложки встаёт лицо собеседника — у общего чата его нет, и это
    отсутствие и есть признак. Кольцо цветом строки, иначе тёмное лицо слипается с фото */
 .listrow__pic{position:relative;flex:none}
-.listrow__pic--corner::before{content:'';position:absolute;left:0;top:0;width:60px;height:60px;border-radius:var(--r-s)}
-.listrow__pic--act::before{background:var(--act)}
-.listrow__pic--offer::before{background:var(--offer)}
-.listrow__pic--find::before{background:var(--find)}
-.listrow__pic--corner .listrow__cover{position:relative;display:block;border-bottom-left-radius:24px}
+.listrow__cat{position:absolute;left:-3px;bottom:-3px;z-index:1;width:20px;height:20px;border-radius:50%;
+  display:grid;place-items:center;color:#fff;box-shadow:0 0 0 2px var(--surface)}
+.listrow__cat svg{width:12px;height:12px}
+.listrow__cat--act{background:var(--act)}
+.listrow__cat--offer{background:var(--offer)}
+.listrow__cat--find{background:var(--find)}
+.listrow:hover .listrow__cat,.listrow.is-sel .listrow__cat{box-shadow:0 0 0 2px var(--surface-2)}
 /* лицо в верхнем углу — вровень с именем написавшего: у нижнего края оно стояло
    у превью сообщения, к которому отношения не имеет */
 .listrow__face{position:absolute;right:-3px;top:-3px;box-shadow:0 0 0 2px var(--surface)}
@@ -1734,6 +1757,16 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .modal__body{padding:24px}
 .modal h1{font-family:'Unbounded',system-ui,sans-serif;font-size:var(--f-h20);line-height:var(--l-h20);font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
 .modal h2{font-size:var(--f-h30);line-height:var(--l-h30);font-weight:600;margin:0 0 8px}
+/* заголовок со значком справа: значок не прибавляет строке высоты */
+.modal__head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+/* окно исхода: заголовок → варианты 16, варианты → пояснение 16, пояснение → кнопки 24 */
+.modal--close h2{margin-bottom:16px}
+.modal--close .modal__note{margin:16px 0 0}
+/* на узком экране длинные названия («Закрыть предложение») в две колонки не влезают —
+   кнопки встают столбиком, основная сверху */
+@media (max-width:480px){.modal--close .modal__foot .row{flex-direction:column-reverse}}
+.modal__head h2{flex:1;min-width:0;margin:0}
+.modal__head .iconbtn{margin:-6px -8px -6px 0}
 .modal p{margin:0 0 20px;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10)}
 .modal__foot{padding:0 24px 24px;display:flex;flex-direction:column;gap:8px}
 .brandbig{display:flex;align-items:center;gap:12px;margin-bottom:20px}
@@ -1760,16 +1793,35 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .map{transition:filter .4s ease}
 /* Подсказка — тёмный пузырь поверх интерфейса: светлые карточки и шторки вокруг, и так
    она не путается с содержимым. Кнопка «Понятно» — текстом, это не действие продукта */
-.kbdiag{position:fixed;left:8px;right:8px;z-index:60;padding:4px 6px;border-radius:6px;pointer-events:none;
-  background:rgba(0,0,0,.72);color:#fff;font:10px/1.35 ui-monospace,Menlo,monospace}
-.kbdiag[hidden]{display:none}
 .hintbub{position:fixed;z-index:30;display:flex;align-items:center;gap:12px;max-width:360px;
   padding:12px 12px 12px 16px;border-radius:var(--r-m);background:var(--ink);color:var(--surface);
   font-size:var(--f-s10);line-height:var(--l-s10);box-shadow:var(--shadow-2)}
 .hintbub[hidden]{display:none}
+/* Подложка цвета шторки под клавиатурой. У клавиатуры iOS 26 прозрачные углы и фон вокруг
+   панели со стрелками, и сквозь них просвечивала карта. Отдельный слой, не часть шторки:
+   её высоту, положение и отступ до кнопки он не трогает и касаний не ловит */
+.kbunder{position:absolute;left:0;right:0;bottom:0;z-index:19;background:var(--surface);pointer-events:none}
+.kbunder[hidden]{display:none}
+.hintbub{opacity:0;transform:translateY(8px);transition:opacity .15s ease,transform .15s ease}
+.hintbub.is-in{opacity:1;transform:none;transition-duration:.2s}
+.hintbub.is-morph{opacity:1;transform:none;overflow:hidden;padding:8px 16px;
+  transition:left .25s ease,top .25s ease,width .25s ease,height .25s ease,padding .25s ease,opacity .15s ease}
+.hintbub.is-morph>*{opacity:0;transition:opacity .12s ease}
+@media (prefers-reduced-motion:reduce){.hintbub,.hintbub.is-in{transform:none}}
 .hintbub span{flex:1;min-width:0}
 .hintbub .pill{flex:none}
+.map{transition:filter .3s ease}
 .app.is-welcome .map{filter:blur(8px);pointer-events:none}
+@keyframes sheetIn{from{transform:translateY(100%)}to{transform:none}}
+@keyframes sheetOut{from{transform:none}to{transform:translateY(100%)}}
+@keyframes colIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+@keyframes colOut{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-16px)}}
+.panel.is-enter{animation:colIn .3s ease}
+.panel.is-leave{animation:colOut .25s ease forwards}
+@media (max-width:820px){
+  .panel.is-enter{animation:sheetIn .3s ease}
+  .panel.is-leave{animation:sheetOut .25s ease forwards}
+}
 /* метки внутри карты сами разрешают нажатия, и запрет родителя их не останавливал */
 .app.is-welcome .map *{pointer-events:none!important}
 /* на десктопе в меню остаётся только знак — разделы пока открывать незачем; на телефоне
@@ -1778,6 +1830,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 @media (max-width:820px){.app.is-welcome .rail{display:none}}
 @media (min-width:821px){.welcome__brand{display:none}}
 .app.is-welcome .toolbar,.app.is-welcome .zoomctl,.app.is-welcome .mapmeta{opacity:0;pointer-events:none}
+.mapmeta{transition:opacity .3s ease,bottom .22s ease}
 .brandbig .brand__mark{width:38px;height:38px;border-radius:10px}
 .brandbig .brand__mark svg{width:21px;height:21px}
 .codeline{display:flex;gap:8px}
@@ -1892,7 +1945,11 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
   .panel{transition:transform .22s ease}
   /* на мобильном сдвиг вниз, а не вбок: правило сворачивания сюда не достаёт */
   .work.is-collapsed .panel{transform:none}
-  .panel.is-peek{transform:translateY(calc(100% - 12px))}
+  /* Шторка уходит целиком: полоска в 12 точек выглядела ручкой, за которую можно что-то
+     сделать, а шторка и так возвращается сама, как только отпускаешь палец */
+  .panel.is-peek{transform:translateY(100%)}
+  /* подпись карты опускается вслед: панели под ней больше нет, и она висела в воздухе */
+  .app.is-peek .mapmeta{bottom:calc(env(safe-area-inset-bottom,0px) + 8px)}
   /* Между полем поиска (низ на 62) и домашней шторкой (верх на 80) полоса ручки стояла
      в 5 от поля и в 9 от шторки. Сдвигаем только нарисованную полоску — зона захвата
      остаётся прежней, 22 над шторкой */
@@ -2553,6 +2610,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.33.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.34.0";</script>
 </body>
 </html>
