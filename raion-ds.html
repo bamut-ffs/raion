@@ -437,25 +437,27 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   .marker.is-out>*{animation-name:markFadeOut}
 }
 
+/* Метка события — круг с центром в самой точке: ножка нужна, когда метка указывает на
+   точный дом, а у нас точка у вещей примерная, у встреч — место сбора. Круги ложатся ровнее
+   и с точками дальнего плана — одна форма разного размера. Каплей с острием остаются только
+   прицел выбора места и маркер «Ваша точка»: там острие и нужно — попасть в точку */
 .pin{
-  pointer-events:auto;position:relative;display:grid;place-items:center;
-  width:34px;height:34px;border-radius:50% 50% 50% 6px;transform:translate(-50%,-100%) rotate(-45deg);
-  box-shadow:var(--shadow-2);transition:transform .14s cubic-bezier(.2,.7,.3,1.3);
-  border:1.5px solid rgba(0,0,0,.10);
+  pointer-events:auto;position:relative;z-index:1;display:grid;place-items:center;
+  width:32px;height:32px;border-radius:50%;transform:translate(-50%,-50%);
+  box-shadow:0 0 0 2px #fff,var(--shadow-2);transition:transform .14s cubic-bezier(.2,.7,.3,1.3);
 }
-.pin>svg{width:16px;height:16px;transform:rotate(45deg)}
+.pin>svg{width:16px;height:16px}
+.pin.pin--drop{width:34px;height:34px;border-radius:50% 50% 50% 6px;transform:translate(-50%,-100%) rotate(-45deg);
+  box-shadow:var(--shadow-2);border:1.5px solid rgba(0,0,0,.10)}
+.pin--drop>svg{transform:rotate(45deg)}
 .pin--act{background:var(--act);color:var(--act-ink)}
 .pin--offer{background:var(--offer);color:var(--offer-ink)}
 .pin--find{background:var(--find);color:var(--find-ink)}
-/* Свои пины — цветом категории, как все: синий читался четвёртым типом. Принадлежность
-   говорит ваш аватар в правом верхнем углу головы. Он внутри булавки — растёт вместе с ней
-   у выбранной; булавка повёрнута на −45°, поэтому «правый верх» экрана для неё — правый
-   край, а сам аватар повёрнут обратно */
-.pin__me{position:absolute;left:calc(100% - 10px);top:calc(50% - 7px);width:14px;height:14px;border-radius:50%;
-  transform:rotate(45deg);box-shadow:0 0 0 2px var(--ground);pointer-events:none;display:block}
-.pin__me .avatar--pin{width:14px;height:14px;font-size:6px;letter-spacing:0;display:grid}
-.marker:hover .pin,.pin:focus-visible{transform:translate(-50%,-100%) rotate(-45deg) scale(1.12)}
-.marker.is-sel .pin{transform:translate(-50%,-100%) rotate(-45deg) scale(1.28)}
+.marker:hover .pin,.pin:focus-visible{transform:translate(-50%,-50%) scale(1.12)}
+.marker.is-sel .pin{transform:translate(-50%,-50%) scale(1.25)}
+.marker.is-sel .pin--drop,.marker:hover .pin--drop{transform:translate(-50%,-100%) rotate(-45deg) scale(1.28)}
+/* своя точка на дальнем плане — брендовым кольцом вместо белого */
+.pindot.pindot--mine{box-shadow:0 0 0 2px var(--brand),0 1px 3px rgba(0,0,0,.28)}
 .marker.is-sel{z-index:5}
 /* Пока открыта карточка, остальные булавки гаснут — выбранная и так крупнее, но на плотной
    карте одного размера мало. Глубина другая, чем у «вне охвата»: два разных смысла не должны
@@ -473,16 +475,32 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Подпись — справа от булавки, по центру её капли, выключка влево, как в Яндекс Картах:
    под булавкой она закрывала то, что под ней, в том числе соседние метки. Вторая строка —
    только у встреч и только время: для встречи главный вопрос на карте — «когда» */
+/* Подложка подписи начинается из-под круга, от его центра, и круг лежит сверху — метка
+   с подписью читаются одним предметом, как у Яндекса, а мелочь карты между ними не
+   просвечивает. Название в одну строку (13/600), длинное — многоточием; у встречи второй
+   строкой время (11/500, серое). Тег «моё» — после последнего слова подписи */
 .pin__label{
-  position:absolute;left:14px;top:-24px;transform:translate(0,-50%);
+  position:absolute;left:0;top:0;transform:translate(0,-50%);z-index:0;
   display:flex;flex-direction:column;align-items:flex-start;text-align:left;
-  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-s);
-  padding:3px 7px;font-size:var(--f-xs10);line-height:var(--l-xs10);white-space:nowrap;max-width:140px;
-  box-shadow:var(--shadow-1);pointer-events:none;
+  background:var(--surface);border:1px solid var(--line);border-radius:20px;
+  padding:4px 10px 4px 22px;white-space:nowrap;box-shadow:var(--shadow-1);pointer-events:none;
 }
-.pin__label b,.pin__label span{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pin__label b{font-weight:600}
-.pin__label span{font-weight:500;color:var(--ink-3)}
+.pin__row{display:flex;align-items:center;gap:4px;min-width:0;max-width:100%}
+.pin__row b{display:block;min-width:0;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:13px;line-height:16px;font-weight:600;color:var(--ink)}
+.pin__row--sub>span{font-size:11px;line-height:14px;font-weight:500;color:var(--ink-3);white-space:nowrap}
+.pin__me{flex:none;font-style:normal;font-size:10px;line-height:14px;font-weight:600;padding:0 4px;border-radius:4px;
+  background:var(--brand-soft);color:var(--brand-icon)}
+.pin__label--drop{top:-24px;padding-left:24px}
+.pin__label.is-fadein{animation:ovIn .2s ease}
+.morphghost{position:fixed;z-index:8;pointer-events:none;overflow:hidden;white-space:nowrap;
+  border-radius:var(--r-m);background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow-1);
+  font-size:var(--f-s10);line-height:var(--l-s10);padding:8px 16px;
+  transition:left .25s ease,top .25s ease,width .25s ease,height .25s ease,background-color .25s ease,border-radius .25s ease,padding .25s ease}
+.morphghost.is-dark{background:var(--ink);color:var(--ground);border-color:transparent}
+.morphghost>div{transition:opacity .12s ease}
+.morphghost.is-go>div{opacity:0}
+.morphghost.is-go:not(.is-dark){border-radius:20px;padding:4px 10px 4px 24px}
 /* Точка — событие, которому не хватило места на булавку. Видно его всё равно: точка своего
    цвета, нажатие открывает событие. Зона нажатия шире самой точки */
 .pindot{
@@ -515,7 +533,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    соседних меток, точка при этом вырастает. Раскладка не перестраивается — соседи стоят */
 .marker.is-hover{z-index:7}
 .marker--dot.is-hover .pindot{transform:translate(-50%,-50%) scale(1.5)}
-.pin__label--dot{top:0;left:12px}
+.pin__label--dot{padding-left:12px}
 .halo{
   position:absolute;left:0;top:0;border-radius:50%;transform:translate(-50%,-50%);
   background:color-mix(in srgb,var(--offer) 16%,transparent);
@@ -540,11 +558,12 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   border-color:color-mix(in srgb,var(--find) 55%,transparent);
 }
 @keyframes haloSpin{to{transform:rotate(360deg)}}
+@keyframes haloGrow{from{opacity:0;transform:translate(-50%,-50%) scale(.2)}}
 .halo__txt{animation:haloSpin 60s linear infinite;transform-origin:50% 50%}
 @media (prefers-reduced-motion:reduce){.halo__txt{animation:none}}
 .halo__txt{position:absolute;left:-1px;top:-1px;overflow:visible;
-  font-size:10px;font-weight:700;letter-spacing:.02em;fill:color-mix(in srgb,var(--offer) 80%,var(--ink))}
-.halo--find .halo__txt{fill:color-mix(in srgb,var(--find) 80%,var(--ink))}
+  font-size:10px;font-weight:700;letter-spacing:.02em;fill:var(--offer)}
+.halo--find .halo__txt{fill:var(--find)}
 .cluster{
   pointer-events:auto;position:relative;transform:translate(-50%,-50%);display:grid;place-items:center;
   width:40px;height:40px;border-radius:50%;background:var(--surface);border:1.5px solid var(--line-2);
@@ -567,8 +586,14 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .pin--pick b{transform:rotate(45deg);font-size:18px;font-weight:700;line-height:1}
 /* во время постановки точки существующие пины приглушаем: контекст рядом остаётся видно,
    но прицел среди них не теряется */
-.map.is-pick .pin,.map.is-pick .cluster,.map.is-pick .halo,.map.is-pick .pin__label{opacity:.22}
-.map.is-pick .marker.is-draft .pin,.map.is-pick .marker.is-draft .halo{opacity:1}
+/* Приглушение на шаге «Место» — плавно: слой меток перерисовывается на каждом кадре, поэтому
+   прозрачность держит не сама метка, а переменная на постоянном слое, и она течёт за 200 мс */
+@property --dim{syntax:'<number>';inherits:true;initial-value:1}
+.markers{--dim:1;transition:--dim .2s ease}
+.map.is-pick .markers{--dim:.22}
+.markers>.marker:not(.is-draft){opacity:var(--dim)}
+.halos{transition:opacity .2s ease}
+.map.is-pick .halos{opacity:.22}
 
 /* ---------- toolbar ---------- */
 .toolbar{
@@ -831,6 +856,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* в поле «Ориентир» теги — отдельная группа под строкой ввода: 16 от неё, а не 8, как
    заголовок и подсказка. Отступ внутри раскрывающегося блока, чтобы ехал вместе с ним */
 [data-reveal="placelist"]>.ptags.ptags--field{padding-top:8px}
+[data-reveal="dur"]>.ptags.ptags--field{padding-top:8px}
 .ptags--field .ptag:hover{background:var(--surface-3)}
 .ptag--all svg{width:14px;height:14px;color:var(--ink-3);flex:none}
 /* На телефоне подсказки — отдельная подложка под полем: серая цвета разделителя, теги на ней
@@ -1076,6 +1102,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* первый раз короткая карточка кивает: приподнимается и оседает — жест показывает себя сам */
 @keyframes sheetNudge{0%,100%{transform:none}45%{transform:translateY(-24px)}}
 .panel.is-nudge{animation:sheetNudge .42s ease}
+.panel__foot.is-swap>*{animation:ovIn .2s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}}
+.msg.is-new{animation:msgIn .15s ease}
 .pinshort__t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .pinshort__n{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1089,6 +1118,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* тот же цвет, что у чипа «Вы участвуете» в списке: --brand-ink один на обе темы и в тёмной
    сливался с фоном тега */
 .stag--me{background:var(--brand-soft);color:var(--brand-icon)}
+@keyframes badgePop{0%{transform:scale(.4)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.navbtn__badge.is-pop{animation:badgePop .24s ease}
+.navbtn__badge.is-out{animation:ovOut .15s ease forwards}
 .chip.chip--me{background:var(--brand-soft);color:var(--brand-icon);border-color:transparent}
 .chip.chip--me svg{color:currentColor}
 .stag--me svg{color:currentColor}
@@ -1595,7 +1627,9 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
    и та же. Поэтому поверх обложки встаёт лицо собеседника — у общего чата его нет, и это
    отсутствие и есть признак. Кольцо цветом строки, иначе тёмное лицо слипается с фото */
 .listrow__pic{position:relative;flex:none}
-.listrow__cat{position:absolute;left:-3px;bottom:-3px;z-index:1;width:20px;height:20px;border-radius:50%;
+/* Лицо и бейдж одного размера и стоят на одной диагонали: лицо — центром на правом краю,
+   напротив строки с именем, бейдж — зеркально через центр обложки. На фото заходит по 10 */
+.listrow__cat{position:absolute;left:-10px;bottom:0;z-index:1;width:20px;height:20px;border-radius:50%;
   display:grid;place-items:center;color:#fff;box-shadow:0 0 0 2px var(--surface)}
 .listrow__cat svg{width:12px;height:12px}
 .listrow__cat--act{background:var(--act)}
@@ -1604,7 +1638,7 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
 .listrow:hover .listrow__cat,.listrow.is-sel .listrow__cat{box-shadow:0 0 0 2px var(--surface-2)}
 /* лицо в верхнем углу — вровень с именем написавшего: у нижнего края оно стояло
    у превью сообщения, к которому отношения не имеет */
-.listrow__face{position:absolute;right:-3px;top:-3px;box-shadow:0 0 0 2px var(--surface)}
+.listrow__face{position:absolute;right:-10px;top:0;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface)}
 /* обложка во всю высоту трёх строк: 20 имя + 2 + 18 событие + 4 + 16 превью = 60.
    Высоту ряда задаёт текст, поэтому крупнее обложка ничего не двигает — только текст
    отходит вправо. Модификатором, а не правилом на класс: строки профиля и канала
@@ -1680,6 +1714,7 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
 /* кнопки ответа под карточкой, на её ширину, с зазором 4 */
 .sysacts{display:flex;gap:4px;margin-top:-12px}
 .sysacts .btn{flex:1;min-width:0}
+.chip.is-pop{animation:ovIn .2s ease}
 .sysmsg__foot .chip{margin-left:auto}
 .sysmsg .btn{width:auto;align-self:flex-start}
 /* только прямым детям колонки: внутри шапки чип стоит в строке с шевроном, и прижатие
@@ -1794,6 +1829,19 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
 
 /* ---------- modal / onboarding ---------- */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;padding:20px;z-index:40;overflow-y:auto}
+@keyframes ovIn{from{opacity:0}}
+@keyframes ovOut{to{opacity:0}}
+@keyframes modalIn{from{opacity:0;transform:translateY(8px)}}
+@keyframes modalOut{to{opacity:0;transform:translateY(8px)}}
+@keyframes menuIn{from{opacity:0;transform:scale(.96)}}
+#overlay .scrim{animation:ovIn .15s ease}
+#overlay .modal{animation:modalIn .15s ease}
+#overlay .menu{animation:menuIn .12s ease;transform-origin:top left}
+#overlay.is-swap .scrim,#overlay.is-swap .modal,#overlay.is-swap .menu{animation:none}
+#overlay.is-closing{pointer-events:none}
+#overlay.is-closing .scrim{animation:ovOut .14s ease forwards}
+#overlay.is-closing .modal{animation:modalOut .14s ease forwards}
+#overlay.is-closing .menu{animation:ovOut .12s ease forwards}
 /* затемнение под мобильной шторкой: показывает, что фон неактивен и что тап по нему закрывает */
 .sheet-scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:19;display:none}
 /* под домашней шторкой затемняем только карту: дом — состояние просмотра, и уходить
@@ -1956,7 +2004,8 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
   .rail .navbtn:hover{background:none;color:var(--ink-2)}
   .rail .navbtn.is-on{background:none;color:var(--ink);font-weight:600}
   /* активный аватар цвета не меняет — у фотографии его не поменять, поэтому кольцо */
-  .rail .navbtn.is-on .avatar--nav{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--ink)}
+  /* кольцо — отдельный круг вокруг аватара: тенью на обрезанном круге айфон рисовал квадрат */
+  .rail .navbtn.is-on .navava::after{content:'';position:absolute;inset:-3.5px;border-radius:50%;border:1.5px solid var(--ink);pointer-events:none}
   /* Счётчик меньше и сдвинут в угол значка: 18 на значке 20 закрывал его половину.
      Цифра 10 — графика внутри фигуры, а не текст строкой, как счётчики на плашках.
      Обводка цветом таббара отделяет плашку от значка, как в iOS */
@@ -2192,7 +2241,9 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
   /* ручка домашней шторки: сводка «●● N событий · место» под полоской */
   .homesum{display:flex;align-items:center;gap:8px;min-width:0}
   .homesum b{font-size:var(--f-h60);line-height:var(--l-h60);font-weight:600;white-space:nowrap}
-  .homesum .scopebtn__st{font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)}
+  .homesum__chev{width:16px;height:16px;color:var(--ink-3);flex:none;margin-left:4px;transition:transform .22s ease}
+  .app.is-homeopen .homesum__chev{transform:rotate(180deg)}
+  .homesum .scopebtn__st{margin-left:auto;font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)}
   /* Контролы стоят на одном месте во всём приложении и ни от чего не зависят. Прежде их
      положение считалось от верха шторки, а верх был взят числом под свёрнутое состояние —
      и в создании события, где шторка занимает пол-экрана, кнопки упирались в неё.
@@ -2671,6 +2722,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.35.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.36.0";</script>
 </body>
 </html>
