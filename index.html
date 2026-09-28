@@ -27,7 +27,7 @@
 <title>«Район» — прототип</title>
 </head>
 <body>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Golos+Text:wght@400;500;600;700&display=swap">
 <style>
 :root{
   /* Серые — системные Gray Apple. Они не нейтральные, а чуть синие, поэтому холод
@@ -57,6 +57,7 @@
   --park-ink:#5f7355;
   --water:#bfd8e8;
   --water-edge:#9dc0d6;
+  --water-ink:#2f6f98;
   /* Акценты взяты из системной палитры Apple (HIG → Color), но не из колонки Default:
      дефолтный оранжевый #FF8D28 под белым текстом даёт 2:1 и не читается. Заливки берут
      колонку Increased contrast (light) — она для того и существует, и даёт нам 6:1 вместо
@@ -167,6 +168,7 @@
     --park-ink:#7fa383;
     --water:#1d3446;
     --water-edge:#6f93ab;
+    --water-ink:#8fb8d4;
     /* тёмная тема берёт колонку Default (dark): там цвета уже осветлены под тёмный фон,
        а иконки поверх остаются тёмными — на светящейся заливке белое слепит */
     --act:#ff9230;
@@ -220,6 +222,7 @@
   --park-ink:#7fa383;
   --water:#1d3446;
   --water-edge:#6f93ab;
+  --water-ink:#8fb8d4;
   /* тёмная тема берёт колонку Default (dark): там цвета уже осветлены под тёмный фон,
      а иконки поверх остаются тёмными — на светящейся заливке белое слепит */
   --act:#ff9230;
@@ -274,7 +277,8 @@ button,input,textarea,select{font:inherit;color:inherit}
 button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
 ::selection{background:var(--brand-soft);color:var(--ink)}
-.mono{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+/* цифры одной ширины: «200 м» и «1 км» не прыгают при масштабировании */
+.tnum{font-variant-numeric:tabular-nums}
 /* Системные полосы прокрутки скрыты во всём приложении: они забирали ширину у содержимого,
    и поле поиска прыгало, когда список результатов переставал прокручиваться. Вместо них —
    плашка .oscroll__thumb поверх содержимого, её ставит скрипт любому прокрученному элементу */
@@ -382,7 +386,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .work.is-collapsed .panel-collapse svg{transform:scaleX(-1)}
 @media (max-width:820px){.panel-collapse{display:none}}
 .stage{flex:1;position:relative;min-width:0;overflow:hidden;background:var(--ground)}
-.map{position:absolute;inset:0;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.map{position:absolute;inset:0;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;background:var(--ground)}
+/* не успел холст — под ним цвет фона карты, а не чёрная дыра */
+.map canvas{background:var(--ground)}
 .map.is-drag{cursor:grabbing}
 /* Настоящая карта лежит ПОВЕРХ нарисованной, а не под ней: нарисованная осталась в файле
    и работает как запасная. Там, где движок или тайлы не доедут (в артефакте их блокирует
@@ -415,12 +421,16 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   position:absolute;right:16px;bottom:16px;z-index:6;pointer-events:none;
   display:flex;flex-direction:column;align-items:flex-end;gap:4px;
 }
+/* Десктоп: подпись источника — в правый верхний угол карты, шкала остаётся внизу. В нижнем
+   углу рядом со шкалой и кнопками подпись ложилась на подписи событий */
+@media (min-width:821px){
+  .mapmeta{top:16px;flex-direction:column-reverse;justify-content:space-between}
+}
 /* Подпись источника — требование лицензии, а не украшение: она остаётся и там, где шкала
    спрятана, и поэтому на телефоне поднимается над свёрнутой шторкой, а не уходит под неё */
 .mapcredit{
   font-size:var(--f-xs10);line-height:var(--l-xs10);color:var(--ink-3);
-  padding:2px 6px;border-radius:var(--r-s);
-  background:color-mix(in srgb,var(--surface) 82%,transparent);
+  padding:2px 6px;border-radius:var(--r-s);background:var(--surface);
 }
 /* только сам холст карты: слой меток лежит внутри .map, и раньше это правило растягивало
    и значки в метках — значок метро схлопывался в ноль, а иконки в пинах распирало на всю каплю */
@@ -430,6 +440,19 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    закрашивал более ранние — их пины и подписи уходили в цвет */
 .halos{position:absolute;inset:0;pointer-events:none;z-index:0}
 .marker{position:absolute;left:0;top:0;will-change:transform}
+/* смена фильтра: у метки своё положение в transform, поэтому анимируем детей, а масштаб —
+   отдельным свойством scale, чтобы не затирать поворот булавки */
+@keyframes markIn{from{opacity:0;scale:.85}}
+@keyframes markOut{to{opacity:0;scale:.85}}
+@keyframes markFadeIn{from{opacity:0}}
+@keyframes markFadeOut{to{opacity:0}}
+.marker.is-in>*{animation:markIn .2s ease}
+.marker.is-out{pointer-events:none}
+.marker.is-out>*{animation:markOut .15s ease forwards;pointer-events:none}
+@media (prefers-reduced-motion:reduce){
+  .marker.is-in>*{animation-name:markFadeIn}
+  .marker.is-out>*{animation-name:markFadeOut}
+}
 
 .pin{
   pointer-events:auto;position:relative;display:grid;place-items:center;
@@ -441,8 +464,13 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .pin--act{background:var(--act);color:var(--act-ink)}
 .pin--offer{background:var(--offer);color:var(--offer-ink)}
 .pin--find{background:var(--find);color:var(--find-ink)}
-/* свои пины — брендовым цветом поверх категорийного, чтобы сразу бросались в глаза на карте */
-.pin--mine{background:var(--brand);color:#fff}
+/* Свои пины — цветом категории, как все: синий читался четвёртым типом. Принадлежность
+   говорит ваш аватар в правом верхнем углу головы. Он внутри булавки — растёт вместе с ней
+   у выбранной; булавка повёрнута на −45°, поэтому «правый верх» экрана для неё — правый
+   край, а сам аватар повёрнут обратно */
+.pin__me{position:absolute;left:calc(100% - 10px);top:calc(50% - 7px);width:14px;height:14px;border-radius:50%;
+  transform:rotate(45deg);box-shadow:0 0 0 2px var(--ground);pointer-events:none;display:block}
+.pin__me .avatar--pin{width:14px;height:14px;font-size:6px;letter-spacing:0;display:grid}
 .marker:hover .pin,.pin:focus-visible{transform:translate(-50%,-100%) rotate(-45deg) scale(1.12)}
 .marker.is-sel .pin{transform:translate(-50%,-100%) rotate(-45deg) scale(1.28)}
 .marker.is-sel{z-index:5}
@@ -528,8 +556,11 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   background:color-mix(in srgb,var(--find) 14%,transparent);
   border-color:color-mix(in srgb,var(--find) 55%,transparent);
 }
+@keyframes haloSpin{to{transform:rotate(360deg)}}
+.halo__txt{animation:haloSpin 60s linear infinite;transform-origin:50% 50%}
+@media (prefers-reduced-motion:reduce){.halo__txt{animation:none}}
 .halo__txt{position:absolute;left:-1px;top:-1px;overflow:visible;
-  font-size:10px;font-weight:600;letter-spacing:.02em;fill:color-mix(in srgb,var(--offer) 80%,var(--ink))}
+  font-size:10px;font-weight:700;letter-spacing:.02em;fill:color-mix(in srgb,var(--offer) 80%,var(--ink))}
 .halo--find .halo__txt{fill:color-mix(in srgb,var(--find) 80%,var(--ink))}
 .cluster{
   pointer-events:auto;position:relative;transform:translate(-50%,-50%);display:grid;place-items:center;
@@ -584,7 +615,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .scalebar{
   font-size:var(--f-xs10);line-height:var(--l-xs10);color:var(--ink-2);
   display:flex;flex-direction:column;align-items:flex-end;gap:3px;padding:6px 8px;border-radius:var(--r-s);
-  background:color-mix(in srgb,var(--surface) 82%,transparent);border:1px solid var(--line);
+  background:var(--surface);border:1px solid var(--line);
 }
 .scalebar__line{height:5px;border:1px solid var(--ink-3);border-top:none}
 
@@ -752,7 +783,16 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .segctl button:hover{color:var(--ink)}
+.avatar--seg{width:16px;height:16px;font-size:7px;letter-spacing:0;display:inline-grid;vertical-align:-3px;margin-right:6px}
 .segctl button.is-on{background:var(--surface);color:var(--ink);font-weight:600}
+/* Ширина сегмента — по тексту, свободное место делится поровну: длинное «Остальные» больше
+   не упирается в края, пока у коротких пустота. Выделение — одна подложка, которая едет от
+   прежнего сегмента к новому и по пути меняет ширину */
+.segctl:not(.segctl--cat){position:relative}
+.segctl:not(.segctl--cat) button{flex:1 1 auto;position:relative;z-index:1}
+.segctl:not(.segctl--cat) button.is-on{background:transparent}
+.segctl__thumb{position:absolute;top:3px;bottom:3px;left:0;width:0;border-radius:7px;background:var(--surface);
+  transition:left .2s ease,width .2s ease;pointer-events:none}
 /* Фильтр категорий — другой случай: не поле формы, а вторичный выбор над списком, поэтому
    кегль служебный. Состояние говорит кружок — залит, когда категория показывается, — а
    заливка сегмента убрана: она сказала бы то же самое второй раз */
@@ -773,7 +813,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    (парк, площадь) встанет свой значок без переделки слоя */
 .marker--stn{z-index:1}
 .stnmark{width:19px;height:19px;display:block;transform:translate(-50%,-50%);pointer-events:none}
-.stnmark--s{width:16px;height:16px}
+.stnmark--m{width:16px;height:11px;overflow:visible;color:#FF0013}
+.marker--stn.is-far .stnmark__n{top:8px}
+.marker--stn.is-hid{display:none}
 /* имя станции — обычный текст с обводкой фоном, а не плашка: плашки в этом приложении
    принадлежат событиям, и станция не должна выглядеть как ещё одно из них */
 .stnmark__n{
@@ -1038,12 +1080,19 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    и по ней ставится верхний край шторки. Сверху 24, а не 16: там лежит ручка */
 .pinshort__in{display:flex;flex-direction:column;gap:10px;padding:24px 16px 12px}
 .panel.is-pin.is-shut .pinshort{max-height:420px;opacity:1}
+/* Оттягивание вниз у верхнего края карточки айфон рисовал пружиной — между шапкой и
+   обложкой открывалась полоса. Пружину у карточки выключаем; вбок тело не прокручивается */
+@media (max-width:820px){.panel.is-pin .panel__body{overscroll-behavior-y:none;overflow-x:hidden}}
 .panel.is-pin .cover{transition:max-height .24s ease,opacity .16s ease}
 .panel.is-pin.is-shut .cover{max-height:0;opacity:0;overflow:hidden}
 /* остальное тело в короткой версии не участвует вовсе: оно ниже сгиба и анимировать
    там нечего */
 .panel.is-pin.is-shut .panel__body>:not(.pinshort):not(.cover){display:none}
 .pinshort__row{display:flex;align-items:center;gap:12px;min-width:0}
+.pinshort__up{width:18px;height:18px;color:var(--ink-3);flex:none}
+/* первый раз короткая карточка кивает: приподнимается и оседает — жест показывает себя сам */
+@keyframes sheetNudge{0%,100%{transform:none}45%{transform:translateY(-24px)}}
+.panel.is-nudge{animation:sheetNudge .42s ease}
 .pinshort__t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .pinshort__n{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1057,6 +1106,8 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* тот же цвет, что у чипа «Вы участвуете» в списке: --brand-ink один на обе темы и в тёмной
    сливался с фоном тега */
 .stag--me{background:var(--brand-soft);color:var(--brand-icon)}
+.chip.chip--me{background:var(--brand-soft);color:var(--brand-icon);border-color:transparent}
+.chip.chip--me svg{color:currentColor}
 .stag--me svg{color:currentColor}
 .pincard{padding:16px;display:flex;flex-direction:column;gap:12px}
 /* Группы по лестнице — внутри 8, между группами линия с 16 по обе стороны, вертикальное поле
@@ -1276,6 +1327,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* кнопка ряда контролов с настоящим select поверх: на телефоне нажатие открывает барабан */
 .ctlpick{position:relative;flex:none;display:flex}
 .ctlpick__sel{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;appearance:none;border:0}
+.selectwrap select[data-pick],.ctlpick__sel{pointer-events:none}
+.selectwrap,.ctlpick{cursor:pointer}
 .ctlpick:hover .ctl{background:var(--surface-3)}
 .selectwrap .select{padding-right:36px}
 .selectwrap__chev{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--ink-3);pointer-events:none}
@@ -1437,6 +1490,8 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
    нужны ленте снимков в карточке события и любой следующей такой полосе. Внутри обёртки
    лежит ровно один прокручиваемый ряд; края и стрелки считает hscrollEdges */
 .hscroll{position:relative;min-width:0}
+.hscroll img{-webkit-user-drag:none;user-select:none}
+body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
 /* Растворение у каждого края живёт по своему условию: слева — пока начало ряда уехало,
    справа — пока за краем остался хвост. Прежде оно включалось один раз по факту «ряд шире
    экрана» и висело даже когда листать уже некуда */
@@ -1478,7 +1533,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .hscroll.is-tight .tabs{gap:8px;padding-right:8px;overflow-x:hidden}
 .tabs button:hover{color:var(--ink)}
 .tabs button.is-on{color:var(--ink);font-weight:600}
-.tabs__n{font-size:11px;line-height:1;font-weight:500;color:var(--ink-3);margin-left:1px;position:relative;top:-6px;vertical-align:baseline}
+.tabs__n{font-size:11px;line-height:1;font-weight:600;color:var(--ink-3);margin-left:3px;position:relative;top:-6px;vertical-align:baseline}
 /* Число на вкладке появляется только когда есть непрочитанное — значит само его наличие
    и есть сигнал внимания, а цвет свободен и может нести тип. Кружок стал лишним */
 .tabs .tag{margin-left:4px;position:relative;top:1px;border-color:transparent;color:var(--ink)}
@@ -1492,6 +1547,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* ненулевая доля всегда видна: одна встреча против двадцати вещей иначе пропадает */
 .statbar i{display:block;min-width:6px}
 .chronicle{display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px 16px;text-align:center}
+.feedend{padding:16px}
 .statlegend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-2)}
 .statlegend span{display:inline-flex;align-items:center;gap:6px}
 .statlegend i{width:8px;height:8px;border-radius:50%;flex:none}
@@ -1511,7 +1567,11 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .swghost{position:absolute;left:0;right:0;top:0;background:var(--surface);pointer-events:none}
 /* подчёркивание в цвет типа — счётчик рядом красится им же, линия просто догоняет.
    У «Все» типа нет, там остаётся тёмная */
-.tabs button.is-on::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:2px 2px 0 0;background:var(--tab-line,var(--ink))}
+/* Полоска под активной вкладкой — отдельный элемент, а не псевдоэлемент кнопки: её можно
+   двигать — при нажатии она переезжает, при свайпе плывёт за пальцем */
+.tabs{position:relative}
+.tabs__bar{position:absolute;left:0;bottom:0;width:0;height:3px;border-radius:2px 2px 0 0;background:var(--ink);
+  transition:left .2s ease,width .2s ease,background-color .2s ease;pointer-events:none}
 .tabs button.tab--act{--tab-line:var(--act)}
 .tabs button.tab--offer{--tab-line:var(--offer)}
 .tabs button.tab--find{--tab-line:var(--find)}
@@ -1851,7 +1911,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 .brandbig .brand__mark{width:38px;height:38px;border-radius:10px}
 .brandbig .brand__mark svg{width:21px;height:21px}
 .codeline{display:flex;gap:8px}
-.codeline .input{text-align:center;font-family:'JetBrains Mono',monospace;font-size:var(--f-h30);line-height:var(--l-h30);letter-spacing:.3em;padding-left:16px}
+.codeline .input{text-align:center;font-variant-numeric:tabular-nums;font-size:var(--f-h30);line-height:var(--l-h30);letter-spacing:.3em;padding-left:16px}
 /* Тот же слот и то же движение, что у плашки расстояния и кнопки охвата. Снизу тост
    наезжал на плавающую кнопку в фильтрах, сверху ему никто не мешает */
 .toast{
@@ -2225,6 +2285,7 @@ svg{width:16px;height:16px}
 <symbol id="i-reset" viewBox="0 0 24 24" fill="currentColor"><path d="M2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2V4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 9.25022 5.38734 6.82447 7.50024 5.38451L7.5 8H9.5V2H3.5V4L5.99918 3.99989C3.57075 5.82434 2 8.72873 2 12Z" fill="currentColor"/></symbol>
 <symbol id="i-phone" viewBox="0 0 24 24" fill="currentColor"><path d="M21 16.42V19.956C21.0001 20.2092 20.9042 20.453 20.7316 20.6382C20.559 20.8234 20.3226 20.9363 20.07 20.954C19.633 20.984 19.276 21 19 21C10.163 21 3 13.837 3 5C3 4.724 3.015 4.367 3.046 3.93C3.06372 3.67744 3.17658 3.44101 3.3618 3.26841C3.54703 3.09581 3.79082 2.99989 4.044 3H7.58C7.70404 2.99987 7.8237 3.04586 7.91573 3.12902C8.00776 3.21218 8.0656 3.32658 8.078 3.45C8.101 3.68 8.122 3.863 8.142 4.002C8.34073 5.38892 8.748 6.73783 9.35 8.003C9.445 8.203 9.383 8.442 9.203 8.57L7.045 10.112C8.36445 13.1865 10.8145 15.6365 13.889 16.956L15.429 14.802C15.4919 14.714 15.5838 14.6509 15.6885 14.6237C15.7932 14.5964 15.9042 14.6068 16.002 14.653C17.267 15.2539 18.6156 15.6601 20.002 15.858C20.141 15.878 20.324 15.9 20.552 15.922C20.6752 15.9346 20.7894 15.9926 20.8724 16.0846C20.9553 16.1766 21.0012 16.2961 21.001 16.42H21Z" fill="currentColor"/></symbol>
 <symbol id="i-shield" viewBox="0 0 24 24" fill="currentColor"><path d="M3.783 2.826L12 1L20.217 2.826C20.4391 2.87536 20.6377 2.99897 20.78 3.1764C20.9224 3.35384 21 3.57452 21 3.802V13.789C20.9999 14.7767 20.756 15.7492 20.2899 16.62C19.8238 17.4908 19.1499 18.2331 18.328 18.781L12 23L5.672 18.781C4.85027 18.2332 4.17646 17.4911 3.71035 16.6205C3.24424 15.7498 3.00024 14.7776 3 13.79V3.802C3.00004 3.57452 3.07764 3.35384 3.21999 3.1764C3.36234 2.99897 3.56094 2.87536 3.783 2.826V2.826Z" fill="currentColor"/></symbol>
+<symbol id="i-metro-m" viewBox="337.5 232.3 125 85.9"><polygon fill="currentColor" style="stroke:var(--ground);stroke-width:4px;paint-order:stroke;stroke-linejoin:round;vector-effect:non-scaling-stroke" points="453.9,306.2 424.7,232.3 400,275.5 375.4,232.3 346.1,306.2 337.5,306.2 337.5,317.4 381.7,317.4 381.7,306.2 375.1,306.2 381.5,287.8 400,318.2 418.5,287.8 424.9,306.2 418.3,306.2 418.3,317.4 462.5,317.4 462.5,306.2"/></symbol>
 <symbol id="i-metro" viewBox="0 0 148 148"><rect x="4" y="4" width="140" height="140" rx="70" fill="currentColor" stroke="#fff" stroke-width="8"/><path fill="#fff" d="M111.014 90.6182L90.6912 39L73.5 69.1746L56.3784 39L35.9856 90.6182H30V98.4412H60.7632V90.6182H56.1696L60.624 77.766L73.5 99L86.376 77.766L90.8304 90.6182H86.2368V98.4412H117V90.6182H111.014Z"/></symbol>
 <symbol id="i-filter" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18H14V16H10V18ZM3 6V8H21V6H3ZM6 13H18V11H6V13Z" fill="currentColor"/></symbol>
 <symbol id="i-gear" viewBox="0 0 24 24" fill="currentColor"><path d="M9.95405 2.20997C11.303 1.9271 12.6958 1.92642 14.045 2.20797C14.1349 2.80126 14.3574 3.36666 14.6958 3.86215C15.0343 4.35764 15.4801 4.77048 16 5.06997C16.5196 5.3705 17.1002 5.55004 17.6987 5.59522C18.2973 5.64041 18.8983 5.55009 19.457 5.33097C20.3753 6.35903 21.0709 7.56601 21.5 8.87597C21.0314 9.25055 20.6532 9.72592 20.3935 10.2668C20.1338 10.8076 19.9993 11.4 20 12C20 13.264 20.586 14.391 21.502 15.124C21.0704 16.4328 20.3739 17.6389 19.456 18.667C18.8974 18.448 18.2966 18.3578 17.6983 18.403C17.0999 18.4481 16.5195 18.6276 16 18.928C15.4805 19.2274 15.0351 19.6399 14.6968 20.1351C14.3585 20.6302 14.1361 21.1951 14.046 21.788C12.6973 22.0715 11.3044 22.0729 9.95505 21.792C9.86559 21.1982 9.64335 20.6322 9.30487 20.1361C8.96639 19.6401 8.52038 19.2268 8.00005 18.927C7.48041 18.6266 6.89975 18.4472 6.30124 18.4022C5.70272 18.3572 5.10176 18.4477 4.54305 18.667C3.62465 17.6386 2.92905 16.4313 2.50005 15.121C2.96844 14.7466 3.34651 14.2716 3.60618 13.7311C3.86586 13.1906 4.00048 12.5986 4.00005 11.999C4.00054 11.3989 3.86575 10.8063 3.60571 10.2655C3.34568 9.72463 2.96707 9.24935 2.49805 8.87497C2.92972 7.56609 3.62616 6.36007 4.54405 5.33197C5.1027 5.55093 5.70352 5.64117 6.30184 5.59598C6.90017 5.5508 7.48061 5.37135 8.00005 5.07097C8.51959 4.77157 8.96503 4.35899 9.30331 3.86388C9.64158 3.36876 9.864 2.80381 9.95405 2.21097V2.20997ZM12 15C12.7957 15 13.5588 14.6839 14.1214 14.1213C14.684 13.5587 15 12.7956 15 12C15 11.2043 14.684 10.4413 14.1214 9.87865C13.5588 9.31604 12.7957 8.99997 12 8.99997C11.2044 8.99997 10.4413 9.31604 9.87873 9.87865C9.31612 10.4413 9.00005 11.2043 9.00005 12C9.00005 12.7956 9.31612 13.5587 9.87873 14.1213C10.4413 14.6839 11.2044 15 12 15V15Z" fill="currentColor"/></symbol>
@@ -2268,7 +2329,7 @@ svg{width:16px;height:16px}
 
       <div class="mapmeta">
       <div class="scalebar" id="scalebar" aria-hidden="true">
-        <span class="mono" id="scaleTxt">200 м</span>
+        <span class="tnum" id="scaleTxt">200 м</span>
         <span class="scalebar__line" id="scaleLine" style="width:64px"></span>
       </div>
       <div class="mapcredit" id="mapCredit" hidden>© OpenStreetMap, © OpenMapTiles</div>
@@ -2990,10 +3051,10 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.34.0';
+var VERSION='3.35.0';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
-var UPDATED='27 сентября 2026';
+var UPDATED='28 сентября 2026';
 var KEY='raion.v1';
 var db=null;
 
@@ -3976,6 +4037,20 @@ function measure(){
   view.kFit=Math.max(view.W/view.worldW,view.Ht/view.worldH);
   if(glMap)glMap.resize();
 }
+/* Айфон при запуске с домашнего экрана пару мгновений уточняет размер окна, и карта могла
+   замериться по первому, неокончательному. События «окно изменилось» после этого нет —
+   под картой оставалась полоса. Перемеряем ещё дважды после запуска, при возврате из фона
+   и после закрытия клавиатуры; если размер тот же, ничего не происходит */
+function remeasure(){
+  try{syncViewport()}catch(e){}
+  measure();
+  if(glMap){glMap.resize(); syncFromGL()}
+  renderMarkers();
+}
+[300,1000].forEach(function(ms){setTimeout(function(){if(mapEl)remeasure()},ms)});
+window.addEventListener('pageshow',function(){setTimeout(remeasure,60)});
+document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(remeasure,60)});
+document.addEventListener('focusout',function(){setTimeout(function(){if(!kbOpenNow&&mapEl)remeasure()},500)});
 /* Потолок приближения задан абсолютным числом, а не кратностью «сколько раз влезает город»:
    кратность зависит от размера окна, и на большом мониторе потолок уезжал бы. 10.5 — это
    примерно 10 метров в шкале при 1.6 м на единицу мира */
@@ -4151,7 +4226,7 @@ function mapPalette(){
   var cs=getComputedStyle(document.documentElement);
   function v(n){return cs.getPropertyValue(n).trim()}
   return {
-    ground:v('--ground'), water:v('--water'), waterEdge:v('--water-edge'),
+    ground:v('--ground'), water:v('--water'), waterEdge:v('--water-edge'), waterInk:v('--water-ink'),
     park:v('--park'), build:v('--build'), road:v('--road'), road2:v('--road-2'),
     roadEdge:v('--road-edge'), ink:v('--ink'), ink2:v('--ink-2'), ink3:v('--ink-3'), parkInk:v('--park-ink'),
     workarea:v('--workarea')
@@ -4278,7 +4353,9 @@ function mapStyle(){
         paint:{'text-color':C.ink3,'text-halo-color':C.ground,'text-halo-width':1.4}},
       {id:'water-label',type:'symbol',source:SRC,'source-layer':'water_name',minzoom:12,
         layout:{'text-field':NAME,'text-font':T,'text-size':11},
-        paint:{'text-color':C.waterEdge,'text-halo-color':C.ground,'text-halo-width':1.2}},
+        /* свой цвет, как у парков: кромкой водоёма на воде подпись почти не читалась.
+           Ореол цвета воды — серый ореол суши оставлял вокруг букв грязь */
+        paint:{'text-color':C.waterInk,'text-halo-color':C.water,'text-halo-width':1.2}},
       {id:'poi-dot',type:'circle',source:SRC,'source-layer':'poi',minzoom:13,filter:POI_STATION,
         paint:{'circle-radius':z(13,2,17,4),'circle-color':C.ink2,
                'circle-stroke-color':C.ground,'circle-stroke-width':1.5}},
@@ -5031,7 +5108,6 @@ function pinGlyph(p){return ptype(p).glyph}
    без подписи → точка. Так на дальнем плане почти всё точки, а при приближении места больше,
    и точки сами разворачиваются. Выбранное и своё — всегда булавкой. Кто уже был булавкой,
    идёт в очереди раньше: иначе на каждом кадре панорамы соседи менялись бы местами и мигали */
-var markPrev={};
 function mapTimeText(p){
   if(!isAct(p)||!p.starts_at)return '';
   if(isNow(p))return 'идёт сейчас';
@@ -5072,21 +5148,44 @@ function isLiveMark(p){
   if(isNow(p))return true;
   return p.type==='lost_found'&&p.subtype==='lost'&&p.status==='active'&&(now()-p.created_at)<DAY;
 }
+/* Раскладка не зависит от сдвига карты: раскладываются события в кадре и ещё на экран
+   вокруг, порядок — от вас или от дома, а не от центра кадра, и памяти «кто был булавкой»
+   больше нет. Раньше при панораме подписи перескакивали, а одно место выглядело по-разному
+   в зависимости от того, как в него приехали. Карту меняют только зум, данные и фильтры */
+function boxHit(list,b){
+  for(var i=0;i<list.length;i++){var o=list[i]; if(b.l<o.r&&b.r>o.l&&b.t<o.b&&b.b>o.t)return true}
+  return false;
+}
+/* Элементы поверх карты — поиск, кнопки масштаба, шкала, подпись источника — занятое
+   место: подписи событий на них не ложатся. Замер раз в полсекунды, не на каждом кадре */
+var chromeCache=null, chromeAt=0;
+function mapChromeBoxes(){
+  var t=Date.now();
+  if(chromeCache&&t-chromeAt<500)return chromeCache;
+  var out=[];
+  if(mapEl){
+    var mr=mapEl.getBoundingClientRect();
+    $$('.toolbar>*, .zoomctl>*, #scalebar, #mapCredit').forEach(function(el){
+      if(el.hidden||el.closest('[hidden]'))return;
+      var r=el.getBoundingClientRect(); if(!r.width||!r.height)return;
+      out.push({l:r.left-mr.left-4,t:r.top-mr.top-4,r:r.right-mr.left+4,b:r.bottom-mr.top+4});
+    });
+  }
+  chromeCache=out; chromeAt=t; return out;
+}
 function layoutEvents(items,halos){
-  var q=viewRect(), boxes=[], pins=[], dots=[], now2={};
+  var q=viewRect(), boxes=[], pins=[], dots=[], html={};
+  var chrome=mapChromeBoxes();
   var rank={};
   items.forEach(function(e){rank[e.p.id]=labelSortKey(e.p)});
   var order=items.slice().sort(function(a,b){
     var fa=(a.sel||a.mine)?0:1, fb=(b.sel||b.mine)?0:1;
     if(fa!==fb)return fa-fb;
-    var pa=markPrev[a.p.id]||0, pb=markPrev[b.p.id]||0;
-    if(pa!==pb)return pb-pa;
-    return rank[a.p.id]-rank[b.p.id];
+    return (rank[a.p.id]-rank[b.p.id])||(a.p.id<b.p.id?-1:1);
   });
-  function hit(b){
-    for(var i=0;i<boxes.length;i++){var o=boxes[i]; if(b.l<o.r&&b.r>o.l&&b.t<o.b&&b.b>o.t)return true}
-    return false;
-  }
+  function hit(b){return boxHit(boxes,b)}
+  /* свои пины — цветом категории, как все; принадлежность говорит ваш аватар в углу */
+  var meBadge='<span class="pin__me">'+avatarHTML(me(),'avatar--pin')+'</span>';
   order.forEach(function(e){
     var p=e.p, x=e.s[0], y=e.s[1], cls=ptype(p).cls;
     var at='transform:translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px)';
@@ -5098,13 +5197,13 @@ function layoutEvents(items,halos){
        двигаешь карту, и она выезжает из-за края вместе с булавкой. Отменяет только сосед */
     var labBox={l:x+14,t:y-24-h/2,r:x+14+w,b:y-24+h/2};
     var force=e.sel||e.mine, pinOk=!hit(pinBox);
-    var level=(pinOk||force)?((!hit(labBox)&&labBox.l<q.r-8)?2:1):0;
-    now2[p.id]=level;
+    var level=(pinOk||force)?((!hit(labBox)&&!boxHit(chrome,labBox)&&labBox.l<q.r-8)?2:1):0;
     var live=isLiveMark(p)?'<span class="pin__live pin__live--'+cls+'"></span>':'';
     if(!level){
       boxes.push({l:x-7,t:y-7,r:x+7,b:y+7});
-      dots.push('<div class="marker marker--dot" style="'+at+'">'+live+
-        '<button class="pindot pindot--'+cls+'" data-pin="'+p.id+'" aria-label="'+H(p.title)+'"></button></div>');
+      html[p.id]='<div class="marker marker--dot" style="'+at+'">'+live+
+        '<button class="pindot pindot--'+cls+'" data-pin="'+p.id+'" aria-label="'+H(p.title)+'"></button></div>';
+      dots.push(html[p.id]);
       return;
     }
     boxes.push(pinBox);
@@ -5120,14 +5219,15 @@ function layoutEvents(items,halos){
     }
     /* идущая сейчас встреча — единственное, что стоит ловить взглядом по всей карте,
        поэтому у неё метка на самой булавке, а не только слова в подписи */
-    pins.push('<div class="marker'+(e.sel?' is-sel':'')+'" style="'+at+'">'+
+    html[p.id]='<div class="marker'+(e.sel?' is-sel':'')+'" style="'+at+'">'+
       live+
-      '<button class="pin pin--'+cls+(e.mine?' pin--mine':'')+'" data-pin="'+p.id+'" aria-label="'+H(p.title)+'">'+icon(pinGlyph(p))+'</button>'+
+      '<button class="pin pin--'+cls+(e.mine?' pin--mine':'')+'" data-pin="'+p.id+'" aria-label="'+H(p.title)+'">'+icon(pinGlyph(p))+
+        (e.mine?meBadge:'')+'</button>'+
       (level===2?labelHTML(p):'')+
-    '</div>');
+    '</div>';
+    pins.push(html[p.id]);
   });
-  markPrev=now2;
-  return {pins:pins,dots:dots,boxes:boxes};
+  return {pins:pins,dots:dots,boxes:boxes,html:html};
 }
 document.addEventListener('mouseover',function(e){
   if(isDesktopPanel()===false)return;
@@ -5138,6 +5238,16 @@ document.addEventListener('mouseover',function(e){
   $$('#markers .marker.is-hover').forEach(function(m){m.classList.remove('is-hover'); var t=m.querySelector('.pin__label--hover'); if(t)t.remove()});
   mk.classList.add('is-hover');
   if(!mk.querySelector('.pin__label'))mk.insertAdjacentHTML('beforeend',labelHTML(p,'pin__label--hover'+(b.classList.contains('pindot')?' pin__label--dot':'')));
+  var hl=mk.querySelector('.pin__label');
+  if(hl){
+    var hr=hl.getBoundingClientRect();
+    $$('#markers .marker--stn').forEach(function(sm){
+      Array.prototype.some.call(sm.children,function(c){
+        var cr=c.getBoundingClientRect();
+        return cr.left<hr.right&&cr.right>hr.left&&cr.top<hr.bottom&&cr.bottom>hr.top;
+      })&&sm.classList.add('is-hid');
+    });
+  }
 });
 document.addEventListener('mouseout',function(e){
   var b=e.target.closest&&e.target.closest('#markers .pindot, #markers .pin[data-pin]');
@@ -5145,30 +5255,32 @@ document.addEventListener('mouseout',function(e){
   var mk=b.parentNode; if(!mk)return;
   mk.classList.remove('is-hover');
   var t=mk.querySelector('.pin__label--hover'); if(t)t.remove();
+  $$('#markers .marker--stn.is-hid').forEach(function(sm){sm.classList.remove('is-hid')});
 });
-/* Имена станций — последними и только вблизи. Место они занимают в той же раскладке,
-   поэтому подпись станции никогда не отнимет место у события */
-function placeStationNames(stns,out,boxes){
-  if(!stns||!stns.length||mapZoom()<STN_NAME_Z)return;
-  var q=viewRect();
-  function fits(box){
-    if(box.l<q.l+2||box.r>q.r-2||box.b>q.b-2)return false;
-    for(var i=0;i<boxes.length;i++){
-      var o=boxes[i];
-      if(box.l<o.r&&box.r>o.l&&box.t<o.b&&box.b>o.t)return false;
-    }
-    return true;
-  }
-  /* пересадочные узлы важнее одиночных станций: у них больше линий и больше поводов
-     назвать место именно ими */
-  stns.slice().sort(function(a,b){return (b.d.lines||[]).length-(a.d.lines||[]).length})
-    .forEach(function(e){
-      var w=Math.min(150,Math.max(40,e.d.name.length*6.1+8)), h=15, top=e.s[1]+13;
-      var box={l:e.s[0]-w/2,t:top,r:e.s[0]+w/2,b:top+h};
-      if(!fits(box))return;
-      boxes.push(box);
-      out[e.idx]=out[e.idx].slice(0,-6)+'<span class="stnmark__n">'+H(e.d.name)+'</span></div>';
-    });
+/* Станция — одно целое: значок и имя вместе или никак. Раскладывается последней, в место,
+   которое оставили события: если значок или имя ложится на булавку, точку, подпись, маркер
+   черновика, прицел или имя другой станции — станции нет целиком. Значка без имени больше
+   не бывает. Край кадра имя не прячет, а обрезает — как подписи событий.
+   Вид по масштабу как у Яндекса: на дальнем плане одна красная «М» с обводкой фоном, с 14
+   (их 15) — круг цвета линии с белой «М» */
+function placeStations(stns,out,boxes){
+  if(!stns||!stns.length)return;
+  var far=mapZoom()<STN_BIG_Z, named=mapZoom()>=STN_NAME_Z;
+  stns.slice().sort(function(a,b){
+    return ((b.d.lines||[]).length-(a.d.lines||[]).length)||(a.d.id<b.d.id?-1:1);
+  }).forEach(function(e){
+    var x=e.s[0], y=e.s[1];
+    var ib=far?{l:x-9,t:y-7,r:x+9,b:y+7}:{l:x-10,t:y-10,r:x+10,b:y+10};
+    var w=Math.min(150,Math.max(40,e.d.name.length*6.1+8)), top=y+(far?8:11);
+    var nb={l:x-w/2,t:top,r:x+w/2,b:top+15};
+    if(boxHit(boxes,ib)||(named&&boxHit(boxes,nb)))return;
+    boxes.push(ib); if(named)boxes.push(nb);
+    out.push('<div class="marker marker--stn'+(far?' is-far':'')+'" style="transform:translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px)">'+
+      (far
+        ? '<svg class="stnmark stnmark--m" aria-hidden="true"><use href="#i-metro-m"/></svg>'
+        : '<svg class="stnmark" aria-hidden="true" style="color:'+e.d.lineColor+'"><use href="#i-metro"/></svg>')+
+      (named?'<span class="stnmark__n">'+H(e.d.name)+'</span>':'')+'</div>');
+  });
 }
 /* Станции, попавшие в кадр. Значок появляется рано — он и есть каркас города на общем
    плане, — а подпись только вблизи: на дальнем зуме сорок девять имён легли бы друг на друга
@@ -5177,14 +5289,15 @@ function placeStationNames(stns,out,boxes){
    всех станций сразу. Их 13 — наш 12: у них плитка 256, у нас 512. Одинаково на телефоне и
    десктопе — раньше значки шли от ширины кадра, и на широком экране всплывали только у 15.
    Имена уступают событиям: сначала раскладываются события, станции — в оставшееся место */
-var STN_Z=12, STN_NAME_Z=12, STN_BIG_Z=15;
+var STN_Z=12, STN_NAME_Z=12, STN_BIG_Z=14;
 function mapZoom(){return GEO_Z+Math.log(view.k)/Math.LN2}
 function stationMarks(){
   if(!glMap||mapZoom()<STN_Z)return [];
   var q=viewRect(), out=[];
   for(var i=0;i<DISTRICTS.length;i++){
     var d=DISTRICTS[i], p=toScreen(d.sx,d.sy);
-    if(p[0]<q.l-40||p[0]>q.r+40||p[1]<-40||p[1]>q.b+40)continue;
+    var MG=Math.max(view.W,view.Ht);
+    if(p[0]<q.l-MG||p[0]>q.r+MG||p[1]<-MG||p[1]>q.b+MG)continue;
     out.push({d:d,s:p});
   }
   return out;
@@ -5197,16 +5310,24 @@ function labelSortKey(p){
 }
 /* Круг объясняет себя сам: по окружности изнутри мелко повторяется, что он значит.
    Число повторов — под длину окружности на экране, текст растянут на неё целиком */
+/* Фраз меньше, между ними пробел примерно в длину фразы; надпись медленно плывёт по часовой
+   с одинаковой линейной скоростью на любом круге. Положение берётся от часов, а не от
+   момента отрисовки: слой меток перерисовывается при каждом движении карты, и обычная
+   анимация начиналась бы заново — текст дёргался бы */
+var HALO_SPEED=15;
 function haloText(p,rad){
   if(rad<46)return '';
   var lab=isLF(p)?'зона поиска':'примерное место', r=rad-11, L=2*Math.PI*r;
-  var n=Math.max(1,Math.floor(L/(lab.length*6.4+22)));
-  var txt=''; for(var i=0;i<n;i++)txt+=lab+' · ';
-  var D=(rad*2).toFixed(0), id='hp_'+p.id;
-  return '<svg class="halo__txt" width="'+D+'" height="'+D+'" style="width:'+D+'px;height:'+D+'px" viewBox="0 0 '+D+' '+D+'" aria-hidden="true">'+
+  var w=lab.length*6.6, n=Math.max(2,Math.floor(L/(w*2)));
+  var D=(rad*2).toFixed(0), id='hp_'+p.id, tp='';
+  for(var i=0;i<n;i++)tp+='<textPath href="#'+id+'" startOffset="'+(i*100/n).toFixed(2)+'%">'+lab+'</textPath>';
+  var T=L/HALO_SPEED, ph=(Date.now()/1000)%T;
+  return '<svg class="halo__txt" width="'+D+'" height="'+D+'" style="width:'+D+'px;height:'+D+'px;animation-duration:'+T.toFixed(2)+'s;animation-delay:-'+ph.toFixed(2)+'s" viewBox="0 0 '+D+' '+D+'" aria-hidden="true">'+
     '<path id="'+id+'" fill="none" d="M '+(rad-r)+' '+rad+' a '+r+' '+r+' 0 1 1 '+(2*r)+' 0 a '+r+' '+r+' 0 1 1 '+(-2*r)+' 0"/>'+
-    '<text><textPath href="#'+id+'" textLength="'+(L-2).toFixed(1)+'" lengthAdjust="spacing">'+txt+'</textPath></text></svg>';
+    '<text>'+tp+'</text></svg>';
 }
+var markFadeAt=0, lastMarkHtml={}, fadeGhosts=[];
+function markFade(){markFadeAt=Date.now()}
 function renderMarkers(){
   /* Режим прицела выводится, а не хранится, и до сих пор пересчитывался в renderPanel —
      то есть уже после слоя меток. Один общий render() успевал нарисовать метки по старому
@@ -5285,17 +5406,29 @@ function renderMarkers(){
      остаётся своей меткой, а размер метки решает место на экране — как в Яндекс Картах.
      Группы выше нужны только для разлёта: 2–4 события, которые не разойдутся даже на
      максимальном приближении, раскладываются кружком, иначе их точки легли бы друг на друга */
-  var items=[];
+  var items=[], MG=Math.max(view.W,view.Ht);
   groups.forEach(function(arr){
     arr.forEach(function(o){
       var vs=o.s;
-      if(vs[0]<-80||vs[1]<-80||vs[0]>view.W+80||vs[1]>view.Ht+80)return;
+      if(vs[0]<-MG||vs[1]<-MG||vs[0]>view.W+MG||vs[1]>view.Ht+MG)return;
       items.push({p:o.p,s:o.s,mine:o.p.author_id===db.currentUserId,
         sel:(ui.panel&&ui.panel.type==='pin'&&ui.panel.id===o.p.id)||ui.hoverPin===o.p.id});
     });
   });
   var placed=layoutEvents(items,halos);
-  out=out.concat(placed.dots,placed.pins);
+  /* Смена фильтра: ушедшие гаснут и чуть сжимаются, новые проявляются. Уходящие — копии
+     их прежней разметки, без нажатий, живут 170 мс; карта в этот момент стоит */
+  var fadeNow=markFadeAt&&(Date.now()-markFadeAt<150), entering=[];
+  if(fadeNow){
+    var tNow=Date.now();
+    for(var oid in lastMarkHtml)if(!placed.html[oid])
+      fadeGhosts.push({until:tNow+170,html:lastMarkHtml[oid].replace('class="marker','class="marker is-out').replace(/ data-pin="[^"]*"/g,'')});
+    for(var nid in placed.html)if(!lastMarkHtml[nid])entering.push(nid);
+    markFadeAt=0;
+  }
+  lastMarkHtml=placed.html;
+  fadeGhosts=fadeGhosts.filter(function(g){return g.until>Date.now()});
+  out=out.concat(fadeGhosts.map(function(g){return g.html}),placed.dots,placed.pins);
   /* пока идёт выбор точки перетаскиванием карты (моб.) точку показывает неподвижный
      прицел по центру экрана (#pickCenter) — здесь маркер для неё не нужен */
   /* маркер черновика живёт ровно столько, сколько открыт экран создания: раньше он оставался
@@ -5321,15 +5454,16 @@ function renderMarkers(){
   }
   /* Станции идут после событий и до раскладки подписей: в очереди на подпись они стоят
      за событиями — событие то, ради чего человек открыл приложение, станция ему фон */
-  var stns=stationMarks();
-  stns.forEach(function(e){
-    e.idx=out.length;
-    out.push('<div class="marker marker--stn" style="transform:translate('+e.s[0].toFixed(1)+'px,'+e.s[1].toFixed(1)+'px)">'+
-      /* при появлении значок 16, вблизи прежние 19: на среднем плане станция не должна
-         быть крупнее самих событий */
-      '<svg class="stnmark'+(mapZoom()<STN_BIG_Z?' stnmark--s':'')+'" aria-hidden="true" style="color:'+e.d.lineColor+'"><use href="#i-metro"/></svg></div>');
-  });
-  placeStationNames(stns,out,placed.boxes);
+  /* станция уступает и маркеру черновика, и прицелу выбора места */
+  if(ui.draft&&ui.draft.x!=null&&!ui.picking&&ui.panel&&ui.panel.type==='create'){
+    var db0=toScreen(ui.draft.x,ui.draft.y);
+    placed.boxes.push({l:db0[0]-18,t:db0[1]-44,r:db0[0]+90,b:db0[1]+2});
+  }
+  if(ui.picking){
+    var pcx=viewCX(), pcy=pickCenterY();
+    placed.boxes.push({l:pcx-18,t:pcy-44,r:pcx+18,b:pcy+2});
+  }
+  placeStations(stationMarks(),out,placed.boxes);
   /* Где вы. Круг показывает заявленную браузером точность как есть: во дворе и в подвале
      она бывает в сотни метров, и честный круг говорит об этом лучше, чем уверенная точка
      не в том месте. Точка рисуется последней — она поверх событий, а не под ними */
@@ -5344,6 +5478,9 @@ function renderMarkers(){
     }
   }
   markersEl.innerHTML=out.join('');
+  entering.forEach(function(id){
+    var b=markersEl.querySelector('[data-pin="'+id+'"]'); if(b&&b.parentNode)b.parentNode.classList.add('is-in');
+  });
   if(halosEl)halosEl.innerHTML=halos.join('');
   /* Булавки выезжают из кластера, а не возникают на местах. Слой меток перерисовывается
      каждый кадр движения карты, поэтому вести узел из точки в точку можно только в тишине —
@@ -5449,6 +5586,39 @@ function hscrollEdges(t){
   wrap.classList.toggle('is-end',over&&t.scrollLeft+t.clientWidth<t.scrollWidth-1);
   if(over&&!wrap.querySelector('.hscroll__arr'))hscrollArrows(wrap);
 }
+/* На десктопе ленту со стрелками можно тянуть мышью: зажал и повёл больше 4 точек — лента
+   едет за курсором, курсор «сжатая рука»; короткий клик остаётся кликом, а отпускание после
+   перетягивания вкладку не переключает. Вертикальное колесо над лентой листает её вбок */
+var hsDrag=null;
+document.addEventListener('mousedown',function(e){
+  if(e.button!==0||!isDesktopPanel())return;
+  var wrap=e.target.closest&&e.target.closest('.hscroll');
+  if(!wrap||e.target.closest('.hscroll__arr'))return;
+  var t=hscrollStrip(wrap); if(!t||t.scrollWidth-t.clientWidth<=1)return;
+  hsDrag={t:t,x0:e.clientX,s0:t.scrollLeft,moved:false};
+});
+document.addEventListener('mousemove',function(e){
+  var d=hsDrag; if(!d)return;
+  var dx=e.clientX-d.x0;
+  if(!d.moved&&Math.abs(dx)>4){d.moved=true; document.body.classList.add('is-grabbing')}
+  if(d.moved){d.t.scrollLeft=d.s0-dx; hscrollEdges(d.t); e.preventDefault()}
+});
+document.addEventListener('mouseup',function(){
+  var d=hsDrag; hsDrag=null;
+  if(!d)return;
+  document.body.classList.remove('is-grabbing');
+  if(d.moved){
+    var eat=function(ce){ce.stopPropagation(); ce.preventDefault()};
+    window.addEventListener('click',eat,true);
+    setTimeout(function(){window.removeEventListener('click',eat,true)},0);
+  }
+});
+document.addEventListener('wheel',function(e){
+  if(!isDesktopPanel())return;
+  var wrap=e.target.closest&&e.target.closest('.hscroll'); if(!wrap)return;
+  var t=hscrollStrip(wrap); if(!t||t.scrollWidth-t.clientWidth<=1)return;
+  if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){t.scrollLeft+=e.deltaY; hscrollEdges(t); e.preventDefault()}
+},{passive:false});
 function hscrollInit(root){
   var ws=(root||document).querySelectorAll('.hscroll');
   for(var i=0;i<ws.length;i++){var t=hscrollStrip(ws[i]); if(t)hscrollEdges(t)}
@@ -5485,6 +5655,48 @@ function fitTabs(t){
   var ws=Array.prototype.map.call(bs,function(b){return b.getBoundingClientRect().width});
   t.classList.add('tabs--fill');
   Array.prototype.forEach.call(bs,function(b,i){b.style.flex=ws[i].toFixed(2)+' 1 0px'});
+}
+var segPos={}, tabPos={};
+function dataKey(el){
+  if(!el)return '';
+  for(var i=0;i<el.attributes.length;i++)if(el.attributes[i].name.indexOf('data-')===0)return el.attributes[i].name;
+  return '';
+}
+function syncSegs(){
+  $$('.segctl:not(.segctl--cat)').forEach(function(sc){
+    var th=sc.querySelector('.segctl__thumb');
+    if(!th){th=document.createElement('i'); th.className='segctl__thumb'; sc.insertBefore(th,sc.firstChild)}
+    var on=sc.querySelector('button.is-on');
+    if(!on||!sc.offsetWidth){th.style.opacity=on?'':'0'; return}
+    th.style.opacity='';
+    var key=dataKey(sc.querySelector('button')), L=on.offsetLeft, W=on.offsetWidth, pv=segPos[key];
+    if(pv&&(pv.l!==L||pv.w!==W)&&!reduceMotion()){
+      th.style.transition='none'; th.style.left=pv.l+'px'; th.style.width=pv.w+'px'; void th.offsetWidth; th.style.transition='';
+    }
+    th.style.left=L+'px'; th.style.width=W+'px';
+    segPos[key]={l:L,w:W};
+  });
+}
+function tabBarColor(b){
+  var c=b?getComputedStyle(b).getPropertyValue('--tab-line').trim():'';
+  return c||'var(--ink)';
+}
+function syncTabBars(){
+  $$('#panel .tabs, #panelB .tabs').forEach(function(t){
+    var bar=t.querySelector('.tabs__bar');
+    if(!bar){bar=document.createElement('i'); bar.className='tabs__bar'; t.appendChild(bar)}
+    var on=t.querySelector('button.is-on');
+    if(!on||!t.offsetWidth){bar.style.opacity='0'; return}
+    bar.style.opacity='';
+    var key=dataKey(on), L=on.offsetLeft, W=on.offsetWidth, pv=tabPos[key];
+    if(pv&&(pv.l!==L||pv.w!==W)&&!reduceMotion()){
+      bar.style.transition='none'; bar.style.left=pv.l+'px'; bar.style.width=pv.w+'px'; bar.style.background=pv.c;
+      void bar.offsetWidth; bar.style.transition='';
+    }
+    var c=tabBarColor(on);
+    bar.style.left=L+'px'; bar.style.width=W+'px'; bar.style.background=c;
+    tabPos[key]={l:L,w:W,c:c};
+  });
 }
 function scrollTabIntoView(root){
   var t=(root||document).querySelector('.tabs'); if(!t)return;
@@ -5884,8 +6096,9 @@ function distChipHTML(p,u,showStation){
 function sortDistUnits(p){
   if(!p||p.x==null)return null;
   var r;
+  /* «рядом» — от вас или от дома, не от центра кадра: иначе порядок менялся от сдвига карты */
   if(geoOn())r=meRef();
-  else{var c=viewCenterPoint(); r={x:c[0],y:c[1]}}
+  else{var hp=homePoint(); r={x:hp.x,y:hp.y}}
   return Math.sqrt(Math.pow(p.x-r.x,2)+Math.pow(p.y-r.y,2));
 }
 /* пин без точки не участвует в сортировке по близости — уводим его в конец списка,
@@ -6275,11 +6488,16 @@ function homeResultsHTML(){
   /* Итог месяца отсюда ушёл: в тихом районе он сам пустой, в живом жизнь видна по списку,
      а цифры стоят в шапке архива. Осталась одна кнопка — вход в архив района. Прибита
      к полу панели, когда список короткий; при длинном стоит в конце */
-  var arcN=q?0:archiveList(true).length;
-  var tail=arcN?'<div class="homefloor"><div class="divider"></div>'+
-    '<div class="chronicle">'+
-      '<button class="btn btn--line btn--sm" data-act="open-archive">'+icon('archive')+'Архив района</button>'+
-    '</div></div>':'';
+  /* Конец ленты — толстый разделитель и строка раздела, как «Законченные дела» в профиле:
+     разделитель говорит, что живая лента кончилась, строка — что дальше. С поиском архив
+     ищет по тому же запросу, и строка называет число совпадений; нет их — блока нет */
+  var arcN=archiveList(true).length, tail='';
+  if(arcN){
+    var tl=q?('Ещё '+arcN+' '+plural(arcN,'совпадение','совпадения','совпадений')+' в архиве'):'Нужное могло уже закончиться';
+    tail='<div class="homefloor"><div class="divider divider--lg"></div>'+
+      '<div class="secthead feedend"><span class="secthead__t">'+H(tl)+'</span>'+
+      '<button class="pill pill--brand" data-act="open-archive">'+(q?'Смотреть':'Архив района')+icon('chev-right')+'</button></div></div>';
+  }
   /* Подсказки стоят первыми — сразу под полем ввода, выше кнопки охвата и сортировки */
   return placesHTML+head+body+nearHTML+tail;
 }
@@ -6631,11 +6849,101 @@ function playReveals(root){
   });
   revealSeen=next;
 }
+/* Свайп между вкладками на телефоне («Сообщения», свои дела). Жест решается по первому
+   движению: вбок — вкладки, вертикально — прокрутка. Список идёт за пальцем, соседняя
+   вкладка выезжает из-за края, полоска под вкладками плывёт с жестом. На крайних вкладках
+   сопротивление без перехода. Прокрутка у каждой вкладки своя */
+var tabScroll={}, tabDrag=null;
+function tabCtx(){
+  var p=ui.panel; if(!p||isDesktopPanel())return null;
+  if(p.type==='chats')return {kind:'msg',keys:MSG_TABS.map(function(t){return t.k}),cur:ui.msgTab,
+    set:function(k){ui.msgTab=k},
+    html:function(k){var l=threadsFor(k); return l.length?l.map(threadRow).join(''):'<div class="empty">'+icon('chat')+'<b>Здесь пусто</b></div>'}};
+  if(p.type==='mine'){
+    var c=mineCompute(p.id); if(!c.both)return null;
+    return {kind:'mine',keys:['own','join'],cur:ui.mineTab,set:function(k){ui.mineTab=k},
+      html:function(k){var o=ui.mineTab; ui.mineTab=k; var c2=mineCompute(p.id); ui.mineTab=o;
+        return c2.cur.length?mineRows(c2.cur,c2.m):mineEmpty(c2)}};
+  }
+  return null;
+}
+function tabBtn(ctx,k){
+  var t=$('#panel .tabs'); if(!t)return null;
+  return t.querySelector(ctx.kind==='msg'?'[data-msgtab="'+k+'"]':'[data-tab="'+k+'"]');
+}
+function tabSaveScroll(ctx){var b=$('#panelBody'); if(b)tabScroll[ctx.kind+':'+ctx.cur]=b.scrollTop}
+function tabRestoreScroll(ctx,k){var b=$('#panelBody'); if(b)b.scrollTop=tabScroll[ctx.kind+':'+k]||0}
+document.addEventListener('touchstart',function(e){
+  tabDrag=null;
+  if(e.touches.length!==1)return;
+  var sw=e.target.closest&&e.target.closest('#panel .swrap'); if(!sw)return;
+  var ctx=tabCtx(); if(!ctx)return;
+  var t=e.touches[0], pr=$('#panel').getBoundingClientRect();
+  if(canSwipeBack()&&t.clientX-pr.left<=24)return;   /* от края — жест «назад» */
+  tabDrag={ctx:ctx,sw:sw,area:$('#swArea'),x0:t.clientX,y0:t.clientY,t0:Date.now(),mode:null,dir:0,ghost:null,W:sw.offsetWidth};
+},{passive:true});
+document.addEventListener('touchmove',function(e){
+  var d=tabDrag; if(!d||e.touches.length!==1)return;
+  var t=e.touches[0], dx=t.clientX-d.x0, dy=t.clientY-d.y0;
+  if(!d.mode){
+    if(Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)*1.2){d.mode='h'; d.area.style.transition='none'}
+    else if(Math.abs(dy)>8){tabDrag=null; return}
+    else return;
+  }
+  e.preventDefault();
+  var i=d.ctx.keys.indexOf(d.ctx.cur), dir=dx<0?1:-1, nk=d.ctx.keys[i+dir];
+  if(!nk){d.area.style.transform='translateX('+(dx*0.3)+'px)'; d.dx=dx*0.3; d.nk=null; return}
+  if(d.dir!==dir){
+    if(d.ghost&&d.ghost.parentNode)d.ghost.parentNode.removeChild(d.ghost);
+    var g=document.createElement('div'); g.className='swghost'; g.innerHTML=d.ctx.html(nk); fixHang(g);
+    d.sw.appendChild(g); d.ghost=g; d.dir=dir;
+  }
+  d.nk=nk; d.dx=dx;
+  d.area.style.transform='translateX('+dx+'px)';
+  d.ghost.style.transition='none'; d.ghost.style.transform='translateX('+(dx+dir*d.W)+'px)';
+  /* полоска между текущей вкладкой и соседней — по доле пройденного */
+  var bar=$('#panel .tabs__bar'), a=tabBtn(d.ctx,d.ctx.cur), b=tabBtn(d.ctx,nk);
+  if(bar&&a&&b){
+    var k=Math.min(1,Math.abs(dx)/d.W);
+    bar.style.transition='none';
+    bar.style.left=(a.offsetLeft+(b.offsetLeft-a.offsetLeft)*k)+'px';
+    bar.style.width=(a.offsetWidth+(b.offsetWidth-a.offsetWidth)*k)+'px';
+  }
+},{passive:false});
+document.addEventListener('touchend',function(){
+  var d=tabDrag; tabDrag=null;
+  if(!d||d.mode!=='h')return;
+  var dt=Math.max(1,Date.now()-d.t0), v=(d.dx||0)/dt;
+  var go=d.nk&&(Math.abs(d.dx)>d.W/4||Math.abs(v)>0.5);
+  var E='transform .2s cubic-bezier(.2,.7,.3,1)';
+  d.area.style.transition=E;
+  if(d.ghost)d.ghost.style.transition=E;
+  var bar=$('#panel .tabs__bar'); if(bar)bar.style.transition='';
+  if(go){
+    d.area.style.transform='translateX('+(-d.dir*d.W)+'px)';
+    if(d.ghost)d.ghost.style.transform='translateX(0)';
+    setTimeout(function(){
+      tabSaveScroll(d.ctx);
+      d.ctx.set(d.nk); render();
+      tabRestoreScroll(d.ctx,d.nk);
+    },200);
+  }else{
+    d.area.style.transform='';
+    if(d.ghost)d.ghost.style.transform='translateX('+(d.dir*d.W)+'px)';
+    syncTabBars();
+    setTimeout(function(){
+      if(d.ghost&&d.ghost.parentNode)d.ghost.parentNode.removeChild(d.ghost);
+      d.area.style.transition='';
+    },220);
+  }
+},{passive:true});
 /* переключение вкладки: снимок делается до перерисовки, разъезд — сразу после неё */
 function tabSwitch(setter,dir){
   var old=$('#swArea'), oldHTML=old?old.innerHTML:null;
+  var ctx=tabCtx(); if(ctx)tabSaveScroll(ctx);
   setter();
   render();
+  var ctx2=tabCtx(); if(ctx&&ctx2)tabRestoreScroll(ctx2,ctx2.cur);
   var neu=$('#swArea');
   if(oldHTML&&neu&&!reduceMotion())areaSlide(neu,dir,oldHTML);
 }
@@ -6689,7 +6997,7 @@ var TOP_PANELS={create:1,chats:1,profile:1};
    первую колонку: из них открываются вложенные экраны, и им нужна вторая. Но в таббаре
    это по-прежнему профиль — иначе, пока человек в своих делах, подсветка уезжала бы
    на «Карту», потому что своего пункта у этого экрана нет */
-var MAIN_PANELS={create:1,chats:1,profile:1,mine:1,welcome:1};
+var MAIN_PANELS={create:1,chats:1,profile:1,mine:1,welcome:1,archive:1};
 var TAB_HOME={mine:"profile"};
 function isDetailPanel(p){return !!p&&!MAIN_PANELS[p.type]}
 /* шаг назад по цепочке «откуда открыли»: им пользуется крестик второй колонки */
@@ -6776,7 +7084,6 @@ function viewWelcome(){
       return '<div class="welcome__type welcome__type--'+t[0]+'">'+icon(t[1])+
         '<span><b>'+t[2]+'</b><span>'+t[3]+'</span></span></div>';
     }).join('')+'</div>'+
-    '<div class="demo-note" style="margin:0">'+icon('info')+'<span>Это прототип: данные живут только в вашем браузере, соседи демонстрационные</span></div>'+
   '</div>';
   var foot='<button class="btn btn--primary" data-act="welcome-next">Далее'+icon('chev-right')+'</button>';
   return {title:'Район', tall:true, noHead:true, body:body, foot:foot};
@@ -6938,7 +7245,9 @@ function renderPanel(){
   var hasBack=!!v.back||(!v.home&&!v.section);
   var goesBack=!!(main&&(oneUp(main)||(main.type==='pin'&&main.origin&&main.origin.type!=='list')));
   var backIcon=goesBack?'back':'close';
-  if(!head&&!v.home&&!v.noHead&&(hasBack||!isDesktopPanel())){
+  /* Корневым разделам (сообщения, профиль) шапка не нужна: раздел называют вкладка внизу,
+     поле поиска и само содержимое. Шапка есть там, где нужен путь обратно */
+  if(!head&&!v.home&&!v.noHead&&hasBack){
     /* по центру только на телефоне: на десктопе шапка есть лишь у вложенных экранов
        в узкой колонке, и центрированное название там оторвалось бы от стрелки */
     var ctr=!isDesktopPanel();
@@ -7070,6 +7379,8 @@ function viewPin(id){
   var thing=act?ptype(p).label:(subLabel(p,closed)||ptype(p).label);
   var chips='<div class="metaline">'+
     (closed?'<span class="chip chip--muted">'+icon('archive')+'В архиве</span>':'')+
+    ((!closed&&act&&myResponse(p.id)&&myResponse(p.id).status==='interested')
+      ?'<span class="chip chip--me">'+icon('clock')+'Вы подали заявку</span>':'')+
     '<span class="chip chip--'+ptype(p).cls+'">'+icon(pinGlyph(p))+H(thing)+'</span>'+
     (geoChip?'<span class="chip chip--muted">'+geoChip+'</span>':'')+
   '</div>';
@@ -7115,7 +7426,7 @@ function viewPin(id){
   if(closed){
     /* исход и дата одной строкой: «Состоялась 22 сентября». Слово «архив» уже сказал тег —
        третий раз его не повторяем */
-    var rl=reasonLabel(p)||'Завершено';
+    var rl=reasonLabel(p)||'Завершено'; rl=rl.charAt(0).toUpperCase()+rl.slice(1);
     facts+='<div class="factrow">'+icon('archive')+'<div><b>'+H(rl+' '+dateFull(p.closed_at||p.created_at))+'</b></div></div>';
   }
   /* расстояние переехало в чип рядом со станцией — там сразу видно, от чего оно считается.
@@ -7130,7 +7441,8 @@ function viewPin(id){
     else { placeTitle='Найдено здесь'; placeNote='Место помогает узнать свою вещь, приходить сюда не нужно'; }
   }
   else { placeTitle='Точка показана приблизительно'; placeNote='точный адрес — в переписке'; }
-  facts+='<div class="factrow">'+icon('pin')+'<div><b>'+H(placeTitle)+'</b>'+
+  /* у закрытого строки места нет: на карте его не показывают, где было — говорит тег станции */
+  if(!closed)facts+='<div class="factrow">'+icon('pin')+'<div><b>'+H(placeTitle)+'</b>'+
     (placeNote?'<span>'+H(placeNote)+'</span>':'')+'</div></div>';
 
   /* «без срока» не значит «навсегда»: раз в месяц спрашиваем автора, актуально ли ещё.
@@ -7258,7 +7570,7 @@ function viewPin(id){
   }
   if(mine)shortTags+='<span class="stag stag--me">'+icon('user')+'Вы автор</span>';
   else if(isJoined(mr))shortTags+='<span class="stag stag--me">'+icon('check')+'Вы участвуете</span>';
-  else if(mr&&mr.status==='interested')shortTags+='<span class="stag stag--me">'+icon('clock')+'Заявка отправлена</span>';
+  else if(mr&&mr.status==='interested')shortTags+='<span class="stag stag--me">'+icon('clock')+'Вы подали заявку</span>';
   var short='<div class="pinshort"><div class="pinshort__in">'+
     '<span class="pinshort__row">'+
       /* тот же элемент, что в строке сообщений: 60, скругление 6, бледная подложка */
@@ -7267,6 +7579,8 @@ function viewPin(id){
         : '<span class="listrow__cover listrow__cover--lg listrow__cover--'+ptype(p).cls+'">'+icon(pinGlyph(p))+'</span>')+
       '<span class="pinshort__t"><span class="pinshort__n">'+H(p.title)+'</span>'+
         '<span class="pinshort__s">'+H(shortSub)+'</span></span>'+
+      /* шеврон вверх: «здесь есть ещё» — строка раскрывает шторку */
+      icon('chev-up','pinshort__up')+
     '</span>'+
     (shortTags?'<span class="stags">'+shortTags+'</span>':'')+
     /* в короткой карточке — первое обращение: она открывается с карты первой */
@@ -7305,7 +7619,8 @@ function viewPin(id){
     }else if(act){
       if(mr&&mr.status==='interested'){
         /* заявка ещё не принята: участником человек не стал и в общий чат не попал */
-        foot='<button class="btn btn--ghost" data-act="leave" data-id="'+p.id+'">'+icon('clock')+'Заявка отправлена — отозвать</button>';
+        /* кнопка называет действие; о том, что заявка подана, говорит тег наверху */
+        foot='<button class="btn btn--danger-soft" data-act="leave" data-id="'+p.id+'">Отозвать заявку</button>';
       }else if(isJoined(mr)){
         /* участник уже внутри, и главное для него — не выйти, а договориться. Поэтому
            сверху разговор, а отказ ниже и контуром: он нужен редко и промахиваться по нему
@@ -7964,7 +8279,7 @@ function viewProfile(){
       '<i class="mephoto__b mephoto__b--s">'+icon('pencil')+'</i></button></span>'+
     '<div style="flex:1;min-width:0"><div style="font-size:var(--f-h40);line-height:var(--l-h40);font-weight:600">'+H(m.name)+'</div>'+
     '<div style="font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3)">'+H(m.phone||'Демо-профиль')+'</div></div>'+
-    '<span class="headacts">'+(isDesktopPanel()?bell:'')+
+    '<span class="headacts">'+bell+
       '<button class="iconbtn iconbtn--20" data-act="settings" aria-label="Настройки" title="Настройки">'+icon('gear')+'</button>'+
     '</span></div>';
 
@@ -8010,7 +8325,7 @@ function viewProfile(){
   var body=head+profileFacts(m.id,true,my.length>0,goLink('archive','Весь архив',archive.length))+soon+rows;
 
   return {title:'Профиль',body:body,section:true,
-    action:isDesktopPanel()?'':bellHTML('chathead__act')};
+  };
 }
 
 /* ---- свои события: «Сейчас» и «Архив» ---- */
@@ -9090,7 +9405,9 @@ function viewScope(){
   var whoseHint={mine:'Созданные вами',others:'Всё, кроме ваших'}[ws];
   var whose='<div class="field"><label>Показывать</label>'+
     '<div class="segctl">'+WHOSE.map(function(o){
-      return '<button class="'+(ws===o[0]?'is-on':'')+'" data-whose="'+o[0]+'">'+o[1]+'</button>';
+      /* у «Мои» тот же аватар, что в углу своих булавок: признак объясняется там, где по нему фильтруют */
+      return '<button class="'+(ws===o[0]?'is-on':'')+'" data-whose="'+o[0]+'">'+
+        (o[0]==='mine'?avatarHTML(me(),'avatar--seg'):'')+o[1]+'</button>';
     }).join('')+'</div>'+
     (whoseHint?'<span class="hint" data-reveal="whose-'+ws+'">'+H(whoseHint)+'</span>':'')+'</div>';
   var picked='<div class="pad stack" style="padding-bottom:16px">'+whose+when+rad+'</div>';
@@ -9351,15 +9668,20 @@ function pickMenu(sel){
   /* у поля формы меню во всю его ширину: узкий список под широким полем выглядел чужим */
   var mn=$('#overlay .menu');
   if(mn&&!sel.closest('.ctlpick'))mn.style.minWidth=Math.round(anchor.getBoundingClientRect().width)+'px';
+  menuFit(anchor);
 }
-document.addEventListener('mousedown',function(e){
-  var sel=e.target.closest&&e.target.closest('select[data-pick]');
-  if(!sel||!isDesktopPanel())return;
-  e.preventDefault(); sel.focus(); pickMenu(sel);
-},true);
+/* В iOS 26 у выпадающего списка больше нет барабана — вместо него стеклянное меню поверх
+   поля. Поэтому наше меню на обеих платформах: select остаётся носителем значения и событий,
+   но нажатия не получает (pointer-events:none), их ловит обёртка */
+document.addEventListener('click',function(e){
+  var w=e.target.closest&&e.target.closest('.selectwrap,.ctlpick');
+  var sel=w&&w.querySelector('select[data-pick]');
+  if(!sel)return;
+  e.preventDefault(); pickMenu(sel);
+});
 document.addEventListener('keydown',function(e){
   var sel=e.target;
-  if(!sel||sel.tagName!=='SELECT'||!sel.getAttribute('data-pick')||!isDesktopPanel())return;
+  if(!sel||sel.tagName!=='SELECT'||!sel.getAttribute('data-pick'))return;
   if(e.key==='Enter'||e.key===' '||(e.altKey&&e.key==='ArrowDown')){e.preventDefault(); pickMenu(sel)}
 },true);
 function menuDialog(anchor,items){
@@ -9392,6 +9714,13 @@ function menuDialog(anchor,items){
       '</button>';
     }).join('')+
   '</div></div>');
+  menuFit(anchor);
+}
+/* Меню, которому не хватает места под кнопкой, раскрывается вверх от неё */
+function menuFit(anchor){
+  var mn=$('#overlay .menu'); if(!mn||!anchor)return;
+  var r=anchor.getBoundingClientRect(), h=mn.offsetHeight, vh=window.visualViewport?window.visualViewport.height:window.innerHeight;
+  if(r.bottom+6+h>vh-8&&r.top-6-h>8)mn.style.top=Math.round(r.top-6-h)+'px';
 }
 /* Все окна пишут в оверлей, и обработку висячих предлогов надо ставить в одно место:
    раньше каждое писало разметку само, и правило до них не доходило вовсе */
@@ -9950,8 +10279,9 @@ function onAction(act,el,e){
       closeModal();
       var mr=myResponse(id);
       function doLeave(){
+        var wasReq=!!(mr&&mr.status==='interested');
         if(mr)db.responses=db.responses.filter(function(r){return r.id!==mr.id});
-        save(); render(); toast('Участие отменено');
+        save(); render(); toast(wasReq?'Заявка отозвана':'Участие отменено');
       }
       /* Отозвать заявку можно молча: вы пока никому ничего не обещали. А выход из
          набранного состава задевает и автора, и разговор, поэтому спрашиваем */
@@ -10460,9 +10790,10 @@ document.addEventListener('click',function(e){
     return;
   }
   if((el=e.target.closest('[data-theme-set]'))){setTheme(el.getAttribute('data-theme-set'));render();return}
-  if((el=e.target.closest('[data-whose]'))){ui.whose=el.getAttribute('data-whose');render();return}
+  if((el=e.target.closest('[data-whose]'))){markFade();ui.whose=el.getAttribute('data-whose');render();return}
   if((el=e.target.closest('[data-cat]'))){
     var ck=el.getAttribute('data-cat'), wb=$('[data-reveal="when"]');
+    markFade();
     /* выключаем встречи — «Когда» сворачивается с анимацией, и только потом перерисовка */
     if(ck==='activity'&&ui.filters.activity&&wb){revealClose(wb,function(){toggleCat(ck);render()});return}
     toggleCat(ck);render();return;
@@ -10473,7 +10804,7 @@ document.addEventListener('click',function(e){
     ui.radius=(!rv||rv>=RAD_MAX)?null:rv; render(); return;
   }
   if((el=e.target.closest('[data-when-set]'))){
-    ui.when=el.getAttribute('data-when-set')||''; render(); return;
+    markFade(); ui.when=el.getAttribute('data-when-set')||''; render(); return;
   }
   /* «Показать ближайшее» из пустого кадра: везём карту к событию и открываем его карточку */
   if((el=e.target.closest('[data-goto-pin]'))){
@@ -10532,6 +10863,8 @@ document.addEventListener('click',function(e){
     ui.homeOpen=false; render(); return;
   }
   /* мобильная шторка: тап вне её области закрывает панель (кроме выбора точки на карте) */
+  /* подсказка, окно и всплывающее сообщение лежат вне шторки, но нажатие по ним — не «мимо» */
+  if(e.target.closest('#hintBubble,#overlay,.toast'))return;
   if(ui.panel&&!ui.picking&&window.innerWidth<=820&&!e.target.closest('#panel')){
     ui.draft=null; ui.pickPaused=false; closePanel();
   }
@@ -10861,16 +11194,6 @@ document.addEventListener('focusout',function(e){
 /* Прокрутка выдачи прячет клавиатуру: начал листать — значит набирать закончил.
    Так это устроено в картах, и это дешевле отдельного режима поиска с «Отменой» —
    его я сделал по образцу и убрал: строка ввода и крестик в ней справлялись сами */
-/* Оттянул карточку вниз в верхней точке — айфон сдвигает содержимое пружиной, и между
-   шапкой и обложкой зияла полоса. Обложка растягивается от нижнего края и заполняет её */
-document.addEventListener('scroll',function(e){
-  var t=e.target; if(!t||!t.querySelector)return;
-  var cv=t.firstElementChild&&t.querySelector(':scope > .cover, :scope > .pinshort + .cover');
-  if(!cv)return;
-  var st=t.scrollTop;
-  if(st<0){cv.style.transformOrigin='50% 100%'; cv.style.transform='scale('+(1+(-st)/Math.max(1,cv.offsetHeight))+')'}
-  else if(cv.style.transform)cv.style.transform='';
-},true);
 document.addEventListener('scroll',function(e){
   var t=e.target, a=document.activeElement;
   if(t&&t.id==='panelBody'&&a&&a.id==='searchInput')a.blur();
@@ -10902,7 +11225,7 @@ document.addEventListener('change',function(e){
     return;
   }
   if(e.target.getAttribute&&e.target.getAttribute('data-when-sel')){
-    ui.when=e.target.value||'';
+    markFade(); ui.when=e.target.value||'';
     render(); return;
   }
   if(e.target.getAttribute&&e.target.getAttribute('data-mine-sort')){
@@ -11034,17 +11357,25 @@ function syncHint(){
     if(isDesktopPanel()){
       /* сцена лежит и под панелью — отступаем от правого края открытых колонок */
       /* на границе списка и карты: подсказка про то, как они связаны, касается обоих */
-      var pr=$('#panel').getBoundingClientRect(), fc=$('#panel .fcard');
-      bw=340; hb.style.width=bw+'px';
-      hb.style.left=Math.round(pr.right-bw/2)+'px';
-      hb.style.top=Math.round(fc?fc.getBoundingClientRect().top:pr.top+130)+'px';
+      /* заходит на панель только на поле — 16 точек, остальное на карте; верх вровень
+         со строкой сортировки */
+      var pr=$('#panel').getBoundingClientRect(), sb=$('#panel .feed__sort button');
+      hb.style.left=Math.round(pr.right-16)+'px';
+      hb.style.top=Math.round(sb?sb.getBoundingClientRect().top:pr.top+110)+'px';
     }
     else{hb.style.left='16px'; hb.style.right='16px'; hb.style.top=(16+safeInset('top')+46+12)+'px'}
   }else if(k==='card'){
-    /* над кнопкой отклика, на её ширину */
     var r=cardMainBtn().getBoundingClientRect();
-    hb.style.left=r.left+'px'; hb.style.width=r.width+'px';
-    hb.style.bottom=(window.innerHeight-r.top+10)+'px';
+    if(!isDesktopPanel()&&ui.pinShut){
+      /* у короткой карточки — над шторкой, на карте: карточку любой высоты не задевает */
+      var sr=$('#panel').getBoundingClientRect();
+      hb.style.left='16px'; hb.style.right='16px';
+      hb.style.bottom=(window.innerHeight-sr.top+8)+'px';
+    }else{
+      /* над кнопкой отклика, на её ширину */
+      hb.style.left=r.left+'px'; hb.style.width=r.width+'px';
+      hb.style.bottom=(window.innerHeight-r.top+10)+'px';
+    }
   }else{
     /* над прицелом, над головой булавки; на десктопе — поверх плашки расстояния, нижние
        края вровень: при первом движении карты подсказка в неё и превращается */
@@ -11054,7 +11385,11 @@ function syncHint(){
     hb.style.left=Math.max(16,Math.min(W-16-bw,cx-bw/2))+'px';
     hb.style.bottom=(window.innerHeight-cy+(isDesktopPanel()?68:64))+'px';
   }
-  if(fresh){hb.classList.remove('is-in'); void hb.offsetWidth; hb.classList.add('is-in')}
+  if(fresh){
+    hb.classList.remove('is-in'); void hb.offsetWidth; hb.classList.add('is-in');
+    /* шторка могла ещё въезжать — переставим, когда встанет */
+    [320,700].forEach(function(ms){setTimeout(function(){if(hb._k===k&&!hb._leaving)syncHint()},ms)});
+  }
 }
 /* Текст, с которым событие уходит в мессенджер: по нему сразу понятно, что это и где.
    Карточку под ним мессенджер построит сам — по мета-тегам страницы */
@@ -11291,6 +11626,17 @@ renderPanel=function(){
   if(ui.picking)updateDraftFromCenter();
   fitChatToViewport();
   fitAlerts();
+  syncSegs(); syncTabBars();
+  /* Первый раз, когда открывается короткая карточка, шторка один раз кивает: приподнимается
+     на 24 и оседает. Жест раскрытия показывает себя сам, без слов. Запоминается как подсказка */
+  if(!isDesktopPanel()&&ui.panel&&ui.panel.type==='pin'&&ui.pinShut&&!hintSeen('nudge')&&!reduceMotion()){
+    var mN=me(); if(mN){mN.hints=mN.hints||{}; mN.hints.nudge=1; save()}
+    setTimeout(function(){
+      var pn=$('#panel'); if(!pn||!ui.pinShut)return;
+      pn.classList.remove('is-nudge'); void pn.offsetWidth; pn.classList.add('is-nudge');
+      setTimeout(function(){pn.classList.remove('is-nudge'); syncHint()},460);
+    },450);
+  }
 };
 function syncPickUI(){
   $('#map').classList.toggle('is-pick',ui.picking);
