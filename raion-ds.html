@@ -342,6 +342,8 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .navava{display:block;width:22px;height:22px;flex:none;position:relative}
 .avatar--nav{width:22px;height:22px;font-size:9px;display:block}
 .avatar--nav.avatar--ini{display:grid}
+.avatar--nav{clip-path:circle(50%)}
+.navava__ring{display:none;position:absolute;left:-3.5px;top:-3.5px;width:29px;height:29px;fill:none;stroke:var(--ink);stroke-width:1.5;pointer-events:none;overflow:visible}
 .avatar--l{width:42px;height:42px;font-size:15px}
 /* Снимок в форме правки показан кружком того же вида, что увидят соседи, — только крупно:
    кадрирования у нас нет, и человек должен сразу видеть, что попало в кадр */
@@ -504,6 +506,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .pin__me{flex:none;font-style:normal;font-size:10px;line-height:14px;font-weight:600;padding:0 4px;border-radius:4px;
   background:var(--brand-soft);color:var(--brand-icon)}
 .pin__label--drop{top:-24px;padding-left:24px}
+.pin__me--act{background:var(--act-soft);color:var(--act)}
+.pin__me--offer{background:var(--offer-soft);color:var(--offer)}
+.pin__me--find{background:var(--find-soft);color:var(--find)}
 .pin__label.is-fadein{animation:ovIn .2s ease}
 .morphghost{position:fixed;z-index:8;pointer-events:none;overflow:hidden;white-space:nowrap;
   border-radius:var(--r-m);background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow-1);
@@ -536,7 +541,8 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   transform:scale(.1);opacity:0;animation:pinlive 2.4s ease-out infinite;animation-delay:var(--d1,0s);
 }
 .pin__live::after{animation-delay:var(--d2,1.2s)}
-@keyframes pinlive{0%{transform:scale(.1);opacity:.95}100%{transform:scale(1);opacity:0}}
+/* начало цикла — из прозрачности: иначе на стыке циклов у метки вспыхивал яркий кадр */
+@keyframes pinlive{0%{transform:scale(.1);opacity:0}8%{transform:scale(.17);opacity:.95}100%{transform:scale(1);opacity:0}}
 /* Вблизи мягкое пятно тонет в домах, скверах и подписях. Там волна плотнее: ровная заливка,
    идёт от края круга, а не из-под него, держит яркость две трети пути и гаснет в конце.
    Обводки нет — с ней волна становилась самым громким на карте */
@@ -546,7 +552,8 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   animation-name:pinliveNear;animation-timing-function:ease-out;
 }
 @keyframes pinliveNear{
-  0%{left:-16px;top:-16px;width:32px;height:32px;opacity:1}
+  0%{left:-16px;top:-16px;width:32px;height:32px;opacity:0}
+  8%{left:-20px;top:-20px;width:40px;height:40px;opacity:1}
   66%{opacity:.85}
   100%{left:-64px;top:-64px;width:128px;height:128px;opacity:0}
 }
@@ -590,6 +597,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .halo__txt{position:absolute;left:-1px;top:-1px;overflow:visible;
   font-size:10px;font-weight:700;letter-spacing:.02em;fill:var(--offer)}
 .halo--find .halo__txt{fill:var(--find)}
+@keyframes haloIn{from{fill-opacity:0}}
+@keyframes haloOut{to{fill-opacity:0}}
+.halo__in{animation:haloIn .3s linear both}
+.halo__out{animation:haloOut .3s linear both}
 .cluster{
   pointer-events:auto;position:relative;transform:translate(-50%,-50%);display:grid;place-items:center;
   width:40px;height:40px;border-radius:50%;background:var(--surface);border:1.5px solid var(--line-2);
@@ -778,9 +789,12 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Алерт — во всю ширину колонки, от края до края, как плашки у Авито: он про всё событие,
    а не про соседний блок. Поля внутри прежние */
 .alert{margin-left:-16px;margin-right:-16px}
-.alert--act{background:var(--act-soft)}
-.alert--offer{background:var(--offer-soft)}
-.alert--find{background:var(--find-soft)}
+.chatpin{position:sticky;top:0;z-index:3;background:var(--surface);padding:16px 16px 0}
+/* снизу цвет категории до четверти высоты, выше — растворение в фон; верхние углы прямые */
+.alert{border-radius:0 0 var(--r-m) var(--r-m)}
+.alert--act{background:linear-gradient(to top,var(--act-soft) 0,var(--act-soft) 25%,var(--surface) 100%)}
+.alert--offer{background:linear-gradient(to top,var(--offer-soft) 0,var(--offer-soft) 25%,var(--surface) 100%)}
+.alert--find{background:linear-gradient(to top,var(--find-soft) 0,var(--find-soft) 25%,var(--surface) 100%)}
 .alert__t{flex:1;min-width:0}
 .alert__t b{display:block;font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;color:var(--ink)}
 /* та же пара, что «Сосед / это вы» в карточке автора; подзаголовок основным цветом —
@@ -882,6 +896,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   font-size:var(--f-s20);line-height:var(--l-s20);font-weight:500;white-space:nowrap;max-width:100%;
 }
 .ptag:hover{background:var(--surface-3)}
+.ptag{transition:background-color .15s ease,color .15s ease}
 /* узкое поле слева — под значок станции; у тега без значка поля одинаковые */
 .ptag:not(:has(>svg)){padding-left:9px}
 .ptag span{overflow:hidden;text-overflow:ellipsis}
@@ -992,6 +1007,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   font-size:var(--f-m20);line-height:var(--l-m20);font-weight:600;transition:opacity .12s,background .12s;width:100%;
 }
 .btn svg{width:16px;height:16px;flex:none}
+/* залитый круг оптически мельче контурных значков — ему 20 и зазор 6 */
+.btn .btn__done{width:20px;height:20px}
+.btn:has(.btn__done){gap:6px}
 /* Кнопки в ряду стараются уместиться в одну строку: сначала поля ужимаются до 8,
    и только если и так не влезло — текст переносится. Значок не сжимается никогда */
 .footrow .btn,.modal__foot .row .btn,.sysacts .btn{white-space:nowrap}
@@ -1148,6 +1166,14 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    недорисованными поверх карты */
 @keyframes sheetNudge{0%,100%{margin-top:0}45%{margin-top:-24px}}
 .panel.is-nudge{animation:sheetNudge .42s ease}
+.sheetfab{position:absolute;top:-52px;z-index:5;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
+  color:var(--ink-2);transition:opacity .2s ease}
+.sheetfab svg{width:20px;height:20px}
+.sheetfab--l{left:16px}
+.sheetfab--r{right:16px}
+.panel.is-home:not(.is-shut) .sheetfab,.panel.is-pin:not(.is-shut) .sheetfab{opacity:0;pointer-events:none}
+.panel.is-pin.is-shut .panelhead--over [data-act="back"]{visibility:hidden}
+@media (max-width:820px){.zoomctl{display:none}}
 .panel__foot.is-swap>*{animation:ovIn .2s ease}
 @keyframes msgIn{from{opacity:0;transform:translateY(8px)}}
 .msg.is-new{animation:msgIn .15s ease}
@@ -1164,6 +1190,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* тот же цвет, что у чипа «Вы участвуете» в списке: --brand-ink один на обе темы и в тёмной
    сливался с фоном тега */
 .stag--me{background:var(--brand-soft);color:var(--brand-icon)}
+.stag--act{background:var(--act-soft);color:var(--act)}
+.stag--offer{background:var(--offer-soft);color:var(--offer)}
+.stag--find{background:var(--find-soft);color:var(--find)}
 @keyframes badgePop{0%{transform:scale(.4)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
 .navbtn__badge.is-pop{animation:badgePop .24s ease}
 .navbtn__badge.is-out{animation:ovOut .15s ease forwards}
@@ -1186,7 +1215,13 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .pcg+.pcg:has(> .author:first-child),.pcg+.pcg:has(> .cardnotes:first-child){border-top:none;padding-top:0;margin-top:20px}
 .pincard h2{font-size:var(--f-h30);line-height:var(--l-h30);font-weight:600;margin:0;text-wrap:balance}
 .pincard p{margin:0;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10);white-space:pre-wrap}
-.metaline{display:flex;flex-wrap:wrap;gap:8px}
+/* Чипы — всегда одна строка: перенос сдвигал заголовок от карточки к карточке. Категория
+   не сжимается, место сжимается первым: название станции — многоточием, расстояние целиком */
+.metaline{display:flex;flex-wrap:nowrap;gap:8px;min-width:0}
+.metaline>.chip{flex:none}
+.metaline>.chip:last-child{flex:0 1 auto;min-width:0}
+.metaline .stn{min-width:0;overflow:hidden}
+.stn__n{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .facts{display:flex;flex-direction:column;gap:8px}
 .factrow{display:flex;gap:12px;align-items:flex-start;font-size:var(--f-h60);line-height:var(--l-h60)}
 .factrow svg{width:16px;height:16px;color:var(--ink-3);flex:none;margin-top:2px}
@@ -1705,6 +1740,8 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
 .listrow__cover--find{background:var(--find-soft);color:var(--find)}
 .listrow__cover svg{width:19px;height:19px}
 .listrow__cover--s{width:40px;height:40px}
+/* светлое фото без границы растекалось в фон: тонкая линия внутри края, поверх снимка */
+img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent);outline-offset:-1px}
 .listrow__cover--s svg{width:16px;height:16px}
 .listrow__pin{font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .listrow__msg{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:4px}
@@ -1945,6 +1982,11 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
 .welcome__types{display:flex;flex-direction:column;gap:8px}
 .welcome__type{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r-m);background:var(--surface-2)}
 .welcome__type svg{width:20px;height:20px;flex:none}
+/* на месте значка — та же метка, что на карте: экран заодно становится легендой */
+.welcome__ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none}
+.welcome__type--act .welcome__ic{background:var(--act)} .welcome__type--act .welcome__ic svg{color:var(--act-ink)}
+.welcome__type--offer .welcome__ic{background:var(--offer)} .welcome__type--offer .welcome__ic svg{color:var(--offer-ink)}
+.welcome__type--find .welcome__ic{background:var(--find)} .welcome__type--find .welcome__ic svg{color:var(--find-ink)}
 .welcome__type--act{background:var(--act-soft)} .welcome__type--act svg{color:var(--act)}
 .welcome__type--offer{background:var(--offer-soft)} .welcome__type--offer svg{color:var(--offer)}
 .welcome__type--find{background:var(--find-soft)} .welcome__type--find svg{color:var(--find)}
@@ -1976,6 +2018,8 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
 .hintbub.has-tail::after{content:'';position:absolute;top:100%;left:var(--tail-x,50%);transform:translateX(-50%);
   border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid var(--ink)}
 .hintbub.is-morph::after{display:none}
+.hintbub.has-tail-l::after{content:'';position:absolute;right:100%;top:50%;transform:translateY(-50%);
+  border-top:6px solid transparent;border-bottom:6px solid transparent;border-right:6px solid var(--ink)}
 .hintbub .pill{flex:none}
 .map{transition:filter .3s ease}
 .app.is-welcome .map{filter:blur(8px);pointer-events:none}
@@ -2064,7 +2108,9 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
   .rail .navbtn.is-on{background:none;color:var(--ink);font-weight:600}
   /* активный аватар цвета не меняет — у фотографии его не поменять, поэтому кольцо */
   /* кольцо — отдельный круг вокруг аватара: тенью на обрезанном круге айфон рисовал квадрат */
-  .rail .navbtn.is-on .navava::after{content:'';position:absolute;inset:-3.5px;border-radius:50%;border:1.5px solid var(--ink);pointer-events:none}
+  /* кольцо — векторная окружность: и тень, и рамка со скруглением на айфоне в таббаре
+     давали уголки. Аватар вдобавок обрезается маской-кругом */
+  .rail .navbtn.is-on .navava__ring{display:block}
   /* Счётчик меньше и сдвинут в угол значка: 18 на значке 20 закрывал его половину.
      Цифра 10 — графика внутри фигуры, а не текст строкой, как счётчики на плашках.
      Обводка цветом таббара отделяет плашку от значка, как в iOS */
@@ -2381,6 +2427,8 @@ body.ds-narrow .dsmain{max-width:400px}
 <symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></symbol>
 <symbol id="i-pin" viewBox="0 0 24 24" fill="currentColor"><path d="M18.364 17.364L12 23.728L5.636 17.364C4.37734 16.1054 3.52019 14.5017 3.17293 12.7559C2.82567 11.0101 3.00391 9.20047 3.6851 7.55595C4.36629 5.91142 5.51984 4.50582 6.99988 3.51689C8.47992 2.52796 10.22 2.00012 12 2.00012C13.78 2.00012 15.5201 2.52796 17.0001 3.51689C18.4802 4.50582 19.6337 5.91142 20.3149 7.55595C20.9961 9.20047 21.1743 11.0101 20.8271 12.7559C20.4798 14.5017 19.6227 16.1054 18.364 17.364V17.364ZM12 13C12.5304 13 13.0391 12.7893 13.4142 12.4143C13.7893 12.0392 14 11.5305 14 11C14 10.4696 13.7893 9.9609 13.4142 9.58583C13.0391 9.21076 12.5304 9.00004 12 9.00004C11.4696 9.00004 10.9609 9.21076 10.5858 9.58583C10.2107 9.9609 10 10.4696 10 11C10 11.5305 10.2107 12.0392 10.5858 12.4143C10.9609 12.7893 11.4696 13 12 13Z" fill="currentColor"/></symbol>
 <symbol id="i-people" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22C2 19.8783 2.84285 17.8434 4.34315 16.3431C5.84344 14.8429 7.87827 14 10 14C12.1217 14 14.1566 14.8429 15.6569 16.3431C17.1571 17.8434 18 19.8783 18 22H2ZM10 13C6.685 13 4 10.315 4 7C4 3.685 6.685 1 10 1C13.315 1 16 3.685 16 7C16 10.315 13.315 13 10 13ZM17.363 15.233C18.8926 15.6261 20.2593 16.4918 21.2683 17.7068C22.2774 18.9218 22.8774 20.4242 22.983 22H20C20 19.39 19 17.014 17.363 15.233ZM15.34 12.957C16.178 12.2075 16.8482 11.2893 17.3066 10.2627C17.765 9.23616 18.0013 8.12429 18 7C18.0021 5.63347 17.6526 4.28937 16.985 3.097C18.1176 3.32459 19.1365 3.93737 19.8685 4.8312C20.6004 5.72502 21.0002 6.84473 21 8C21.0003 8.71247 20.8482 9.41676 20.5541 10.0657C20.26 10.7146 19.8305 11.2931 19.2946 11.7625C18.7586 12.2319 18.1285 12.5814 17.4464 12.7874C16.7644 12.9934 16.0462 13.0512 15.34 12.957V12.957Z" fill="currentColor"/></symbol>
+<symbol id="i-nav" viewBox="0 0 24 24"><path fill="currentColor" transform="translate(24 0) scale(-1 1)" d="M4.96488 5.09625L8.5107 17.5066L11.5514 11.4253L17.188 9.17062L4.96488 5.09625ZM2.89945 2.29958L21.7052 8.56818C21.9672 8.6555 22.1088 8.93866 22.0215 9.20063C21.975 9.34016 21.8694 9.45214 21.7328 9.50676L13.0002 12.9998L8.57501 21.8501C8.45151 22.0971 8.15118 22.1972 7.90419 22.0737C7.77883 22.011 7.68553 21.8986 7.64703 21.7639L2.26058 2.91129C2.18472 2.64577 2.33846 2.36903 2.60398 2.29316C2.70087 2.26548 2.80386 2.26772 2.89945 2.29958Z"/></symbol>
+<symbol id="i-nav-fill" viewBox="0 0 24 24"><path fill="currentColor" transform="translate(24 0) scale(-1 1)" d="M2.89945 2.29983L21.7052 8.56842C21.9672 8.65574 22.1088 8.93891 22.0215 9.20088C21.975 9.3404 21.8694 9.45238 21.7328 9.507L13.0002 13.0001L8.57501 21.8504C8.45151 22.0974 8.15118 22.1975 7.90419 22.074C7.77883 22.0113 7.68553 21.8989 7.64703 21.7641L2.26058 2.91153C2.18472 2.64601 2.33846 2.36927 2.60398 2.29341C2.70087 2.26573 2.80386 2.26796 2.89945 2.29983Z"/></symbol>
 <symbol id="i-group" viewBox="0 0 24 24"><path fill="currentColor" d="M12 11C13.3261 11 14.5979 11.5268 15.5355 12.4645C16.4732 13.4021 17 14.6739 17 16V22H7V16C7 14.6739 7.52678 13.4021 8.46447 12.4645C9.40215 11.5268 10.6739 11 12 11ZM5.288 14.006C5.12886 14.5428 5.03485 15.0968 5.008 15.656L5 16V22H2V17.5C1.9998 16.6376 2.31803 15.8054 2.89363 15.1632C3.46924 14.521 4.2617 14.1139 5.119 14.02L5.289 14.006H5.288ZM18.712 14.006C19.6019 14.0602 20.4376 14.452 21.0486 15.1012C21.6596 15.7505 21.9999 16.6084 22 17.5V22H19V16C19 15.307 18.9 14.638 18.712 14.006ZM5.5 8C6.16304 8 6.79893 8.26339 7.26777 8.73223C7.73661 9.20107 8 9.83696 8 10.5C8 11.163 7.73661 11.7989 7.26777 12.2678C6.79893 12.7366 6.16304 13 5.5 13C4.83696 13 4.20107 12.7366 3.73223 12.2678C3.26339 11.7989 3 11.163 3 10.5C3 9.83696 3.26339 9.20107 3.73223 8.73223C4.20107 8.26339 4.83696 8 5.5 8V8ZM18.5 8C19.163 8 19.7989 8.26339 20.2678 8.73223C20.7366 9.20107 21 9.83696 21 10.5C21 11.163 20.7366 11.7989 20.2678 12.2678C19.7989 12.7366 19.163 13 18.5 13C17.837 13 17.2011 12.7366 16.7322 12.2678C16.2634 11.7989 16 11.163 16 10.5C16 9.83696 16.2634 9.20107 16.7322 8.73223C17.2011 8.26339 17.837 8 18.5 8V8ZM12 2C13.0609 2 14.0783 2.42143 14.8284 3.17157C15.5786 3.92172 16 4.93913 16 6C16 7.06087 15.5786 8.07828 14.8284 8.82843C14.0783 9.57857 13.0609 10 12 10C10.9391 10 9.92172 9.57857 9.17157 8.82843C8.42143 8.07828 8 7.06087 8 6C8 4.93913 8.42143 3.92172 9.17157 3.17157C9.92172 2.42143 10.9391 2 12 2V2Z"/></symbol>
 <symbol id="i-give" viewBox="0 -960 960 960"><path fill="currentColor" d="M549-53q8 2 17 2t17-2l297-91q0-54-30.5-80.5T762-251H587q-45 0-69.5-4.5T477-265l-61-21q-6-2-8.5-7.5T407-305q2-6 7.5-8.5t11.5-.5l59 19q24 8 44 11t46 3h73q8 0 13-5t5-13q0-23-16-45.5T604-378l-245-92q-5-2-10.5-3t-10.5-1h-83v337l294 84ZM40-140q0 25 17.5 42.5T100-80h34q25 0 42.5-17.5T194-140v-274q0-25-17.5-42.5T134-474h-34q-25 0-42.5 17.5T40-414v274Zm584-344.5q-11-4.5-20-12.5L482-616q-30-29-50-64.5T412-758q0-51 35.5-86.5T534-880q34 0 62 17.5t50 43.5q22-26 50-43.5t62-17.5q51 0 86.5 35.5T880-758q0 42-20 77.5T810-616L688-497q-9 8-20 12.5t-22 4.5q-11 0-22-4.5Z"/></symbol>
 <symbol id="i-hands" viewBox="0 0 24 24"><path fill="currentColor" d="M19.2914 5.99994H20.0002C20.5525 5.99994 21.0002 6.44766 21.0002 6.99994V13.9999C21.0002 14.5522 20.5525 14.9999 20.0002 14.9999H18.0002L13.8319 9.16427C13.3345 8.46797 12.4493 8.16522 11.6297 8.41109L9.14444 9.15668C8.43971 9.3681 7.6758 9.17551 7.15553 8.65524L6.86277 8.36247C6.41655 7.91626 6.49011 7.17336 7.01517 6.82332L12.4162 3.22262C13.0752 2.78333 13.9312 2.77422 14.5994 3.1994L18.7546 5.8436C18.915 5.94571 19.1013 5.99994 19.2914 5.99994ZM5.02708 14.2947L3.41132 15.7085C2.93991 16.1209 2.95945 16.8603 3.45201 17.2474L8.59277 21.2865C9.07284 21.6637 9.77592 21.5264 10.0788 20.9963L10.7827 19.7645C11.2127 19.012 11.1091 18.0682 10.5261 17.4269L7.82397 14.4545C7.09091 13.6481 5.84722 13.5771 5.02708 14.2947ZM7.04557 5H3C2.44772 5 2 5.44772 2 6V13.5158C2 13.9242 2.12475 14.3173 2.35019 14.6464C2.3741 14.6238 2.39856 14.6015 2.42357 14.5796L4.03933 13.1658C5.47457 11.91 7.65103 12.0343 8.93388 13.4455L11.6361 16.4179C12.6563 17.5401 12.8376 19.1918 12.0851 20.5087L11.4308 21.6538C11.9937 21.8671 12.635 21.819 13.169 21.4986L17.5782 18.8531C18.0786 18.5528 18.2166 17.8896 17.8776 17.4146L12.6109 10.0361C12.4865 9.86205 12.2652 9.78636 12.0603 9.84783L9.57505 10.5934C8.34176 10.9634 7.00492 10.6264 6.09446 9.7159L5.80169 9.42313C4.68615 8.30759 4.87005 6.45035 6.18271 5.57524L7.04557 5Z"/></symbol>
@@ -2787,6 +2835,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.38.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.39.0";</script>
 </body>
 </html>
