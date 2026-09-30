@@ -316,6 +316,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .navbtn span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .navbtn:hover{background:var(--surface-2);color:var(--ink)}
 .navbtn.is-on{background:var(--surface-3);color:var(--ink)}
+.railthumb{position:absolute;border-radius:var(--r-m);background:var(--surface-3);pointer-events:none;
+  transition:top .2s ease,height .2s ease,opacity .15s ease}
+@media (min-width:821px){.rail .navbtn{z-index:1}.rail .navbtn.is-on,.rail .navbtn.is-on:hover{background:transparent}.navbtn{transition:color .2s ease}}
+@media (max-width:820px){.railthumb{display:none}}
 /* от центра кнопки, а не от её правого края: иконка центрирована и на фиксированном рейле,
    и на резиновом таббаре, поэтому значок всегда стоит в одной точке относительно неё */
 .navbtn__badge{
@@ -453,10 +457,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Прозрачность — у метки целиком, масштаб — у частей. Пока прозрачность была у каждой части
    своя, подложка подписи просвечивала сквозь полупрозрачный кружок, и место их наложения
    читалось третьим пятном */
-.marker.is-in{animation:markFadeIn .2s ease}
-.marker.is-in>*{animation:markScaleIn .2s ease}
-.marker.is-out{pointer-events:none;animation:markFadeOut .15s ease forwards}
-.marker.is-out>*{animation:markScaleOut .15s ease forwards;pointer-events:none}
+.marker.is-in{animation:markFadeIn .2s ease both;animation-delay:var(--gd,0s)}
+.marker.is-in>*{animation:markScaleIn .2s ease both;animation-delay:var(--gd,0s)}
+.marker.is-out{pointer-events:none;animation:markFadeOut .15s ease forwards;animation-delay:var(--gd,0s)}
+.marker.is-out>*{animation:markScaleOut .15s ease forwards;animation-delay:var(--gd,0s);pointer-events:none}
 @keyframes markScaleIn{from{scale:.85}}
 @keyframes markScaleOut{to{scale:.85}}
 @media (prefers-reduced-motion:reduce){
@@ -491,8 +495,16 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    форма, а прозрачность лишь помогает */
 /* Круг зоны рисуется только у выбранного события, и живёт он в своём слое — поэтому его
    не гасим вовсе: правило «гасить всё, кроме выбранного» задевало его, выбранного */
-.map.is-selpin .pin,.map.is-selpin .pindot,.map.is-selpin .pin__live,.map.is-selpin .pin__label{opacity:.55}
-.map.is-selpin .marker.is-sel .pin,.map.is-selpin .marker.is-sel .pin__label{opacity:1}
+/* Невыбранные метки бледнеют цветом, а не прозрачностью: полупрозрачные кружки и подписи
+   пропускали карту и круг зоны, и казалось, что круг лежит поверх меток */
+.map.is-selpin .pin__live{opacity:.55}
+.map.is-selpin .marker:not(.is-sel) .pin--act,.map.is-selpin .marker:not(.is-sel) .pindot--act{background:color-mix(in srgb,var(--act) 55%,var(--surface))}
+.map.is-selpin .marker:not(.is-sel) .pin--offer,.map.is-selpin .marker:not(.is-sel) .pindot--offer{background:color-mix(in srgb,var(--offer) 55%,var(--surface))}
+.map.is-selpin .marker:not(.is-sel) .pin--find,.map.is-selpin .marker:not(.is-sel) .pindot--find{background:color-mix(in srgb,var(--find) 55%,var(--surface))}
+.map.is-selpin .marker:not(.is-sel) .pin>svg{opacity:.75}
+.map.is-selpin .marker:not(.is-sel) .pin__label{color:var(--ink-3)}
+.map.is-selpin .marker:not(.is-sel) .pin__label *{color:inherit}
+.map.is-selpin .marker:not(.is-sel) .pin__me{opacity:.6}
 /* Переход задан на самой булавке, а не на метке: положение лежит на .marker, и стоило бы
    анимировать его — весь слой поехал бы за картой с отставанием в те же 180 мс */
 .pin{transition:opacity .18s ease,transform .18s ease}
@@ -516,7 +528,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .mapask{z-index:1000}
 .mapask__in{position:absolute;bottom:32px;width:320px;border-radius:var(--r-m);background:var(--surface);
   box-shadow:0 8px 24px rgba(0,0,0,.15);pointer-events:auto}
-.mapask__in .alert{margin:0;border-radius:var(--r-m);background:var(--surface)}
+.mapask__in .alert{margin:0;border-radius:var(--r-m)}
 /* ширина кнопок задана числом: мерить её по надписям на каждом кадре движения карты — это
    и были скачки */
 .mapask__in .alert__acts{width:96px}
@@ -671,6 +683,11 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    с шага создания обнуляет черновик, то есть кнопка молча выбрасывала недоделанное */
 .app.is-noscope .scopetop{opacity:0;pointer-events:none;transform:translateY(-160%) scale(.92)}
 .card-float{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);box-shadow:var(--shadow-2)}
+/* плашки управления над картой — чуть прозрачные, карта под ними размыта. Подписи меток так
+   не делаем: их десятки, и слой перерисовывается каждым кадром движения */
+.card-float,.mapask__in{background:color-mix(in srgb,var(--surface) 85%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.mapask__in .alert{background:transparent}
+.pickinfo{background:color-mix(in srgb,var(--ink) 85%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 /* два кружка внахлёст — индикатор выбранных категорий. Обводка цветом подложки отделяет их
    друг от друга; выключенная категория остаётся на месте, но становится контурной */
 .catdots{display:flex;align-items:center;flex:none;--btn-bg:var(--surface)}
@@ -804,6 +821,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    в светлой теме тёмная заливка со светлыми цифрами, в тёмной наоборот, как у категорийных
    цветов, где значок на светящейся заливке тоже тёмный */
 .tag--solid{background:var(--ink-2);border-color:transparent;color:var(--surface)}
+.tag--brand{background:var(--brand-soft);border-color:transparent;color:var(--brand-icon)}
+.tag--ok{background:var(--offer-soft);border-color:transparent;color:var(--offer)}
+.author__n .tag{vertical-align:2px;margin-left:4px}
 /* Обращения сервиса к вам: первым блоком карточки (3.27) */
 .cardnotes{display:flex;flex-direction:column;gap:8px;margin-top:4px}
 /* Алерт — обращение сервиса к человеку: «Уже вернулось?», «Ещё актуально?», «Подтвердите
@@ -818,7 +838,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .alert{margin-left:-16px;margin-right:-16px}
 /* закреплённое сообщение: прибит к шапке, во всю ширину, выше обычного алерта */
 .chatpin{position:sticky;top:0;z-index:3;background:var(--surface);padding:0}
-.chatpin .alert{margin:0;padding:21px 16px}
+.chatpin .alert{margin:0;padding:20px 16px;gap:16px}
+/* обращение в короткой карточке — в том же виде, что закреплённое в переписке */
+.cardnotes--short .alert{padding:20px 16px;gap:16px}
 /* снизу цвет категории до четверти высоты, выше — растворение в фон; верхние углы прямые */
 .alert{border-radius:0 0 var(--r-m) var(--r-m)}
 .alert--act{background:linear-gradient(to top,var(--act-soft) 0,var(--act-soft) 35%,var(--surface) 100%)}
@@ -1098,7 +1120,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .switchrow{display:flex;align-items:flex-start;gap:16px}
 /* в подвале карточки тумблер стоит над кнопкой и отделён от неё линией: подвал приклеен,
    и без линии строка читалась бы как часть самой кнопки */
-.switchrow--foot{align-items:center;padding:0 0 12px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.switchrow--foot{align-items:flex-start;padding:0 0 12px;margin-bottom:4px;border-bottom:1px solid var(--line)}
 /* центр тумблера на центре строки заголовка: сама строка 18, тумблер 25 */
 .switchrow .switch{margin-top:calc((var(--l-h60) - 25px) / 2)}
 .switchrow__txt{flex:1;min-width:0}
@@ -1143,10 +1165,14 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   content:'';position:absolute;left:0;right:0;bottom:0;height:76px;pointer-events:none;
   background:linear-gradient(to top,rgba(0,0,0,.16),transparent);
 }
+/* у руки с сердцем много воздуха внутри рамки — рядом с людьми и сумкой она выглядела мельче */
+svg:has(> use[href="#i-give"]){scale:1.2}
 .cover--act{background:var(--act-soft)}
 .cover--offer{background:var(--offer-soft)}
 .cover--find{background:var(--find-soft)}
 .cover__glyph{width:44px;height:44px;opacity:.42}
+/* карточка наезжает на обложку — значок встаёт по центру того, что видно */
+.cover:has(+.pincard) .cover__glyph{translate:0 calc(var(--r-l) / -2)}
 .cover--act .cover__glyph{color:var(--act)}
 .cover--offer .cover__glyph{color:var(--offer)}
 .cover--find .cover__glyph{color:var(--find)}
@@ -1201,11 +1227,12 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    недорисованными поверх карты */
 @keyframes sheetNudge{0%,100%{margin-top:0}45%{margin-top:-24px}}
 .panel.is-nudge{animation:sheetNudge .42s ease}
-.sheetfab{position:absolute;top:-52px;z-index:5;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
+/* кнопка со значком — квадрат со скруглением; круг у нас значит объект: аватар, метку */
+.sheetfab{position:absolute;top:-52px;z-index:5;width:40px;height:40px;border-radius:var(--r-m);display:grid;place-items:center;
   color:var(--ink-2);transition:opacity .2s ease}
 .sheetfab svg{width:20px;height:20px}
 /* у стрелки тяжёлая часть внизу слева, носик вправо вверх: по геометрии в центре, на глаз нет */
-#zoomFit svg,.geofab svg{transition:color .15s ease;translate:-4px 4px}
+#zoomFit svg,.geofab svg{transition:color .15s ease;translate:-2px 2px}
 #zoomFit.is-me svg,.geofab.is-me svg{color:var(--brand)}
 .sheetfab--l{left:16px}
 .sheetfab--r{right:16px}
@@ -1247,9 +1274,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    на телефоне, в 3.25 — и на десктопе: карточка одна, раскладка одна */
 .pincard{padding:24px 16px;gap:0}
 .pcg{display:flex;flex-direction:column;gap:8px}
-.pcg+.pcg{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.pcg+.pcg{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
 /* после алертов линии нет и отступ один: правило стояло выше общего и проигрывало ему */
-.pcg.pcg--notes+.pcg{padding-top:0;border-top:none;margin-top:24px}
+.pcg.pcg--notes+.pcg{padding-top:0;border-top:none;margin-top:20px}
 .pcg .cardnotes{margin-top:0}
 /* над группой, которая начинается с карточки (автор, участники, обращение), линию не рисуем:
    край карточки — заливка или рамка — уже граница, и линия над ним была второй. Отступ прежний */
@@ -1280,10 +1307,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Обе кнопки — автор и участники — одного роста: содержимое внутри держится в 36, поэтому
    при центрировании верхняя строка встаёт на те же 12 сверху, а полоса заполнения остаётся
    там же, где была, просто снизу добавляется воздух */
-.author{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r-m);background:var(--surface-2);width:100%;text-align:left;min-height:60px}
+.author{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r-m);background:var(--surface-2);width:100%;text-align:left;min-height:64px}
 /* без подписи содержимое встаёт по центру: минимальная высота 36 — это место под две
    строки, и одинокая строка висела в верхней трети. Высота самой строки не меняется */
-.author__body{flex:1;min-width:0;min-height:36px;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.author__body{flex:1;min-width:0;min-height:40px;display:flex;flex-direction:column;justify-content:center;gap:4px}
 .author:hover{background:var(--surface-3)}
 .author--flat,.author--flat:hover{background:var(--surface-2);cursor:default}
 .author>svg:last-child{width:16px;height:16px;color:var(--ink-3);flex:none;margin-left:auto}
@@ -1345,6 +1372,11 @@ button.person:hover{background:var(--surface-2)}
 .feed__sort button{padding:4px 12px;border-radius:7px;font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;color:var(--ink-3)}
 .feed__sort button:hover{color:var(--ink)}
 .feed__sort button.is-on{background:var(--surface-3);color:var(--ink);font-weight:600}
+/* выделение — одна подложка, которая едет от прежнего варианта к новому, как у сегментов */
+.feed__sort{position:relative}
+.feed__sort button{position:relative;z-index:1;transition:color .2s ease}
+.feed__sort button.is-on{background:transparent}
+.feed__sort .segctl__thumb{border-radius:7px;background:var(--surface-3)}
 /* Список пинов — не карточки, а строки во всю доступную ширину. Карточка с собственной
    рамкой была единственным таким элементом во всём приложении: чаты, станции и профиль
    давно живут на строках с разделителем. Цветного корешка типа тоже больше нет — он
@@ -1861,6 +1893,14 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .sysacts .btn{flex:1;min-width:0}
 .chip.is-pop{animation:ovIn .2s ease}
 .sysmsg__foot .chip{margin-left:auto}
+.sysmsg__f{display:flex;align-items:center;gap:8px;font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;color:var(--ink)}
+.sysmsg__f svg{width:16px;height:16px;flex:none}
+.sysmsg__f--act svg{color:var(--act)}
+.sysmsg__f--offer svg{color:var(--offer)}
+.sysmsg__f--find svg{color:var(--find)}
+/* что произошло — основным цветом: уведомления просматривают как раз по этой строке */
+.sysmsg__m{font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;color:var(--ink)}
+.stack.sysstack{gap:12px}
 .sysmsg .btn{width:auto;align-self:flex-start}
 /* только прямым детям колонки: внутри шапки чип стоит в строке с шевроном, и прижатие
    к верху разводило их центры на три пикселя — высоты-то разные */
@@ -1879,6 +1919,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 /* Разделитель дня между сообщениями и метка «Новые» — один элемент: обе отвечают на вопрос
    «где я остановился». Раз день назван здесь, в самом сообщении остаётся только время */
 .daysep{text-align:center;font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);padding:4px 0}
+.sysstack>.daysep{padding:4px 0}
 .districtrow{position:relative;display:flex;align-items:center;gap:8px;padding:16px;width:100%;transition:background .14s}
 /* у первой строки списка есть и верхняя линия: без неё заливка под курсором открыта сверху.
    Псевдоэлементом самой строки, а не отдельным разделителем, — иначе линия не узнает
@@ -1918,7 +1959,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
    Кликабельна целиком и ведёт на карточку пина, поэтому отдельная строка-контекст под ней не нужна */
 /* единая шапка всех экранов: одна высота, содержимое слева, выход стрелкой назад */
 .chathead{display:flex;align-items:center;gap:4px;padding:8px 12px;border-bottom:1px solid var(--line);flex:none;min-height:var(--head-h)}
-.chathead__main{display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:4px 8px;border-radius:var(--r-m)}
+.chathead__main{display:flex;align-items:center;gap:12px;flex:1;min-width:0;padding:4px;border-radius:var(--r-m)}
 .chathead__main:hover{background:var(--surface-2)}
 /* в шапке кегль крупнее, и той же паре нужно меньше воздуха, чем в строке списка */
 .chathead__txt{display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -2063,24 +2104,31 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 /* Подсказка висит на конце длинного невидимого рычага: ось далеко слева, рычаг поворачивается,
    и пузырь одновременно идёт по дуге и выпрямляется, а в конце покачивается, как подвешенный */
 .hintbub{opacity:0;transform-origin:-430px calc(100% + 40px)}
-.hintbub.is-in{opacity:1;animation:hintSwing .6s both}
+.hintbub.is-in{opacity:1;animation:hintSwing .45s both}
 .hintbub.is-in.hint--ccw{animation-name:hintSwingCcw}
-.hintbub.is-out{animation:hintSwingOut .25s ease-in both}
+.hintbub.is-out{animation:hintSwingOut .2s ease-in both}
+/* на время движения — отдельный слой: браузер поворачивает готовую картинку и не перерисовывает
+   буквы на каждом кадре. После остановки слой снимается, чтобы текст был чётким */
+.hintbub.is-swing,.hintbub.is-out{will-change:transform}
+/* подсказка выбора места на десктопе лежит на плашке и превращается в неё — ей без поворота */
+.hintbub.is-in.hint--plain{animation:hintPlainIn .2s ease both}
+.hintbub.is-out.hint--plain{animation:markFadeOut .15s ease both}
+@keyframes hintPlainIn{from{opacity:0;transform:translateY(8px)}}
 .hintbub.is-out.hint--ccw{animation-name:hintSwingCcwOut}
 @keyframes hintSwing{
-  0%{opacity:0;transform:rotate(-33deg);animation-timing-function:cubic-bezier(.45,0,.7,1)}
+  0%{opacity:0;transform:rotate(-18deg);animation-timing-function:cubic-bezier(.45,0,.7,1)}
   20%{opacity:1}
-  50%{transform:rotate(6deg);animation-timing-function:ease-in-out}
-  75%{transform:rotate(-2deg);animation-timing-function:ease-in-out}
+  50%{transform:rotate(4deg);animation-timing-function:ease-in-out}
+  75%{transform:rotate(-1.5deg);animation-timing-function:ease-in-out}
   100%{opacity:1;transform:none}}
 @keyframes hintSwingCcw{
-  0%{opacity:0;transform:rotate(33deg);animation-timing-function:cubic-bezier(.45,0,.7,1)}
+  0%{opacity:0;transform:rotate(18deg);animation-timing-function:cubic-bezier(.45,0,.7,1)}
   20%{opacity:1}
-  50%{transform:rotate(-6deg);animation-timing-function:ease-in-out}
-  75%{transform:rotate(2deg);animation-timing-function:ease-in-out}
+  50%{transform:rotate(-4deg);animation-timing-function:ease-in-out}
+  75%{transform:rotate(1.5deg);animation-timing-function:ease-in-out}
   100%{opacity:1;transform:none}}
-@keyframes hintSwingOut{0%{opacity:1;transform:none}60%{opacity:1}100%{opacity:0;transform:rotate(-33deg)}}
-@keyframes hintSwingCcwOut{0%{opacity:1;transform:none}60%{opacity:1}100%{opacity:0;transform:rotate(33deg)}}
+@keyframes hintSwingOut{0%{opacity:1;transform:none}60%{opacity:1}100%{opacity:0;transform:rotate(-18deg)}}
+@keyframes hintSwingCcwOut{0%{opacity:1;transform:none}60%{opacity:1}100%{opacity:0;transform:rotate(18deg)}}
 @keyframes hintArcCw{0%{opacity:0;transform:translate(-120px,40px)}20%{opacity:.6;transform:translate(-85px,6px)}42%{opacity:1;transform:translate(-52px,-12px)}68%{transform:translate(-22px,-10px)}100%{opacity:1;transform:none}}
 @keyframes hintArcCwOut{0%{opacity:1;transform:none}32%{transform:translate(-22px,-10px)}58%{transform:translate(-52px,-12px)}80%{opacity:.6;transform:translate(-85px,6px)}100%{opacity:0;transform:translate(-120px,40px)}}
 @keyframes hintArcCcw{0%{opacity:0;transform:translate(-120px,-40px)}20%{opacity:.6;transform:translate(-85px,-6px)}42%{opacity:1;transform:translate(-52px,12px)}68%{transform:translate(-22px,10px)}100%{opacity:1;transform:none}}
@@ -2103,7 +2151,10 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .hintmap--col .hintmap__sep{width:auto;height:1px}
 .hintmap__b{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .hint__move{width:20px;height:20px;flex:none;animation:hintShake 2.5s ease-in-out infinite}
-@keyframes hintShake{0%,76%,100%{transform:none}80%{transform:translateX(-2px)}84%{transform:translateX(2px)}88%{transform:translateY(-2px)}92%{transform:translateY(2px)}96%{transform:none}}
+/* крестом: вверх, вниз, влево, вправо — и пауза */
+@keyframes hintShake{0%,76%,100%{transform:none}80%{transform:translateY(-2px)}84%{transform:translateY(2px)}88%{transform:translateX(-2px)}92%{transform:translateX(2px)}96%{transform:none}}
+/* на десктопе каждая половина — в две строки, чтобы подсказка не растягивалась */
+.hintmap:not(.hintmap--col) .hintmap__a,.hintmap:not(.hintmap--col) .hintmap__tx{max-width:180px;white-space:normal;text-wrap:balance}
 @media (prefers-reduced-motion:reduce){.hint__move{animation:none}}
 .map{transition:filter .3s ease}
 .app.is-welcome .map{filter:blur(8px);pointer-events:none}
@@ -2547,7 +2598,7 @@ body.ds-narrow .dsmain{max-width:400px}
 <symbol id="i-phone" viewBox="0 0 24 24" fill="currentColor"><path d="M21 16.42V19.956C21.0001 20.2092 20.9042 20.453 20.7316 20.6382C20.559 20.8234 20.3226 20.9363 20.07 20.954C19.633 20.984 19.276 21 19 21C10.163 21 3 13.837 3 5C3 4.724 3.015 4.367 3.046 3.93C3.06372 3.67744 3.17658 3.44101 3.3618 3.26841C3.54703 3.09581 3.79082 2.99989 4.044 3H7.58C7.70404 2.99987 7.8237 3.04586 7.91573 3.12902C8.00776 3.21218 8.0656 3.32658 8.078 3.45C8.101 3.68 8.122 3.863 8.142 4.002C8.34073 5.38892 8.748 6.73783 9.35 8.003C9.445 8.203 9.383 8.442 9.203 8.57L7.045 10.112C8.36445 13.1865 10.8145 15.6365 13.889 16.956L15.429 14.802C15.4919 14.714 15.5838 14.6509 15.6885 14.6237C15.7932 14.5964 15.9042 14.6068 16.002 14.653C17.267 15.2539 18.6156 15.6601 20.002 15.858C20.141 15.878 20.324 15.9 20.552 15.922C20.6752 15.9346 20.7894 15.9926 20.8724 16.0846C20.9553 16.1766 21.0012 16.2961 21.001 16.42H21Z" fill="currentColor"/></symbol>
 <symbol id="i-shield" viewBox="0 0 24 24" fill="currentColor"><path d="M3.783 2.826L12 1L20.217 2.826C20.4391 2.87536 20.6377 2.99897 20.78 3.1764C20.9224 3.35384 21 3.57452 21 3.802V13.789C20.9999 14.7767 20.756 15.7492 20.2899 16.62C19.8238 17.4908 19.1499 18.2331 18.328 18.781L12 23L5.672 18.781C4.85027 18.2332 4.17646 17.4911 3.71035 16.6205C3.24424 15.7498 3.00024 14.7776 3 13.79V3.802C3.00004 3.57452 3.07764 3.35384 3.21999 3.1764C3.36234 2.99897 3.56094 2.87536 3.783 2.826V2.826Z" fill="currentColor"/></symbol>
 <symbol id="i-metro-m" viewBox="337.5 232.3 125 85.9"><polygon fill="currentColor" style="stroke:var(--ground);stroke-width:4px;paint-order:stroke;stroke-linejoin:round;vector-effect:non-scaling-stroke" points="453.9,306.2 424.7,232.3 400,275.5 375.4,232.3 346.1,306.2 337.5,306.2 337.5,317.4 381.7,317.4 381.7,306.2 375.1,306.2 381.5,287.8 400,318.2 418.5,287.8 424.9,306.2 418.3,306.2 418.3,317.4 462.5,317.4 462.5,306.2"/></symbol>
-<symbol id="i-metro-c" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.5" style="fill:var(--m-bg);stroke:var(--m-ring);stroke-width:1"/><path style="fill:var(--m-ink)" transform="translate(-0.448 0.067) scale(0.1149)" d="M111.014 90.6182L90.6912 39L73.5 69.1746L56.3784 39L35.9856 90.6182H30V98.4412H60.7632V90.6182H56.1696L60.624 77.766L73.5 99L86.376 77.766L90.8304 90.6182H86.2368V98.4412H117V90.6182H111.014Z"/></symbol>
+<symbol id="i-metro-c" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.5" style="fill:var(--m-bg);stroke:var(--m-ring);stroke-width:1"/><path style="fill:var(--m-ink)" transform="translate(-0.448 -0.933) scale(0.1149)" d="M111.014 90.6182L90.6912 39L73.5 69.1746L56.3784 39L35.9856 90.6182H30V98.4412H60.7632V90.6182H56.1696L60.624 77.766L73.5 99L86.376 77.766L90.8304 90.6182H86.2368V98.4412H117V90.6182H111.014Z"/></symbol>
 <symbol id="i-metro" viewBox="0 0 148 148"><rect x="4" y="4" width="140" height="140" rx="70" fill="currentColor" stroke="#fff" stroke-width="8"/><path fill="#fff" d="M111.014 90.6182L90.6912 39L73.5 69.1746L56.3784 39L35.9856 90.6182H30V98.4412H60.7632V90.6182H56.1696L60.624 77.766L73.5 99L86.376 77.766L90.8304 90.6182H86.2368V98.4412H117V90.6182H111.014Z"/></symbol>
 <symbol id="i-filter" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18H14V16H10V18ZM3 6V8H21V6H3ZM6 13H18V11H6V13Z" fill="currentColor"/></symbol>
 <symbol id="i-gear" viewBox="0 0 24 24" fill="currentColor"><path d="M9.95405 2.20997C11.303 1.9271 12.6958 1.92642 14.045 2.20797C14.1349 2.80126 14.3574 3.36666 14.6958 3.86215C15.0343 4.35764 15.4801 4.77048 16 5.06997C16.5196 5.3705 17.1002 5.55004 17.6987 5.59522C18.2973 5.64041 18.8983 5.55009 19.457 5.33097C20.3753 6.35903 21.0709 7.56601 21.5 8.87597C21.0314 9.25055 20.6532 9.72592 20.3935 10.2668C20.1338 10.8076 19.9993 11.4 20 12C20 13.264 20.586 14.391 21.502 15.124C21.0704 16.4328 20.3739 17.6389 19.456 18.667C18.8974 18.448 18.2966 18.3578 17.6983 18.403C17.0999 18.4481 16.5195 18.6276 16 18.928C15.4805 19.2274 15.0351 19.6399 14.6968 20.1351C14.3585 20.6302 14.1361 21.1951 14.046 21.788C12.6973 22.0715 11.3044 22.0729 9.95505 21.792C9.86559 21.1982 9.64335 20.6322 9.30487 20.1361C8.96639 19.6401 8.52038 19.2268 8.00005 18.927C7.48041 18.6266 6.89975 18.4472 6.30124 18.4022C5.70272 18.3572 5.10176 18.4477 4.54305 18.667C3.62465 17.6386 2.92905 16.4313 2.50005 15.121C2.96844 14.7466 3.34651 14.2716 3.60618 13.7311C3.86586 13.1906 4.00048 12.5986 4.00005 11.999C4.00054 11.3989 3.86575 10.8063 3.60571 10.2655C3.34568 9.72463 2.96707 9.24935 2.49805 8.87497C2.92972 7.56609 3.62616 6.36007 4.54405 5.33197C5.1027 5.55093 5.70352 5.64117 6.30184 5.59598C6.90017 5.5508 7.48061 5.37135 8.00005 5.07097C8.51959 4.77157 8.96503 4.35899 9.30331 3.86388C9.64158 3.36876 9.864 2.80381 9.95405 2.21097V2.20997ZM12 15C12.7957 15 13.5588 14.6839 14.1214 14.1213C14.684 13.5587 15 12.7956 15 12C15 11.2043 14.684 10.4413 14.1214 9.87865C13.5588 9.31604 12.7957 8.99997 12 8.99997C11.2044 8.99997 10.4413 9.31604 9.87873 9.87865C9.31612 10.4413 9.00005 11.2043 9.00005 12C9.00005 12.7956 9.31612 13.5587 9.87873 14.1213C10.4413 14.6839 11.2044 15 12 15V15Z" fill="currentColor"/></symbol>
@@ -2930,6 +2981,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.41.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.42.0";</script>
 </body>
 </html>
