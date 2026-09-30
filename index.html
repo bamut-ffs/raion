@@ -561,7 +561,11 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .mapask__in .pill:not(.pill--primary){background:var(--surface-2)}
 .askfoot{display:flex;flex-direction:column;gap:12px}
 /* алерт в подвале — во всю ширину, как закреп в переписке, градиент развёрнут: цвет сверху */
-.panel__foot .askfoot>.alert{margin:-12px -16px 0;padding:20px 16px;gap:16px;border-radius:0}
+.panel__foot .askfoot>.alert{margin:-12px -16px 0;padding:20px 16px;gap:16px;border-radius:var(--r-l) var(--r-l) 0 0}
+.panel__foot .askfoot>.alert .alert__acts{width:96px}
+.panel__foot .askfoot>.alert .alert__acts .pill{width:100%}
+/* подвал начинается с алерта — растворение над ним не нужно, край алерта сам граница */
+.panel__foot:has(>.askfoot>.alert:first-child)::before{display:none}
 .panel__foot .askfoot>.alert--act{background:linear-gradient(to bottom,var(--act-soft) 0,var(--act-soft) 35%,var(--surface) 100%)}
 .panel__foot .askfoot>.alert--offer{background:linear-gradient(to bottom,var(--offer-soft) 0,var(--offer-soft) 35%,var(--surface) 100%)}
 .panel__foot .askfoot>.alert--find{background:linear-gradient(to bottom,var(--find-soft) 0,var(--find-soft) 35%,var(--surface) 100%)}
@@ -661,6 +665,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 }
 @keyframes haloSpin{to{transform:rotate(360deg)}}
 @keyframes haloGrow{from{opacity:0;transform:translate(-50%,-50%) scale(.2)}}
+@keyframes haloShrink{to{opacity:0;transform:translate(-50%,-50%) scale(.2)}}
 .halo__txt{animation:haloSpin 60s linear infinite;transform-origin:50% 50%}
 @media (prefers-reduced-motion:reduce){.halo__txt{animation:none}}
 .halo__txt{position:absolute;left:-1px;top:-1px;overflow:visible;
@@ -1253,7 +1258,8 @@ svg:has(> use[href="#i-give"]){scale:1.2}
 /* Поля живут на внутренней обёртке, а не на самой полосе: так полная высота короткой версии
    известна в любой момент перехода (у обрезанного узла scrollHeight — высота содержимого),
    и по ней ставится верхний край шторки. Сверху 24, а не 16: там лежит ручка */
-.pinshort__in{display:flex;flex-direction:column;gap:10px;padding:24px 16px 12px}
+.pinshort__in{display:flex;flex-direction:column;gap:10px;padding:16px 16px 12px}
+.panel:has(.panel__foot>.askfoot>.alert:first-child) .pinshort__in{padding-bottom:16px}
 .panel.is-pin.is-shut .pinshort{max-height:420px;opacity:1}
 /* Оттягивание вниз у верхнего края карточки айфон рисовал пружиной — между шапкой и
    обложкой открывалась полоса. Пружину у карточки выключаем; вбок тело не прокручивается */
@@ -1290,7 +1296,8 @@ svg:has(> use[href="#i-give"]){scale:1.2}
 .pinshort__t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .pinshort__n{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pinshort__tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.pinshort__cap{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.pinshort__me{color:var(--brand-icon)}
 .pinshort__s{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap}
 /* теги мельче обычного чипа: их бывает три-четыре, и они не содержание, а опора решения */
 .stags{display:flex;flex-wrap:wrap;gap:6px}
@@ -1347,8 +1354,10 @@ svg:has(> use[href="#i-give"]){scale:1.2}
 .factrow svg{width:16px;height:16px;color:var(--ink-3);flex:none;margin-top:2px}
 .factrow b{font-weight:600}
 .factrow--btn{width:100%;text-align:left;border-radius:var(--r-s)}
-.factrow__go{color:var(--brand-icon);font-weight:500}
+.factrow .factrow__go{color:var(--brand-icon);font-weight:500}
+.factrow--btn:active{background:var(--surface-2)}
 .factrow--btn:hover .factrow__go{text-decoration:underline}
+.factrow--btn span+.factrow__go{margin-top:2px}
 /* будильник на строке времени: прижат к правому краю строки и не спорит с текстом */
 .factrow span{color:var(--ink-3);font-size:var(--f-s20);line-height:var(--l-s20);display:block;margin-top:4px}
 /* Обе кнопки — автор и участники — одного роста: содержимое внутри держится в 36, поэтому
@@ -1944,8 +1953,8 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .sysacts .btn{flex:1;min-width:0}
 .chip.is-pop{animation:ovIn .2s ease}
 .sysmsg__foot .chip{margin-left:auto}
-.sysmsg__f{display:flex;align-items:center;gap:8px;font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;color:var(--ink)}
-.sysmsg__f>svg{width:16px;height:16px;flex:none;color:var(--ink)}
+.sysmsg__f{display:flex;align-items:center;gap:8px;font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;color:var(--ink-2)}
+.sysmsg__f>svg{width:16px;height:16px;flex:none;color:var(--ink-2)}
 /* тип события — его собственным знаком справа, тем же кружком, что бейдж на миниатюре */
 .sysmsg__cat{margin-left:auto;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;flex:none;color:#fff}
 .sysmsg__cat svg{width:12px;height:12px}
@@ -1953,7 +1962,8 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .sysmsg__cat--offer{background:var(--offer)}
 .sysmsg__cat--find{background:var(--find)}
 /* что произошло — основным цветом: уведомления просматривают как раз по этой строке */
-.sysmsg__m{font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;color:var(--ink)}
+.sysmsg__m{font-size:var(--f-m20);line-height:var(--l-m20);font-weight:400;color:var(--ink)}
+.sysmsg__foot .tag{position:relative;top:1px}
 .stack.sysstack{gap:12px}
 .sysmsg .btn{width:auto;align-self:flex-start}
 /* только прямым детям колонки: внутри шапки чип стоит в строке с шевроном, и прижатие
@@ -2393,6 +2403,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
   .panel.is-home .panel__body,.panel.is-screen .panel__body{flex:1 1 auto;min-height:0}
   /* короткий список — вход в архив стоит у нижнего края раскрытой шторки */
   .panel.is-home .panel__body{display:flex;flex-direction:column}
+  .panel.is-home #searchResults{flex:1 0 auto;display:flex;flex-direction:column}
   /* жест перетаскивания шторки ловится с этой зоны, поэтому полю поиска внутри неё
      возвращаем собственные касания — иначе тап уходит в жест */
   .panel.is-home .panel__top{touch-action:none}
@@ -2480,6 +2491,8 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
     opacity:0;transition:opacity .15s;
   }
   .panel.is-more:not(.is-section) .panel__foot::before,.panel.is-more.is-footfade .panel__foot::before{opacity:1}
+  /* раздел стоит над таббаром, а безопасную зону уже учёл таббар */
+  .panel.is-section.is-footfade .panel__foot{padding-bottom:12px}
   /* Высота короткой карточки — по содержимому, а не числом. Числом её задавали, когда
      внутри был один заголовок; теперь там строка с миниатюрой, теги и кнопка, и любое
      число пришлось бы держать в голове вручную. По содержимому кнопка гарантированно
@@ -2488,8 +2501,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
      шторку тянут. Ручка ложится внутрь, к верхнему краю, и серая — белая на карте пропадала */
   .panel.is-pin.is-shut .panelhead--over{background:none;border-bottom-color:transparent}
   .panel.is-pin.is-shut .panelhead--over .chathead{display:none}
-  .panel.is-pin.is-shut .sheet-grip{top:0}
-  .panel.is-pin.is-shut .sheet-grip::before{background:var(--line-2);box-shadow:none}
+  /* ручка — снаружи, над кромкой, как у домашней шторки */
   /* поля равные: полоса корешка задана числом (--pin-peek), содержимое — названием 20
      и станцией 16, и при полях 0 сверху и 12 снизу двадцать восемь пикселей падали вниз
      пустотой под станцией, а название прижималось к верху */
@@ -3461,7 +3473,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.43.0';
+var VERSION='3.44.0';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
 var UPDATED='30 сентября 2026';
@@ -5974,7 +5986,7 @@ function setBadge(b,n){
 /* Метка черновика говорит, на каком шаге создание: место — капля с «?», тип — круг цвета
    категории с белой обводкой, описание — значок типа. Переходы ведём от часов: слой
    перерисовывается каждым кадром, и узел каждый раз новый */
-var draftSt={s:null,c:null,at:0,ps:null,pc:null}, flashId=null, flashAt=0;
+var draftSt={s:null,c:null,at:0,ps:null,pc:null}, flashId=null, flashAt=0, dHalo={on:false,at:0,rad:0};
 function draftPinHTML(d){
   var st=(d.step||1)<=1?'drop':((d.step===2)?'circle':'glyph');
   var col=d.type?ptype(d).cls:'pick';
@@ -6013,10 +6025,12 @@ function renderMarkers(){
      но оно стоит там, где события, и распадается приближением.
      Заодно ушёл сам список ориентиров как способ выбирать место: место выбирает карта */
   db.pins.forEach(function(p){
-    if(p.status!=='active'||hiddenForMe(p)||!ui.filters[p.type])return;
+    /* открытое событие видно всегда, даже если фильтр его прячет: иначе карточка есть, а метки нет */
+    var keep=pinOpen(p.id);
+    if(p.status!=='active'||hiddenForMe(p)||(!ui.filters[p.type]&&!keep))return;
     /* Карта и список показывают одно и то же: расстояние, время и «чьи» действуют и здесь.
        Время карта раньше не слушала — с «Сегодня» на ней оставались завтрашние встречи */
-    if(!radiusOK(p)||!whenOK(p)||!whoseOK(p))return;
+    if(!keep&&(!radiusOK(p)||!whenOK(p)||!whoseOK(p)))return;
     /* находка без указанного места на карте не живёт: она есть в списках и в оповещении */
     if(p.x==null)return;
     list.push({p:p,wx:p.x,wy:p.y});
@@ -6114,16 +6128,23 @@ function renderMarkers(){
      прицел по центру экрана (#pickCenter) — здесь маркер для неё не нужен */
   /* маркер черновика живёт ровно столько, сколько открыт экран создания: раньше он оставался
      на карте во всех разделах, потому что проверялось только наличие черновика */
+  /* пока целятся, на экране капля прицела — запоминаем её, чтобы метка выросла из неё */
+  if(ui.picking&&ui.draft){draftSt.s='drop'; draftSt.c=ui.draft.type?ptype(ui.draft).cls:'pick'; draftSt.at=0}
   if(ui.draft&&ui.draft.x!=null&&!ui.picking&&ui.panel&&ui.panel.type==='create'){
     var ds=toScreen(ui.draft.x,ui.draft.y);
     /* у вещей и услуг сразу рисуем круг неопределённости: соседи увидят не точку, а примерное
        место, и автор должен видеть это до публикации, а не узнавать после */
     var dhalo='', dhu=0;
-    if(ui.draft.type==='need_offer')dhu=46;
-    else if(ui.draft.type==='lost_found'&&ui.draft.lfsub==='lost')dhu=(parseInt(ui.draft.radius,10)||400)/METERS_PER_UNIT;
+    /* у вещи круг до публикации ничего не говорит — его нет; у пропажи это сама зона поиска */
+    if(ui.draft.type==='lost_found'&&ui.draft.lfsub==='lost')dhu=(parseInt(ui.draft.radius,10)||400)/METERS_PER_UNIT;
+    if(!!dhu!==dHalo.on){dHalo.on=!!dhu; dHalo.at=reduceMotion()?0:Date.now()}
+    var hEl=(Date.now()-dHalo.at)/1000, hAn=dHalo.at&&hEl<.3;
     if(dhu){
-      var drad=Math.max(24,dhu*view.k);
-      dhalo='<span class="halo'+(ui.draft.type==='lost_found'?' halo--find':'')+'" style="width:'+(drad*2).toFixed(0)+'px;height:'+(drad*2).toFixed(0)+'px"></span>';
+      var drad=Math.max(24,dhu*view.k); dHalo.rad=drad;
+      dhalo='<span class="halo halo--find" style="width:'+(drad*2).toFixed(0)+'px;height:'+(drad*2).toFixed(0)+'px'+
+        (hAn?';animation:haloGrow .3s ease both;animation-delay:-'+hEl.toFixed(3)+'s':'')+'"></span>';
+    }else if(hAn&&dHalo.rad){
+      dhalo='<span class="halo halo--find" style="width:'+(dHalo.rad*2).toFixed(0)+'px;height:'+(dHalo.rad*2).toFixed(0)+'px;animation:haloShrink .3s ease both;animation-delay:-'+hEl.toFixed(3)+'s"></span>';
     }
     out.push('<div class="marker is-sel is-draft" style="transform:translate('+ds[0].toFixed(1)+'px,'+ds[1].toFixed(1)+'px)">'+dhalo+
       /* пока тип не выбран, маркер выглядит как прицел: брендовый со знаком вопроса,
@@ -7505,6 +7526,8 @@ function backUnder(b){
   b.el.parentNode.insertBefore(u,b.el);
   var ub=u.querySelector('.panel__body'); if(ub)ub.scrollTop=sn.scroll;
   b.under=u; b.dim=u.querySelector('.panel__dim');
+  /* из переписки таббар спрятан: возвращаем его сразу, он ниже по слоям и открывается вместе с жестом */
+  var apx=$('#app'); if(apx&&apx.classList.contains('is-chat')){apx.classList.remove('is-chat'); b.unChat=true}
   b.underSheet=!/\bis-section\b/.test(sn.cls);
   backUnderAt(b,0,false);
 }
@@ -7571,6 +7594,7 @@ function backSwipeEnd(cancel){
   }else{
     b.el.style.transform='';
     backUnderAt(b,0,true);
+    if(b.unChat){var apy=$('#app'); if(apy)apy.classList.add('is-chat')}
     setTimeout(function(){
       b.el.style.transition='';
       if(b.under&&b.under.parentNode)b.under.parentNode.removeChild(b.under);
@@ -8471,7 +8495,7 @@ function viewPin(id){
   var facts='';
   if(act){
     /* у закрытого «уже прошло» повторяло бы строку «В архиве с 14 сентября» ниже */
-    var rel=liveText(p)||(closed?'':whenRel(p.starts_at)), rep=repeatWord(p);
+    var rel=liveText(p)||(closed?lowerFirst(reasonLabel(p)||'завершена'):whenRel(p.starts_at)), rep=closed?'':repeatWord(p);
     var relLine=[rel,rep?'↻ '+rep:''].filter(Boolean).join(' · ');
     /* Значок будильника со строки времени ушёл: двадцатого размера, вплотную к дате и
        молча — понять, что он делает, было нельзя. Само действие переехало в подвал
@@ -8482,7 +8506,7 @@ function viewPin(id){
     facts+='<div class="factrow">'+icon('clock')+'<div><b>Опубликовано '+H(agoText(p.created_at))+'</b></div></div>';
   }
   /* исход — факт, а не состояние: состояние сказал чип «В архиве» первой строкой */
-  if(closed){
+  if(closed&&!act){
     /* исход и дата одной строкой: «Состоялась 22 сентября». Слово «архив» уже сказал тег —
        третий раз его не повторяем */
     var rl=reasonLabel(p)||'Завершено'; rl=rl.charAt(0).toUpperCase()+rl.slice(1);
@@ -8504,9 +8528,9 @@ function viewPin(id){
     var ps=[];
     if(p.type==='need_offer'&&!mine&&!mr&&!threadOf(p.id,p.author_id))ps.push(H('точный адрес — в переписке'));
     if(p.subtype==='lost'&&p.area_radius)ps.push(H('зона поиска ~'+niceUp(p.area_radius)));
-    ps.push('<span class="factrow__go">Показать на карте</span>');
     facts+='<button class="factrow factrow--btn" data-act="show-on-map" data-id="'+p.id+'">'+icon('walk')+'<div>'+
-      (pb?'<b>'+H(pb)+'</b>':'')+'<span>'+ps.join(' · ')+'</span></div></button>';
+      (pb?'<b>'+H(pb)+'</b>':'')+(ps.length?'<span>'+ps.join(' · ')+'</span>':'')+
+      '<span class="factrow__go">Показать на карте</span></div></button>';
   }
 
   /* «без срока» не значит «навсегда»: раз в месяц спрашиваем автора, актуально ли ещё.
@@ -8605,13 +8629,14 @@ function viewPin(id){
     : (closed?'в архиве':'опубликовано '+agoText(p.created_at));
   /* Мелкие теги без значков: где и что. Роли «моё» и «участвую» здесь нет — её говорит
      тег на метке прямо над карточкой; заявки на карте не видно, поэтому она остаётся */
-  var shortTags='';
-  if(dist!=null||closed)shortTags+='<span class="tag">'+(closed?metroDot:distChipHTML(p,dist,true))+'</span>';
+  var sparts=[];
+  if(p.x!=null||closed)sparts.push(metroDot);
   if(act&&p.status==='active'){
     var jn=joinedOf(p.id).length;
-    shortTags+='<span class="tag">Участники '+jn+(p.participant_limit?'/'+p.participant_limit:'')+'</span>';
-  }else if(!act){var sl=subLabel(p,closed); if(sl)shortTags+='<span class="tag">'+H(sl)+'</span>'}
-  if(!mine&&mr&&mr.status==='interested')shortTags+='<span class="tag tag--brand">Вы подали заявку</span>';
+    sparts.push('Участники '+jn+(p.participant_limit?'/'+p.participant_limit:''));
+  }else if(!act){var sl=subLabel(p,closed); if(sl)sparts.push(H(sl))}
+  if(!mine&&mr&&mr.status==='interested')sparts.push('<span class="pinshort__me">Вы подали заявку</span>');
+  var shortTags=sparts.join(' · ');
   var short='<div class="pinshort"><div class="pinshort__in">'+
     '<span class="pinshort__row">'+
       /* тот же элемент, что в строке сообщений: 60, скругление 6, бледная подложка */
@@ -8620,7 +8645,7 @@ function viewPin(id){
         : '<span class="listrow__cover listrow__cover--lg listrow__cover--'+ptype(p).cls+'">'+icon(pinGlyph(p))+'</span>')+
       '<span class="pinshort__t"><span class="pinshort__n">'+H(p.title)+'</span>'+
         '<span class="pinshort__s">'+H(shortSub)+'</span>'+
-        (shortTags?'<span class="pinshort__tags">'+shortTags+'</span>':'')+'</span>'+
+        (shortTags?'<span class="pinshort__cap">'+shortTags+'</span>':'')+'</span>'+
       /* шеврон вверх: «здесь есть ещё» — строка раскрывает шторку */
       icon('chev-up','pinshort__up')+
     '</span>'+
@@ -8675,12 +8700,12 @@ function viewPin(id){
            Чат остаётся на виду: он полезнее всего на экране, а строкой в теле уезжал под скролл */
         /* личный чат с автором и общий для человека почти неотличимы — ведём в общий */
         if(askFoot&&!isDesktopPanel())foot='<div class="askfoot">'+
-          alertHTML(p,'Подтвердите участие','Без ответа место уйдёт другому','')+
-          '<div class="footrow">'+
-            (gt?'<button class="btn btn--line btn--ic" data-act="open-group" data-id="'+p.id+'" aria-label="Чат участников" title="Чат участников">'+icon('group')+'</button>'
-               :'<button class="btn btn--line btn--ic" data-act="write" data-id="'+p.id+'" aria-label="Написать автору" title="Написать автору">'+icon('chat')+'</button>')+
-            '<button class="btn btn--line" data-act="confirm-no" data-id="'+mr.id+'">Не смогу</button>'+
-            '<button class="btn btn--primary" data-act="confirm-go" data-id="'+mr.id+'">Иду</button></div></div>';
+          alertHTML(p,'Подтвердите участие','Без ответа место уйдёт другому',
+            '<button class="pill pill--primary" data-act="confirm-go" data-id="'+mr.id+'">Иду</button>'+
+            '<button class="pill" data-act="confirm-no" data-id="'+mr.id+'">Не смогу</button>')+
+          (gt?'<button class="btn btn--primary" data-act="open-group" data-id="'+p.id+'">'+icon('chat')+groupName(p)+'</button>'
+             :'<button class="btn btn--primary" data-act="write" data-id="'+p.id+'">'+icon('chat')+'Написать автору</button>')+
+          '</div>';
         else foot=askFoot
           ? '<div class="askfoot"><div class="askfoot__t">Подтвердите участие — без ответа место уйдёт другому соседу</div>'+
               '<div class="footrow"><button class="btn btn--line" data-act="confirm-no" data-id="'+mr.id+'">Не смогу</button>'+
@@ -13221,12 +13246,8 @@ function pickMorph(){
   var now2=!!ui.picking, inCreate=!!(ui.panel&&ui.panel.type==='create');
   var pi=$('#pickInfo'), lbl=$('.marker.is-draft .pin__label');
   if(lastPickState!==null&&now2!==lastPickState&&inCreate&&!reduceMotion()){
-    if(!now2&&lbl){
-      if(isDesktopPanel()&&lastPiBox)morphGhost(lastPiBox,lbl,true);
-      else{lbl.classList.remove('is-fadein'); void lbl.offsetWidth; lbl.classList.add('is-fadein')}
-    }else if(now2&&pi&&!pi.hidden&&isDesktopPanel()&&lastLblBox){
-      morphGhost(lastLblBox,pi,false);
-    }
+    /* плашка станции просто пропадает, как всегда; подпись появляется вместе с кругом */
+    if(!now2&&lbl){lbl.classList.remove('is-fadein'); void lbl.offsetWidth; lbl.classList.add('is-fadein')}
   }
   lastPickState=now2;
   lastPiBox=(pi&&!pi.hidden&&pi.offsetWidth)?{r:pi.getBoundingClientRect(),h:pi.innerHTML}:null;
@@ -13512,14 +13533,16 @@ function osThumb(el){
 }
 function osUpdate(el){
   var t=osThumb(el); if(!t)return;
-  var ch=el.clientHeight, sh=el.scrollHeight, st=el.scrollTop;
-  var h=Math.max(28,Math.round(ch*ch/sh));
+  var ch=el.clientHeight, sh=el.scrollHeight, st=Math.max(0,Math.min(sh-ch,el.scrollTop));
+  /* закреплённый алерт наверху ленты — дорожка начинается под ним; пружина за края не выводит */
+  var cp=el.querySelector('.chatpin'), top0=(cp&&el.contains(cp))?cp.offsetHeight:0, tr=ch-top0;
+  var h=Math.max(28,Math.round(tr*ch/sh));
   var host=t.parentNode;
   /* плашка стоит у правого края самого блока, а не его хозяина: колонки бывают разной ширины */
   var er=el.getBoundingClientRect(), hr=host.getBoundingClientRect();
   t.style.height=h+'px';
   t.style.right=Math.round(hr.right-er.right+3)+'px';
-  t.style.transform='translateY('+Math.round(er.top-hr.top+(ch-h)*(st/(sh-ch)))+'px)';
+  t.style.transform='translateY('+Math.round(er.top-hr.top+top0+(tr-h)*(st/(sh-ch)))+'px)';
 }
 function osFlash(el){
   var t=osThumb(el); if(!t)return;

@@ -544,7 +544,11 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .mapask__in .pill:not(.pill--primary){background:var(--surface-2)}
 .askfoot{display:flex;flex-direction:column;gap:12px}
 /* алерт в подвале — во всю ширину, как закреп в переписке, градиент развёрнут: цвет сверху */
-.panel__foot .askfoot>.alert{margin:-12px -16px 0;padding:20px 16px;gap:16px;border-radius:0}
+.panel__foot .askfoot>.alert{margin:-12px -16px 0;padding:20px 16px;gap:16px;border-radius:var(--r-l) var(--r-l) 0 0}
+.panel__foot .askfoot>.alert .alert__acts{width:96px}
+.panel__foot .askfoot>.alert .alert__acts .pill{width:100%}
+/* подвал начинается с алерта — растворение над ним не нужно, край алерта сам граница */
+.panel__foot:has(>.askfoot>.alert:first-child)::before{display:none}
 .panel__foot .askfoot>.alert--act{background:linear-gradient(to bottom,var(--act-soft) 0,var(--act-soft) 35%,var(--surface) 100%)}
 .panel__foot .askfoot>.alert--offer{background:linear-gradient(to bottom,var(--offer-soft) 0,var(--offer-soft) 35%,var(--surface) 100%)}
 .panel__foot .askfoot>.alert--find{background:linear-gradient(to bottom,var(--find-soft) 0,var(--find-soft) 35%,var(--surface) 100%)}
@@ -644,6 +648,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 }
 @keyframes haloSpin{to{transform:rotate(360deg)}}
 @keyframes haloGrow{from{opacity:0;transform:translate(-50%,-50%) scale(.2)}}
+@keyframes haloShrink{to{opacity:0;transform:translate(-50%,-50%) scale(.2)}}
 .halo__txt{animation:haloSpin 60s linear infinite;transform-origin:50% 50%}
 @media (prefers-reduced-motion:reduce){.halo__txt{animation:none}}
 .halo__txt{position:absolute;left:-1px;top:-1px;overflow:visible;
@@ -1236,7 +1241,8 @@ svg:has(> use[href="#i-give"]){scale:1.2}
 /* Поля живут на внутренней обёртке, а не на самой полосе: так полная высота короткой версии
    известна в любой момент перехода (у обрезанного узла scrollHeight — высота содержимого),
    и по ней ставится верхний край шторки. Сверху 24, а не 16: там лежит ручка */
-.pinshort__in{display:flex;flex-direction:column;gap:10px;padding:24px 16px 12px}
+.pinshort__in{display:flex;flex-direction:column;gap:10px;padding:16px 16px 12px}
+.panel:has(.panel__foot>.askfoot>.alert:first-child) .pinshort__in{padding-bottom:16px}
 .panel.is-pin.is-shut .pinshort{max-height:420px;opacity:1}
 /* Оттягивание вниз у верхнего края карточки айфон рисовал пружиной — между шапкой и
    обложкой открывалась полоса. Пружину у карточки выключаем; вбок тело не прокручивается */
@@ -1273,7 +1279,8 @@ svg:has(> use[href="#i-give"]){scale:1.2}
 .pinshort__t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .pinshort__n{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pinshort__tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.pinshort__cap{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.pinshort__me{color:var(--brand-icon)}
 .pinshort__s{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap}
 /* теги мельче обычного чипа: их бывает три-четыре, и они не содержание, а опора решения */
 .stags{display:flex;flex-wrap:wrap;gap:6px}
@@ -1330,8 +1337,10 @@ svg:has(> use[href="#i-give"]){scale:1.2}
 .factrow svg{width:16px;height:16px;color:var(--ink-3);flex:none;margin-top:2px}
 .factrow b{font-weight:600}
 .factrow--btn{width:100%;text-align:left;border-radius:var(--r-s)}
-.factrow__go{color:var(--brand-icon);font-weight:500}
+.factrow .factrow__go{color:var(--brand-icon);font-weight:500}
+.factrow--btn:active{background:var(--surface-2)}
 .factrow--btn:hover .factrow__go{text-decoration:underline}
+.factrow--btn span+.factrow__go{margin-top:2px}
 /* будильник на строке времени: прижат к правому краю строки и не спорит с текстом */
 .factrow span{color:var(--ink-3);font-size:var(--f-s20);line-height:var(--l-s20);display:block;margin-top:4px}
 /* Обе кнопки — автор и участники — одного роста: содержимое внутри держится в 36, поэтому
@@ -1927,8 +1936,8 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .sysacts .btn{flex:1;min-width:0}
 .chip.is-pop{animation:ovIn .2s ease}
 .sysmsg__foot .chip{margin-left:auto}
-.sysmsg__f{display:flex;align-items:center;gap:8px;font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;color:var(--ink)}
-.sysmsg__f>svg{width:16px;height:16px;flex:none;color:var(--ink)}
+.sysmsg__f{display:flex;align-items:center;gap:8px;font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;color:var(--ink-2)}
+.sysmsg__f>svg{width:16px;height:16px;flex:none;color:var(--ink-2)}
 /* тип события — его собственным знаком справа, тем же кружком, что бейдж на миниатюре */
 .sysmsg__cat{margin-left:auto;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;flex:none;color:#fff}
 .sysmsg__cat svg{width:12px;height:12px}
@@ -1936,7 +1945,8 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .sysmsg__cat--offer{background:var(--offer)}
 .sysmsg__cat--find{background:var(--find)}
 /* что произошло — основным цветом: уведомления просматривают как раз по этой строке */
-.sysmsg__m{font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;color:var(--ink)}
+.sysmsg__m{font-size:var(--f-m20);line-height:var(--l-m20);font-weight:400;color:var(--ink)}
+.sysmsg__foot .tag{position:relative;top:1px}
 .stack.sysstack{gap:12px}
 .sysmsg .btn{width:auto;align-self:flex-start}
 /* только прямым детям колонки: внутри шапки чип стоит в строке с шевроном, и прижатие
@@ -2376,6 +2386,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
   .panel.is-home .panel__body,.panel.is-screen .panel__body{flex:1 1 auto;min-height:0}
   /* короткий список — вход в архив стоит у нижнего края раскрытой шторки */
   .panel.is-home .panel__body{display:flex;flex-direction:column}
+  .panel.is-home #searchResults{flex:1 0 auto;display:flex;flex-direction:column}
   /* жест перетаскивания шторки ловится с этой зоны, поэтому полю поиска внутри неё
      возвращаем собственные касания — иначе тап уходит в жест */
   .panel.is-home .panel__top{touch-action:none}
@@ -2463,6 +2474,8 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
     opacity:0;transition:opacity .15s;
   }
   .panel.is-more:not(.is-section) .panel__foot::before,.panel.is-more.is-footfade .panel__foot::before{opacity:1}
+  /* раздел стоит над таббаром, а безопасную зону уже учёл таббар */
+  .panel.is-section.is-footfade .panel__foot{padding-bottom:12px}
   /* Высота короткой карточки — по содержимому, а не числом. Числом её задавали, когда
      внутри был один заголовок; теперь там строка с миниатюрой, теги и кнопка, и любое
      число пришлось бы держать в голове вручную. По содержимому кнопка гарантированно
@@ -2471,8 +2484,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
      шторку тянут. Ручка ложится внутрь, к верхнему краю, и серая — белая на карте пропадала */
   .panel.is-pin.is-shut .panelhead--over{background:none;border-bottom-color:transparent}
   .panel.is-pin.is-shut .panelhead--over .chathead{display:none}
-  .panel.is-pin.is-shut .sheet-grip{top:0}
-  .panel.is-pin.is-shut .sheet-grip::before{background:var(--line-2);box-shadow:none}
+  /* ручка — снаружи, над кромкой, как у домашней шторки */
   /* поля равные: полоса корешка задана числом (--pin-peek), содержимое — названием 20
      и станцией 16, и при полях 0 сверху и 12 снизу двадцать восемь пикселей падали вниз
      пустотой под станцией, а название прижималось к верху */
@@ -3020,6 +3032,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.43.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.44.0";</script>
 </body>
 </html>
