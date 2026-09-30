@@ -143,7 +143,7 @@
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --ground:#121214;
+    --ground:#121214;--thumb-ring:transparent;
     --surface:#1c1c1e;
     --surface-2:#2c2c2e;
     --surface-3:#3a3a3c;
@@ -197,7 +197,7 @@
   }
 }
 :root[data-theme="dark"]{
-  --ground:#121214;
+  --ground:#121214;--thumb-ring:transparent;
   --surface:#1c1c1e;
   --surface-2:#2c2c2e;
   --surface-3:#3a3a3c;
@@ -260,6 +260,7 @@
 html,body{height:100%}
 /* цвет полосы под часами на айфоне — см. syncTint() */
 :root{--tint:var(--ground)}
+:root{--thumb-ring:color-mix(in srgb,var(--ink) 8%,transparent)}
 :root.is-dimmed{--tint:color-mix(in srgb,var(--ground) 45%,#000)}
 body{
   margin:0;background:var(--tint);color:var(--ink);transition:background-color .2s ease;
@@ -466,12 +467,17 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 @keyframes dotShrink{from{transform:translate(-50%,-50%) scale(2.67)}}
 .pin[style*="pinGrow"]>svg{animation:pinIconIn .2s ease both;animation-delay:inherit}
 @keyframes pinIconIn{0%,50%{opacity:0}}
-.marker.is-in>*{animation:markIn .2s ease}
-.marker.is-out{pointer-events:none}
-.marker.is-out>*{animation:markOut .15s ease forwards;pointer-events:none}
+/* Прозрачность — у метки целиком, масштаб — у частей. Пока прозрачность была у каждой части
+   своя, подложка подписи просвечивала сквозь полупрозрачный кружок, и место их наложения
+   читалось третьим пятном */
+.marker.is-in{animation:markFadeIn .2s ease}
+.marker.is-in>*{animation:markScaleIn .2s ease}
+.marker.is-out{pointer-events:none;animation:markFadeOut .15s ease forwards}
+.marker.is-out>*{animation:markScaleOut .15s ease forwards;pointer-events:none}
+@keyframes markScaleIn{from{scale:.85}}
+@keyframes markScaleOut{to{scale:.85}}
 @media (prefers-reduced-motion:reduce){
-  .marker.is-in>*{animation-name:markFadeIn}
-  .marker.is-out>*{animation-name:markFadeOut}
+  .marker.is-in>*,.marker.is-out>*{animation:none}
 }
 
 /* Метка события — круг с центром в самой точке: ножка нужна, когда метка указывает на
@@ -522,12 +528,20 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   padding:4px 10px 4px 22px;white-space:nowrap;box-shadow:var(--shadow-1);pointer-events:auto;cursor:pointer;
 }
 .pin__label--drop{pointer-events:none}
-.mapask{z-index:8}
+/* Алерт над меткой лежит поверх всего на карте — меток, подписей, станций. Панель и кнопки
+   над картой выше него: у края панели он уходит под неё, а не упирается в стену */
+.mapask{z-index:1000}
 .mapask__in{position:absolute;bottom:32px;width:320px;border-radius:var(--r-m);background:var(--surface);
   box-shadow:0 8px 24px rgba(0,0,0,.15);pointer-events:auto}
-.mapask__in .alert{margin:0;border-radius:var(--r-m)}
+.mapask__in .alert{margin:0;border-radius:var(--r-m);background:var(--surface)}
+/* ширина кнопок задана числом: мерить её по надписям на каждом кадре движения карты — это
+   и были скачки */
+.mapask__in .alert__acts{width:96px}
+.mapask__in .alert__acts .pill{width:100%}
+.mapask__in .pill:not(.pill--primary){background:var(--surface-2)}
 .askfoot{display:flex;flex-direction:column;gap:8px}
-.askfoot__t{font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3);text-align:center}
+.askfoot__t{font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.footrow .btn.btn--ic{flex:none;width:48px;padding:0}
 .pin,.pindot{cursor:pointer}
 .pin__row{display:flex;align-items:center;gap:4px;min-width:0;max-width:100%}
 .pin__row b{display:block;min-width:0;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
@@ -576,7 +590,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Вблизи мягкое пятно тонет в домах, скверах и подписях. Там волна плотнее: ровная заливка,
    идёт от края круга, а не из-под него, держит яркость две трети пути и гаснет в конце.
    Обводки нет — с ней волна становилась самым громким на карте */
-.markers.is-near .pin__live::before,.markers.is-near .pin__live::after{
+.halos.is-near .pin__live::before,.halos.is-near .pin__live::after{
   box-sizing:border-box;transform:none;left:-16px;top:-16px;width:32px;height:32px;
   background:color-mix(in srgb,var(--live) 20%,transparent);
   animation-name:pinliveNear;animation-timing-function:ease-out;
@@ -590,7 +604,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 @media (prefers-reduced-motion:reduce){
   .pin__live::before{animation:none;transform:scale(.6);opacity:.45}
   .pin__live::after{display:none}
-  .markers.is-near .pin__live::before{animation:none;left:-32px;top:-32px;width:64px;height:64px;transform:none;opacity:.6}
+  .halos.is-near .pin__live::before{animation:none;left:-32px;top:-32px;width:64px;height:64px;transform:none;opacity:.6}
 }
 /* Наведение на десктопе: точка или булавка без подписи показывает подпись поверх всех
    соседних меток, точка при этом вырастает. Раскладка не перестраивается — соседи стоят */
@@ -821,7 +835,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .alert{margin-left:-16px;margin-right:-16px}
 /* закреплённое сообщение: прибит к шапке, во всю ширину, выше обычного алерта */
 .chatpin{position:sticky;top:0;z-index:3;background:var(--surface);padding:0}
-.chatpin .alert{margin:0;padding-top:21px;padding-bottom:21px}
+.chatpin .alert{margin:0;padding:21px 16px}
 /* снизу цвет категории до четверти высоты, выше — растворение в фон; верхние углы прямые */
 .alert{border-radius:0 0 var(--r-m) var(--r-m)}
 .alert--act{background:linear-gradient(to top,var(--act-soft) 0,var(--act-soft) 35%,var(--surface) 100%)}
@@ -1140,6 +1154,12 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   content:'';position:absolute;left:0;right:0;top:0;height:76px;pointer-events:none;
   background:linear-gradient(to bottom,rgba(0,0,0,.16),transparent);
 }
+/* У фото — и снизу то же затемнение: на него наезжает карточка, и её белый скруглённый край
+   на светлом снимке сливался с ним. Обложке без фото это не нужно — у неё край и так виден */
+.cover:has(>img)::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:76px;pointer-events:none;
+  background:linear-gradient(to top,rgba(0,0,0,.16),transparent);
+}
 .cover--act{background:var(--act-soft)}
 .cover--offer{background:var(--offer-soft)}
 .cover--find{background:var(--find-soft)}
@@ -1201,12 +1221,15 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .sheetfab{position:absolute;top:-52px;z-index:5;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
   color:var(--ink-2);transition:opacity .2s ease}
 .sheetfab svg{width:20px;height:20px}
-#zoomFit svg,.geofab svg{transition:color .15s ease}
+/* у стрелки тяжёлая часть внизу слева, носик вправо вверх: по геометрии в центре, на глаз нет */
+#zoomFit svg,.geofab svg{transition:color .15s ease;translate:-4px 4px}
 #zoomFit.is-me svg,.geofab.is-me svg{color:var(--brand)}
 .sheetfab--l{left:16px}
 .sheetfab--r{right:16px}
-.panel.is-home:not(.is-shut) .sheetfab,.panel.is-pin:not(.is-shut) .sheetfab{opacity:0;pointer-events:none}
-.panel.is-pin.is-shut .panelhead--over [data-act="back"]{visibility:hidden}
+/* кнопки у кромки гаснут, только когда над шторкой не осталось карты */
+.panel.is-high .sheetfab{opacity:0;pointer-events:none}
+/* кнопка у кромки тоже лежит в шапке и тоже зовётся back — её это правило не касается */
+.panel.is-pin.is-shut .panelhead--over [data-act="back"]:not(.sheetfab){visibility:hidden}
 @media (max-width:820px){.zoomctl{display:none}}
 .panel__foot.is-swap>*{animation:ovIn .2s ease}
 @keyframes msgIn{from{opacity:0;transform:translateY(8px)}}
@@ -1253,7 +1276,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .pincard p{margin:0;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10);white-space:pre-wrap}
 /* Чипы — всегда одна строка: перенос сдвигал заголовок от карточки к карточке. Категория
    не сжимается, место сжимается первым: название станции — многоточием, расстояние целиком */
-.metaline{display:flex;flex-wrap:nowrap;gap:8px;min-width:0}
+.metaline{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
 .feedend2{display:flex;align-items:center;gap:12px;width:100%;padding:16px;text-align:left;
   font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;color:var(--ink-2);transition:background .14s}
 .feedend2:hover{background:var(--surface-2)}
@@ -1369,6 +1392,8 @@ button.person:hover{background:var(--surface-2)}
 .districtrow:has(+ .divider--lg)::after{display:none}
 /* открытая во второй колонке строка помечается той же заливкой, что и карточка списка */
 .listrow.is-sel{background:var(--surface-2)}
+/* мягкая заливка миниатюры без фото на сером выделении сливалась; в тёмной теме обводки нет */
+.listrow:hover span.listrow__cover,.listrow.is-sel span.listrow__cover{outline:1px solid var(--thumb-ring);outline-offset:-1px}
 .fcard:hover{background:var(--surface-2)}
 
 /* Выбранная строка — только в двухколоночном режиме, где список виден рядом с карточкой.
@@ -1842,13 +1867,14 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
    и есть вход, а кнопка «Открыть» говорила бы то же самое второй раз */
 .sysmsg--go{cursor:pointer}
 .sysmsg--go:hover{border-color:var(--line-2)}
-.sysmsg__go{margin-left:auto;width:16px;height:16px;color:var(--ink-3);flex:none}
+.sysmsg__tail{white-space:nowrap}
+.sysmsg__go{display:inline-block;width:.9em;height:.9em;margin-left:2px;vertical-align:-.12em;color:inherit}
 .sysmsg__d{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
 .sysmsg__foot{display:flex;align-items:center;gap:8px}
 .sysmsg__when{display:flex;align-items:center;gap:8px;font-size:var(--f-m20);line-height:var(--l-m20);font-weight:600;color:var(--ink)}
 .sysmsg__when svg{width:16px;height:16px;color:var(--ink-3);flex:none}
-/* кнопки ответа под карточкой, на её ширину, с зазором 4 */
-.sysacts{display:flex;gap:4px;margin-top:-12px}
+/* кнопки ответа — внутри карточки последним рядом; от времени отступ больше обычного */
+.sysacts{display:flex;gap:8px;margin-top:8px}
 .sysacts .btn{flex:1;min-width:0}
 .chip.is-pop{animation:ovIn .2s ease}
 .sysmsg__foot .chip{margin-left:auto}
@@ -2051,13 +2077,27 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
    её высоту, положение и отступ до кнопки он не трогает и касаний не ловит */
 .kbunder{position:absolute;left:0;right:0;bottom:0;z-index:19;background:var(--surface);pointer-events:none}
 .kbunder[hidden]{display:none}
-/* Подсказка приезжает по пологой дуге и уходит по ней же обратно. Дуга — точками, а не
-   вращением: пузырь при этом не наклоняется, текст всё время ровный */
-.hintbub{opacity:0}
-.hintbub.is-in{opacity:1;animation:hintArcCw .35s linear both}
-.hintbub.is-in.hint--ccw{animation-name:hintArcCcw}
-.hintbub.is-out{animation:hintArcCwOut .25s linear both}
-.hintbub.is-out.hint--ccw{animation-name:hintArcCcwOut}
+/* Подсказка висит на конце длинного невидимого рычага: ось далеко слева, рычаг поворачивается,
+   и пузырь одновременно идёт по дуге и выпрямляется, а в конце покачивается, как подвешенный */
+.hintbub{opacity:0;transform-origin:-430px calc(100% + 40px)}
+.hintbub.is-in{opacity:1;animation:hintSwing .6s both}
+.hintbub.is-in.hint--ccw{animation-name:hintSwingCcw}
+.hintbub.is-out{animation:hintSwingOut .25s ease-in both}
+.hintbub.is-out.hint--ccw{animation-name:hintSwingCcwOut}
+@keyframes hintSwing{
+  0%{opacity:0;transform:rotate(-33deg);animation-timing-function:cubic-bezier(.45,0,.7,1)}
+  20%{opacity:1}
+  50%{transform:rotate(6deg);animation-timing-function:ease-in-out}
+  75%{transform:rotate(-2deg);animation-timing-function:ease-in-out}
+  100%{opacity:1;transform:none}}
+@keyframes hintSwingCcw{
+  0%{opacity:0;transform:rotate(33deg);animation-timing-function:cubic-bezier(.45,0,.7,1)}
+  20%{opacity:1}
+  50%{transform:rotate(-6deg);animation-timing-function:ease-in-out}
+  75%{transform:rotate(2deg);animation-timing-function:ease-in-out}
+  100%{opacity:1;transform:none}}
+@keyframes hintSwingOut{0%{opacity:1;transform:none}60%{opacity:1}100%{opacity:0;transform:rotate(-33deg)}}
+@keyframes hintSwingCcwOut{0%{opacity:1;transform:none}60%{opacity:1}100%{opacity:0;transform:rotate(33deg)}}
 @keyframes hintArcCw{0%{opacity:0;transform:translate(-120px,40px)}20%{opacity:.6;transform:translate(-85px,6px)}42%{opacity:1;transform:translate(-52px,-12px)}68%{transform:translate(-22px,-10px)}100%{opacity:1;transform:none}}
 @keyframes hintArcCwOut{0%{opacity:1;transform:none}32%{transform:translate(-22px,-10px)}58%{transform:translate(-52px,-12px)}80%{opacity:.6;transform:translate(-85px,6px)}100%{opacity:0;transform:translate(-120px,40px)}}
 @keyframes hintArcCcw{0%{opacity:0;transform:translate(-120px,-40px)}20%{opacity:.6;transform:translate(-85px,-6px)}42%{opacity:1;transform:translate(-52px,12px)}68%{transform:translate(-22px,10px)}100%{opacity:1;transform:none}}
@@ -2065,7 +2105,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .hintbub.is-morph{opacity:1;transform:none;overflow:hidden;padding:8px 16px;
   transition:left .25s ease,top .25s ease,width .25s ease,height .25s ease,padding .25s ease,opacity .15s ease}
 .hintbub.is-morph>*{opacity:0;transition:opacity .12s ease}
-@media (prefers-reduced-motion:reduce){.hintbub.is-in,.hintbub.is-out{animation:none}.hintbub.is-out{opacity:0}}
+@media (prefers-reduced-motion:reduce){.hintbub.is-in{animation:markFadeIn .2s both}.hintbub.is-out{animation:none;opacity:0}}
 .hintbub span{flex:1;min-width:0;text-wrap:balance}
 .hintbub.has-tail::after{content:'';position:absolute;top:100%;left:var(--tail-x,50%);transform:translateX(-50%);
   border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid var(--ink)}
@@ -2144,6 +2184,11 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .toast__a svg{width:15px;height:15px}
 /* тост без сообщения: остаётся одно действие, и поля ему нужны кнопочные, а не абзацные */
 .toast--bare{padding:8px 14px}
+/* тост с действием: текст одной строкой слева, кнопка справа; не помещаются — кнопка уходит
+   под текст, а не сжимает его в столбик */
+.toast.toast--act{flex-wrap:wrap;justify-content:flex-start;text-align:left;row-gap:4px;max-width:min(420px,calc(100vw - 32px))}
+.toast--act>span:first-child{flex:1 1 auto}
+.toast--act .toast__a{margin-left:auto}
 
 /* ---------- responsive ---------- */
 /* меняем саму переменную, а не ширину панели: от неё же отсчитывается кнопка сворачивания */
@@ -2231,6 +2276,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
   .panel.is-home .sheet-grip::before{transform:translateY(2px)}
   /* снимок предыдущего экрана под свайпом назад: только картинка, в руки не берётся */
   .panel.panel--under{pointer-events:none}
+  .secdim{position:fixed;inset:0;background:#000;pointer-events:none;opacity:0}
   .panel__dim{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:50;border-radius:inherit}
 
   /* Домашняя шторка: развёрнутая — обычный полноэкранный раздел над таббаром; свёрнутая —
@@ -2321,8 +2367,12 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
     padding-top:12px;
     /* внизу поле блока по лестнице плюс безопасная зона телефона: на растворяющемся
        подвале двенадцати пикселей не хватало, кнопки стояли у самого края */
-    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+    padding-bottom:calc(12px + env(safe-area-inset-bottom));
   }
+  /* верхнее поле подвала прозрачное: содержимое проходит под ним и растворяется, а полоса
+     растворения доходит до верха кнопки */
+  .panel:not(.is-section):not(.is-shut) .panel__foot{margin-top:-12px;z-index:1;
+    background:linear-gradient(to bottom,transparent 12px,var(--surface) 12px)}
   /* Ручка вынесена из потока и больше не держит верхний отступ собой — возвращаем его
      панели там, где ручка есть */
   /* У карточки события верхнего отступа нет: первым элементом идёт обложка, и восемь
@@ -2335,7 +2385,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
      Подвал не двигается и не меняет высоту — меняется только прозрачность полосы, поэтому
      признак «ниже ещё есть» не может сам себя переключить */
   .panel:not(.is-section) .panel__foot::before{
-    content:'';position:absolute;left:0;right:0;bottom:100%;height:32px;pointer-events:none;
+    content:'';position:absolute;left:0;right:0;bottom:calc(100% - 12px);height:32px;pointer-events:none;
     background:linear-gradient(to top,var(--surface),color-mix(in srgb,var(--surface) 0%,transparent));
     opacity:0;transition:opacity .15s;
   }
@@ -3032,6 +3082,7 @@ function toast(text,label,fn,ic){
     (label?'<button class="toast__a" data-act="toast-act">'+H(label)+(ic?icon(ic):'')+'</button>':'')+
     '<span class="toast__time"><i></i></span>';
   el.classList.toggle('toast--bare',!text);
+  el.classList.toggle('toast--act',!!(text&&label));
   el.classList.add('is-on');
   /* полоска отмеряет ровно ту жизнь, что задана ниже: сброс с принудительным пересчётом,
      иначе второй тост подряд продолжил бы заполнять её с середины */
@@ -3310,10 +3361,10 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.40.0';
+var VERSION='3.41.0';
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
-var UPDATED='29 сентября 2026';
+var UPDATED='30 сентября 2026';
 var KEY='raion.v1';
 var db=null;
 
@@ -5437,11 +5488,10 @@ function wrapTitle(t){
   }
   return lines.map(function(l){return l.length>LABEL_CH+2?l.slice(0,LABEL_CH).replace(/\s+$/,'')+'…':l});
 }
-/* тег «моё» у своих; при фильтре «Мои» он был бы на каждой метке — не нужен */
+/* теги видны и при фильтре «Мои»: в нём две роли, и без тега их не различить */
 /* «моё» — голубым: вы автор. «участвую» — цветом события: вы часть встречи, и метка
    с тегом складываются в одно яркое пятно */
 function mineTag(p){
-  if(ui.whose==='mine')return '';
   if(p.author_id===db.currentUserId)return '<i class="pin__me">моё</i>';
   if(isJoined(responseOf(p.id,db.currentUserId)))return '<i class="pin__me pin__me--'+ptype(p).cls+'">участвую</i>';
   return '';
@@ -5500,7 +5550,7 @@ function mapChromeBoxes(){
   }
   chromeCache=out; chromeAt=t; return out;
 }
-function layoutEvents(items,halos){
+function layoutEvents(items,halos,pulses){
   var q=viewRect(), boxes=[], pins=[], dots=[], html={};
   var chrome=mapChromeBoxes();
   var rank={};
@@ -5531,6 +5581,8 @@ function layoutEvents(items,halos){
        под них, как под край экрана, — иначе подпись пропадала бы при простой панораме */
     var level=(pinOk||force)?((named&&!hit(labBox)&&labBox.l<q.r-8)?2:1):0;
     var live=e.live?'<span class="pin__live pin__live--'+cls+'" style="'+liveClock()+'"></span>':'';
+    /* волна идёт под всеми метками: внутри своей метки она ложилась поверх соседних */
+    if(live)pulses.push('<div class="marker" style="'+at+'">'+live+'</div>');
     /* Точка ↔ круг — превращение, а не подмена. Слой перерисовывается каждым кадром, поэтому
        переход ведём от часов: момент смены запоминаем, анимация стартует с отставанием */
     var ml=markLvl[p.id], tn=Date.now(), rm=reduceMotion();
@@ -5546,7 +5598,7 @@ function layoutEvents(items,halos){
     var labDelay=(ml.lab===ml.at&&ml.at)?.2:0, labAnim=(level===2&&lEl<labDelay+.15)?(labDelay-lEl):null;
     if(!level){
       boxes.push({l:x-7,t:y-7,r:x+7,b:y+7});
-      html[p.id]='<div class="marker marker--dot" style="'+at+'">'+live+
+      html[p.id]='<div class="marker marker--dot" style="'+at+'">'+
         '<button class="pindot pindot--'+cls+'" data-pin="'+p.id+'"'+dotAnim+' aria-label="'+H(p.title)+'"></button></div>';
       dots.push(html[p.id]);
       return;
@@ -5568,7 +5620,6 @@ function layoutEvents(items,halos){
     /* идущая сейчас встреча — единственное, что стоит ловить взглядом по всей карте,
        поэтому у неё метка на самой булавке, а не только слова в подписи */
     html[p.id]='<div class="marker'+(e.sel?' is-sel':'')+'" style="'+at+'">'+
-      live+
       '<button class="pin pin--'+cls+(e.mine?' pin--mine':'')+'" data-pin="'+p.id+'"'+pinAnim+' aria-label="'+H(p.title)+'">'+icon(pinGlyph(p))+'</button>'+
       (level===2?(labAnim!=null?labelHTML(p).replace('class="pin__label"','class="pin__label" style="animation:markFadeIn .15s ease both;animation-delay:'+labAnim.toFixed(3)+'s"'):labelHTML(p)):'')+
     '</div>';
@@ -5732,7 +5783,7 @@ function setBadge(b,n){
   }else b.hidden=true;
 }
 function renderMarkers(){
-  var hsNow=(ui.panel&&ui.panel.type==='pin')?ui.panel.id:null;
+  var hsNow=(ui.panel&&ui.panel.type==='pin')?ui.panel.id:(ui.pubPin||null);
   if(hsNow!==haloSelId){haloSelId=hsNow; haloSelAt=reduceMotion()?0:Date.now()}
   /* Режим прицела выводится, а не хранится, и до сих пор пересчитывался в renderPanel —
      то есть уже после слоя меток. Один общий render() успевал нарисовать метки по старому
@@ -5766,7 +5817,7 @@ function renderMarkers(){
      других в соседних — отсюда мигание. Расстояние монотонно по зуму: приближаясь, пины
      только расходятся, поэтому кластер может распасться, но не собраться обратно.
      От сдвига карты оно не зависит вовсе. Пинов на экране десятки, квадрат по ним дёшев */
-  var CL=70, out=[], halos=[], groups=[], taken={};
+  var CL=70, out=[], halos=[], pulses=[], groups=[], taken={};
   var pts=list.map(function(item){return {p:item.p,s:toScreen(item.wx,item.wy),wx:item.wx,wy:item.wy}});
   /* Открытый пин в кластер не попадает никогда. Иначе он честно доезжает до центра экрана
      и честно сливается с соседом: человек открыл карточку, смотрит в середину карты и видит
@@ -5817,7 +5868,7 @@ function renderMarkers(){
       var vs=o.s;
       if(vs[0]<-MG||vs[1]<-MG||vs[0]>view.W+MG||vs[1]>view.Ht+MG)return;
       items.push({p:o.p,s:o.s,mine:o.p.author_id===db.currentUserId,
-        sel:(ui.panel&&ui.panel.type==='pin'&&ui.panel.id===o.p.id)||ui.hoverPin===o.p.id});
+        sel:(ui.panel&&ui.panel.type==='pin'&&ui.panel.id===o.p.id)||ui.hoverPin===o.p.id||ui.pubPin===o.p.id});
     });
   });
   /* Волна — только у меток в кадре и не больше пяти, ближайших к центру: каждая волна
@@ -5829,7 +5880,8 @@ function renderMarkers(){
     return Math.hypot(a.s[0]-lcx,a.s[1]-lcy)-Math.hypot(b.s[0]-lcx,b.s[1]-lcy);
   }).slice(0,LIVE_MAX).forEach(function(e){e.live=true});
   markersEl.classList.toggle('is-near',mapZoom()>=NEAR_Z);
-  var placed=layoutEvents(items,halos);
+  if(halosEl)halosEl.classList.toggle('is-near',mapZoom()>=NEAR_Z);
+  var placed=layoutEvents(items,halos,pulses);
   /* Смена фильтра: ушедшие гаснут и чуть сжимаются, новые проявляются. Уходящие — копии
      их прежней разметки, без нажатий, живут 170 мс; карта в этот момент стоит */
   var fadeNow=markFadeAt&&(Date.now()-markFadeAt<150), entering=[];
@@ -5878,12 +5930,21 @@ function renderMarkers(){
     placed.boxes.push({l:pcx-18,t:pcy-44,r:pcx+18,b:pcy+2});
   }
   placeStations(stationMarks(),out,placed.boxes);
-  /* Десктоп: вопрос о подтверждении — алертом над меткой, как карточка у Яндекса. Видно,
-     пока ждёт ответа и метка в кадре, даже без открытой карточки */
-  var ap=isDesktopPanel()?askPin():null;
-  if(ap&&pinInFrame(ap.p)){
-    var as=toScreen(ap.p.x,ap.p.y), AW=320;
-    var aoff=Math.max(mapInsetLeft()+16,Math.min(view.W-16-AW,as[0]-AW/2))-as[0];
+  /* Десктоп: вопрос о подтверждении — алертом над меткой, как карточка у Яндекса. Только у
+     открытой карточки этой встречи и пока метка в кадре; иначе вопрос стоит в подвале
+     карточки. Два одинаковых вопроса на экране разом не бывает */
+  var ap=null;
+  if(isDesktopPanel()&&ui.panel&&ui.panel.type==='pin'){
+    var aop=pin(ui.panel.id), aor=aop&&responseOf(aop.id,db.currentUserId);
+    if(aop&&askConfirm(aop,aor)&&pinInFrame(aop))ap={p:aop,r:aor};
+  }
+  /* метка вошла в кадр или вышла из него — подвал карточки меняется вместе с этим */
+  var askNow=ap?ap.p.id:null;
+  if(askNow!==askFrameId){askFrameId=askNow; if(isDesktopPanel())setTimeout(renderPanel,0)}
+  if(ap){
+    var as=toScreen(ap.p.x,ap.p.y);
+    /* левый край — по левому краю кружка; у открытой карточки метка увеличена до 40 */
+    var aoff=-20;
     if(askShownId!==ap.p.id){askShownId=ap.p.id; askShownAt=Date.now()}
     var ael=(Date.now()-askShownAt)/1000;
     var aan=ael<.2&&!reduceMotion()?';animation:modalIn .2s ease both;animation-delay:-'+ael.toFixed(3)+'s':'';
@@ -5916,7 +5977,7 @@ function renderMarkers(){
   entering.forEach(function(id){
     var b=markersEl.querySelector('[data-pin="'+id+'"]'); if(b&&b.parentNode)b.parentNode.classList.add('is-in');
   });
-  if(halosEl)halosEl.innerHTML=halos.join('');
+  if(halosEl)halosEl.innerHTML=halos.concat(pulses).join('');
   /* Булавки выезжают из кластера, а не возникают на местах. Слой меток перерисовывается
      каждый кадр движения карты, поэтому вести узел из точки в точку можно только в тишине —
      когда перерисовок больше не будет. Такая тишина наступает после нажатия на кластер:
@@ -6707,13 +6768,20 @@ function feedCard(p,withDist){
            либо повторял заголовок раздела на каждой строке. В карточке события он остался:
            её открывают откуда угодно, и там состояние — новость */
         '<span class="fcard__m">'+
-          (role?'<span class="chip chip--brand">'+icon('user')+H(role)+'</span>':'')+
+          (role?roleChip(p,role):'')+
           (sub?'<span class="chip chip--muted">'+H(sub)+'</span>':'')+
           ((distPart||stPart)?'<span class="chip chip--muted">'+stPart+(stPart&&distPart?' ':'')+distPart+'</span>':'')+
         '</span>'+
       '</span>'+
     '</span>'+
   '</button>';
+}
+/* Роль в ленте называется так же, как тег на метке: «моё» и «участвую». Остальные роли на
+   карте не показываются, у них прежний текст. Значка нет ни у одной — роль говорит словом */
+function roleChip(p,role){
+  if(role==='Вы автор')return '<span class="chip chip--brand">моё</span>';
+  if(role==='Вы участвуете')return '<span class="chip chip--'+ptype(p).cls+'">участвую</span>';
+  return '<span class="chip chip--brand">'+H(role)+'</span>';
 }
 /* Домашний экран: одна поверхность вместо трёх — списка района в панели, «Ленты» на телефоне
    и отдельного поиска. Строка поиска закреплена сверху, а что в списке — решает карта:
@@ -6802,7 +6870,7 @@ function viewArchive(){
   var ctl='<div class="hscroll"><div class="ctlrow">'+catCtlHTML(arcCatOn,'arc-cats')+
     pickHTML({look:'ctl',ic:'calendar',attrs:'data-arc-period="1"',label:'Период',val:ui.arcPeriod||'month',
       opts:ARC_PERIODS.map(function(o){return [o[0],o[1]]})})+'</div></div>';
-  return {title:'Архив района',sub:scopeName(),back:true,section:!isDesktopPanel(),top:head+ctl,body:body};
+  return {title:'Архив района',sub:scopeName(),back:true,section:!isDesktopPanel(),top:head,body:ctl+body};
 }
 /* Ближайшее к кадру событие из тех, что в кадр не попали. Пустой кадр иначе не отличить
    от пустого района: человек не знает, здесь тихо или он смотрит не туда, и возит карту
@@ -7192,13 +7260,14 @@ function backUnder(b){
   b.el.parentNode.insertBefore(u,b.el);
   var ub=u.querySelector('.panel__body'); if(ub)ub.scrollTop=sn.scroll;
   b.under=u; b.dim=u.querySelector('.panel__dim');
+  b.underSheet=!/\bis-section\b/.test(sn.cls);
   backUnderAt(b,0,false);
 }
 function backUnderAt(b,p,anim){
   if(!b.under)return;
   var E=anim?'transform .22s cubic-bezier(.2,.7,.3,1)':'none';
   b.under.style.transition=E;
-  b.under.style.transform='translateX('+(-30*(1-p))+'%)';
+  b.under.style.transform=b.underSheet?'none':'translateX('+(-30*(1-p))+'%)';
   b.dim.style.transition=anim?'opacity .22s cubic-bezier(.2,.7,.3,1)':'none';
   b.dim.style.opacity=String(0.16*(1-p));
 }
@@ -7216,6 +7285,8 @@ document.addEventListener('touchstart',function(e){
   backSwipe=null;
   if(e.touches.length!==1||!canSwipeBack())return;
   var el=$('#panel'); if(!el||el.hidden)return;
+  /* у шторки свой жест — вниз; вбок над картой ей возвращаться некуда */
+  if(!el.classList.contains('is-section'))return;
   var t=e.touches[0], r=el.getBoundingClientRect();
   if(t.clientX-r.left>24)return;
   backSwipe={el:el,x0:t.clientX,y0:t.clientY,w:r.width,live:false};
@@ -7498,6 +7569,34 @@ function tabSwitch(setter,dir,el){
   var neu=$('#'+tpid+' .swrap > div');
   if(oldHTML&&neu&&!reduceMotion())areaSlide(neu,dir,oldHTML);
 }
+function secSlide(el,dir,oldHTML,cls,st,scroll){
+  var g=document.createElement('aside');
+  g.className=cls.replace(/\bis-(swipe|high)\b/g,'')+' panel--under is-secslide';
+  g.style.cssText=st;
+  g.innerHTML=oldHTML;
+  var ided=g.querySelectorAll('[id]'), i;
+  for(i=0;i<ided.length;i++)ided[i].removeAttribute('id');
+  var dim=document.createElement('i'); dim.className='secdim';
+  var zi=getComputedStyle(el).zIndex; if(zi&&zi!=='auto'){g.style.zIndex=zi; dim.style.zIndex=zi}
+  var E='.28s cubic-bezier(.2,.7,.3,1)', par=el.parentNode;
+  if(dir>0){
+    par.insertBefore(g,el); par.insertBefore(dim,el);
+    el.style.transition='none'; el.style.transform='translateX(100%)'; dim.style.opacity='0';
+  }else{
+    par.insertBefore(dim,el.nextSibling); par.insertBefore(g,dim.nextSibling);
+    g.style.transform='none'; dim.style.opacity='.16';
+  }
+  var gb=g.querySelector('.panel__body'); if(gb)gb.scrollTop=scroll;
+  void el.offsetWidth;
+  dim.style.transition='opacity '+E;
+  if(dir>0){el.style.transition='transform '+E; el.style.transform=''; dim.style.opacity='.16'}
+  else{g.style.transition='transform '+E; g.style.transform='translateX(100%)'; dim.style.opacity='0'}
+  setTimeout(function(){
+    if(g.parentNode)g.parentNode.removeChild(g);
+    if(dim.parentNode)dim.parentNode.removeChild(dim);
+    if(dir>0){el.style.transition=''; el.style.transform=''}
+  },300);
+}
 function panelSlide(el,dir,oldHTML,oldScroll){
   var g=document.createElement('div');
   g.className='panel__ghost';
@@ -7775,7 +7874,9 @@ function welcomeGoNow(){
 }
 function renderPanel(){
   var el=$('#panel');
-  var prevCls=el.className, prevSt=el.style.cssText;
+  var prevCls=el.className, prevSt=el.style.cssText, prevHid=el.hidden;
+  /* оборванный жест не оставляет на экране двойника */
+  if(!backSwipe)$$('.panel--under:not(.is-secslide)').forEach(function(n){if(n.parentNode)n.parentNode.removeChild(n)});
   var twoCol=isTwoCol()&&isDesktopPanel();
   var detail=(twoCol&&isDetailPanel(ui.panel))?ui.panel:null;
   var main=detail?parentOf(ui.panel):ui.panel;
@@ -7792,7 +7893,12 @@ function renderPanel(){
   /* Переходы гасятся при смене экрана, чтобы шторка не проигрывала переезд там, где
      ничего не двигалось. Но карточка пина поверх карты — не смена экрана, а появление,
      и этот запрет задевал её зря: она возникала рывком */
-  var rising=!isDesktopPanel()&&!!main&&main.type==='pin'&&!sameScreen;
+  /* Раздел — слой над картой со шторкой, а не соседняя страница: въезжает поверх неподвижной
+     шторки и уезжает с неё. Шторка при этом стоит — над ней всё время карта, а не дыра */
+  var prevSec=/\bis-section\b/.test(prevCls);
+  var secLayer=(!isDesktopPanel()&&!sameScreen&&!!lastPanelKey&&!prevHid&&!reduceMotion()&&!sheetClosing&&!slideDir&&
+    !!el.innerHTML&&!(main&&main.type==='welcome')&&prevSec!==!!v.section)?(v.section?1:-1):0;
+  var rising=!isDesktopPanel()&&!!main&&main.type==='pin'&&!sameScreen&&secLayer!==-1;
   if(!sameScreen&&!rising)el.style.transition='none';
   el.hidden=false;
   el.classList.toggle('is-section',!!v.section);
@@ -7814,6 +7920,9 @@ function renderPanel(){
      третьей ступенью жеста и ничего не добавляло: раскрытая карточка и так почти во весь
      экран, а третья ступень делала жест непредсказуемым */
   el.classList.toggle('is-shut',(homeSheet&&!ui.homeOpen)||(pinSheet&&ui.pinShut));
+  /* до конца движения шторки — по состоянию, после — по тому, где встал её край */
+  el.classList.toggle('is-high',(homeSheet&&ui.homeOpen)||(pinSheet&&!ui.pinShut));
+  setTimeout(syncFabs,320);
   /* таббар уходит только в переписке — остальные вложенные экраны у нас шторки
      поверх карты, они не «проваливаются», а наезжают */
   /* Таббар уходит там, где есть куда печатать: полю ввода и клавиатуре нужно место.
@@ -7930,8 +8039,10 @@ function renderPanel(){
       if(rr.bottom>ob2.top&&rr.top<ob2.bottom)flipOld[n.getAttribute('data-pin')]={top:rr.top,rect:rr,node:n};
     });
   }
+  var secOld=secLayer?el.innerHTML:null;
   el.innerHTML=html; el._html=html;
   if(slideOld)panelSlide(el,slideWas,slideOld,keepScroll);
+  else if(secOld)secSlide(el,secLayer,secOld,prevCls,prevSt,keepScroll);
   /* Тумблер описан с переходом в CSS, но не анимировался: панель перерисовывается целиком,
      и браузер получает новый узел, уже стоящий в конечном положении. Поэтому рисуем прежнее
      состояние, даём браузеру его увидеть и только потом выставляем текущее — тот же приём,
@@ -8012,7 +8123,7 @@ function askPin(){
   });
   return best;
 }
-var askShownAt=0, askShownId=null;
+var askShownAt=0, askShownId=null, askFrameId=null;
 function viewPin(id){
   var p=pin(id);
   if(!p)return {title:'Событие не найдено',body:'<div class="empty">'+icon('pin')+'<b>Событие удалено</b></div>'};
@@ -8197,7 +8308,7 @@ function viewPin(id){
       '</div>'+(seeList?icon('chev-right'):'')+
     '</'+pt+'>';
   }
-  if(askFoot&&groupThread(p.id))partBtn+='<button class="author" data-act="open-group" data-id="'+p.id+'">'+
+  if(askFoot&&isDesktopPanel()&&groupThread(p.id))partBtn+='<button class="author" data-act="open-group" data-id="'+p.id+'">'+
     '<div class="author__body"><div class="author__n">'+H(groupName(p))+'</div><div class="author__s">общий чат участников</div></div>'+icon('chev-right')+'</button>';
   /* Итог передач: отметки ставятся по одной в переписках, а увидеть их разом можно только
      здесь — иначе автору пришлось бы листать все разговоры, чтобы вспомнить, чем кончилось.
@@ -8289,7 +8400,15 @@ function viewPin(id){
            «во сколько и что взять» один на всех */
         /* «Не пойду» уехала в меню: внизу карточки она соседствовала с разговором, то есть
            отказ стоял ровно там, куда тянется рука за чатом. Нужен он редко, а промах дорог */
-        foot=askFoot
+        /* На телефоне — ряд, как у Яндекса: разговор значками слева, ответ словами справа.
+           Чат остаётся на виду: он полезнее всего на экране, а строкой в теле уезжал под скролл */
+        if(askFoot&&!isDesktopPanel())foot='<div class="askfoot"><div class="askfoot__t">Идёте? Без ответа место уйдёт другому</div>'+
+          '<div class="footrow">'+
+            '<button class="btn btn--line btn--ic" data-act="write" data-id="'+p.id+'" aria-label="Написать автору" title="Написать автору">'+icon('chat')+'</button>'+
+            (gt?'<button class="btn btn--line btn--ic" data-act="open-group" data-id="'+p.id+'" aria-label="Чат участников" title="Чат участников">'+icon('group')+'</button>':'')+
+            '<button class="btn btn--line" data-act="confirm-no" data-id="'+mr.id+'">Не смогу</button>'+
+            '<button class="btn btn--primary" data-act="confirm-go" data-id="'+mr.id+'">Иду</button></div></div>';
+        else foot=askFoot
           ? '<div class="askfoot"><div class="askfoot__t">Подтвердите участие — без ответа место уйдёт другому соседу</div>'+
               '<div class="footrow"><button class="btn btn--line" data-act="confirm-no" data-id="'+mr.id+'">Не смогу</button>'+
               '<button class="btn btn--primary" data-act="confirm-go" data-id="'+mr.id+'">Иду</button></div></div>'
@@ -9748,9 +9867,17 @@ function sysStatus(m,op){
 /* Время встречи — самое важное после названия, поэтому отдельной строкой, как в карточке
    события. Прежде оно стояло серым началом пояснения и сливалось со временем уведомления */
 var SYS_WHEN={'Подтвердите участие':1,'Скоро встреча':1};
-function sysWhenHTML(m,op){
+/* та же пара «значок + текст», что факты в карточке и профиле; пояснение — серой строкой под ней */
+function sysWhenHTML(m,op,txt){
   if(!op||!isAct(op)||!op.starts_at||!SYS_WHEN[m.title])return '';
-  return '<div class="sysmsg__when">'+icon('calendar')+H(whenText(op.starts_at))+'</div>';
+  return '<div class="factrow">'+icon('calendar')+'<div><b>'+H(whenText(op.starts_at))+'</b>'+
+    (txt?'<span>'+H(txt)+'</span>':'')+'</div></div>';
+}
+/* шеврон — продолжение заголовка: стоит при последнем слове и не уезжает на строку один */
+function titleGo(t){
+  var i=t.lastIndexOf(' ');
+  return H(t.slice(0,i+1))+'<span class="sysmsg__tail">'+H(t.slice(i+1))+
+    '<svg class="sysmsg__go" aria-hidden="true"><use href="#i-chev-right"/></svg></span>';
 }
 /* из пояснения убираем время, если оно стоит в начале: теперь его говорит своя строка */
 function sysText(m,op){
@@ -9766,7 +9893,7 @@ function sysBtn(m,op){
      Раньше оно предлагало только «Открыть» и отправляло искать те же две кнопки в карточке */
   if(m.ask==='confirm'&&op){
     var cr=myResponse(op.id);
-    /* кнопки — ответ на сообщение, поэтому под карточкой, как инлайн-кнопки в Телеграме */
+    /* кнопки — ответ на сообщение, поэтому в самой карточке, последним рядом */
     if(cr)return '<div class="sysacts" data-mid="'+H(m.id)+'">'+
       /* маленькие: это ответ на сообщение, а не главное действие экрана. «Не смогу» — с обводкой,
          не красная: зеркальный ответ в паре */
@@ -9821,13 +9948,13 @@ function viewThread(id){
                  пустой, но забирала зазор колонки, и сверху было 24 вместо 16 */
               ? (op?'<div class="sysmsg__head">'+
                   (op?'<span class="chip chip--'+ptype(op).cls+'">'+icon(pinGlyph(op))+H(m.title)+'</span>':'')+
-                  (op?'<span class="sysmsg__go">'+icon('chev-right')+'</span>':'')+'</div>':'')+
-                '<div class="sysmsg__t">'+H(op?op.title:m.title)+'</div>'+
-                sysWhenHTML(m,op)+
-                (sysText(m,op)?'<div class="sysmsg__x">'+H(sysText(m,op))+'</div>':'')
+                  '</div>':'')+
+                '<div class="sysmsg__t">'+(op?titleGo(op.title):H(m.title))+'</div>'+
+                (sysWhenHTML(m,op)?sysWhenHTML(m,op,sysText(m,op))
+                  :(sysText(m,op)?'<div class="sysmsg__x">'+H(sysText(m,op))+'</div>':''))
               : '<div class="sysmsg__x">'+H(m.text)+'</div>')+
             '<div class="sysmsg__foot"><span class="sysmsg__d">'+H(hhmm(m.created_at))+'</span>'+st+'</div>'+
-          '</div>'+sysBtn(m,op);
+          sysBtn(m,op)+'</div>';
         }).join('')+'</div>'
       : '<div class="empty">'+icon('bell')+'<b>Пока тихо</b><p>Сюда придут напоминания о ваших событиях и оповещения о пропажах по соседству</p></div>';
     /* общая шапка разделов: стрелка и «Уведомления»; «Район» — имя приложения, оно ничего не сообщало */
@@ -9905,8 +10032,15 @@ function viewThread(id){
     /* Вопрос и ответ про одно и то же: на «Договорились?» кнопка «Да» значила бы «мы
        договорились», а отмечает она, что вещь уже у другого. «Уже вернулось?» верно для обоих
        случаев находок — возвращает ли автор или сосед, — прежнее «когда вернёте» — нет */
+    /* Отметка закрывает участие соседа, а не событие. Поэтому алерт говорит, что событие ещё
+       открыто, и сам предлагает закрыть его — раньше это делал тост, и через шесть секунд
+       предложение пропадало, а кнопка «Закрыть» после «Отмечено» читалась повтором */
+    var sdone=lf?'Находка вернулась':'Вещь передана';
     settle=(sr&&sr.settled_at)
-      ? alertHTML(p,lf?'Отмечено: находка вернулась':'Отмечено: вещь передана','','')
+      ? (p.status!=='active'
+          ? alertHTML(p,sdone+' · событие закрыто','','')
+          : alertHTML(p,sdone,lf?'Событие ещё открыто':'Событие ещё открыто — могут откликнуться другие соседи',
+              '<button class="pill" data-act="close-pin" data-id="'+H(p.id)+'">Закрыть событие</button>'))
       : alertHTML(p,lf?'Уже вернулось?':'Уже передали?','У соседа событие уйдёт в архив',
           '<button class="pill" data-act="settle" data-id="'+H(u.id)+'" data-pin="'+H(p.id)+'">Да</button>');
     /* стоит в начале ленты и прилипает к верху только при прокрутке: без прокрутки под ним
@@ -10139,7 +10273,7 @@ function viewScope(){
      конца Садового жителю Сухаревской не сосед. Подсказка называет границу выбора */
   var ws=ui.whose||'all';
   var WHOSE=[['all','Все'],['mine','Мои'],['others','Остальные']];
-  var whoseHint={mine:'Созданные вами',others:'Всё, кроме ваших'}[ws];
+  var whoseHint={mine:'Ваши и те, где вы участвуете',others:'Всё, где вы не автор и не участник'}[ws];
   var whose='<div class="field"><label>Показывать</label>'+
     '<div class="segctl">'+WHOSE.map(function(o){
       return '<button class="'+(ws===o[0]?'is-on':'')+'" data-whose="'+o[0]+'">'+o[1]+'</button>';
@@ -10729,6 +10863,10 @@ function publish(){
      мотивации автора, а его чаты — единственный источник плотности на холодном старте.
      Никакой рассылки: кнопка открывает системное «Поделиться», и куда отправить, решает
      человек. Показывается один раз — ушёл с карточки, и предложения больше нет */
+  var pmsg=p.type==='activity'?'Встреча опубликована — соседи её уже видят'
+    :p.type==='lost_found'?(p.subtype==='lost'?'Пропажа опубликована — соседи получат оповещение':'Находка опубликована — она в сообщениях у соседей')
+    :'Событие опубликовано у станции «'+district(landmarkOf(p)).name+'»';
+  if(!isDesktopPanel()&&p.x!=null&&!reduceMotion()){publishStage(p,d,pmsg);return}
   ui.inviteFor=p.id;
   openPanel({type:'pin',id:p.id});
   if(p.x!=null){
@@ -10736,9 +10874,57 @@ function publish(){
     centerOnSmooth(p.x,p.y);
     setTimeout(function(){confettiAt(p)},750);
   }
-  toast(p.type==='activity'?'Встреча опубликована — соседи её уже видят'
-    :p.type==='lost_found'?(p.subtype==='lost'?'Пропажа опубликована — соседи получат оповещение':'Находка опубликована — она в сообщениях у соседей')
-    :'Событие опубликовано у станции «'+district(landmarkOf(p)).name+'»');
+  toast(pmsg);
+}
+/* Телефон: сначала место, потом карточка. Шторка создания уходит, пин вырастает ровно там,
+   где стоял прицел. У вещи точка на карте примерная — и тогда едет не пин, а карта под ним:
+   пин остаётся на месте прицела, а вокруг проявляется круг «примерный адрес». Прежде пин
+   молча отскакивал в сторону, и это читалось сбоем. Потом конфетти и короткая карточка;
+   карта поднимается, только если карточка накрыла бы пин */
+function publishStage(p,d,msg){
+  var fx=p.x, fy=p.y, ex=Math.round(d.x), ey=Math.round(d.y), fuzz=(fx!==ex||fy!==ey);
+  if(fuzz)setPlaceXY(p,ex,ey); else ui.pubPin=p.id;
+  ui.panel=null; lastPanelKey=null; ui.pinShut=true;
+  toast(msg);
+  function stage3(){
+    confettiAt(p);
+    setTimeout(function(){
+      ui.pubPin=null; ui.inviteFor=p.id; ui.pinShut=true;
+      openPanel({type:'pin',id:p.id});
+      setTimeout(function(){liftOver(p)},300);
+    },450);
+  }
+  closeSheetAnim(function(){
+    render();
+    setTimeout(function(){
+      if(!fuzz){stage3();return}
+      ui.pubPin=p.id;
+      var S=toScreen(ex,ey), t0=0, dur=500;
+      function fr(ts){
+        if(!t0)t0=ts;
+        var k=Math.min(1,(ts-t0)/dur), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+        var px=ex+(fx-ex)*e, py=ey+(fy-ey)*e;
+        setPlaceXY(p,px,py);
+        holdAt(px,py,S[0],S[1]);
+        if(k<1){requestAnimationFrame(fr);return}
+        setPlaceXY(p,fx,fy); save(); renderMarkers(); stage3();
+      }
+      requestAnimationFrame(fr);
+    },300);
+  });
+}
+/* поставить точку мира в заданное место экрана, без анимации */
+function holdAt(x,y,sx,sy){
+  if(glMap)glGoto(x,y,null,false,sx,sy);
+  else{view.tx=sx-x*view.k; view.ty=sy-y*view.k; applyView()}
+}
+function liftOver(p){
+  var b=markersEl&&markersEl.querySelector('[data-pin="'+p.id+'"]'), pn=$('#panel');
+  if(!b||!pn||pn.hidden)return;
+  /* пин с подписью должен стоять над краем шторки хотя бы на свою высоту */
+  var need=b.getBoundingClientRect().top-(pn.getBoundingClientRect().top-72);
+  if(need<=0)return;
+  if(glMap)glMap.panBy([0,need],{duration:320}); else panTo(view.tx,view.ty-need);
 }
 /* Ориентир выбирается как в поиске: тегами, а не алфавитным списком всех станций, где
    первой стояла «Арбатская», даже если прицел на Чистых прудах. Без запроса — недавние
@@ -10986,13 +11172,8 @@ function onAction(act,el,e){
       var sres=responseOf(stp,stu);
       if(!sres){sres={id:uid('rsp'),pin_id:stp,user_id:stu,status:'interested',created_at:now()};db.responses.push(sres)}
       sres.settled_at=now();
+      /* закрыть событие предлагает сам алерт в переписке — см. viewThread */
       save(); render();
-      /* Закрыть событие предлагаем, а не спрашиваем: раздача уходит партиями, и вопрос
-         «всё отдали?» навязывал бы решение тому, кто только начал. Кто отдал последнее —
-         нажмёт, остальные не заметят */
-      toast('Отмечено — сосед получил вещь','Закрыть событие',function(){
-        var sp=pin(stp); if(sp)closeDialog(sp);
-      });
       break;
     case 'scope-done': onAction('back',el,e); break;
     case 'toast-act':
@@ -12592,7 +12773,12 @@ function repaintSheet(){
   });
 }
 /* шторка встала — подсказка переставляется по её окончательному краю */
-document.addEventListener('transitionend',function(e){if(e.target&&e.target.id==='panel'){repaintSheet(); syncHint()}});
+function syncFabs(){
+  var el=$('#panel'); if(!el||el.hidden||isDesktopPanel())return;
+  if(el.classList.contains('is-shut')||!el.querySelector('.sheetfab')){el.classList.remove('is-high');return}
+  el.classList.toggle('is-high',el.getBoundingClientRect().top<140+safeInset('top'));
+}
+document.addEventListener('transitionend',function(e){if(e.target&&e.target.id==='panel'){repaintSheet(); syncHint(); syncFabs()}});
 document.addEventListener('animationend',function(e){if(e.target&&e.target.id==='panel')repaintSheet()});
 function fitBtnRows(root){
   $$('.footrow .btn, .modal__foot .row .btn, .sysacts .btn',root||document).forEach(function(b){
@@ -12721,7 +12907,14 @@ function syncPickUI(){
    Тело не ловим, иначе жест дерётся с прокруткой содержимого. Закрытие делает то же, что
    сделала бы кнопка выхода этого экрана: у выбора станции и категорий — возврат назад,
    у карточки пина — к тому, откуда её открыли, у остальных — на домашний экран */
-var sheetDrag=null;
+var sheetDrag=null, dragClickAt=0;
+/* элементы, у которых свой жест: ползунок, поле, ряд с прокруткой вбок, переключатели */
+function onCtl(t){return !!(t&&t.closest&&t.closest('input,textarea,select,[contenteditable],.hscroll,.switch,.ctlrow,.segctl,.rangerow,.tabs'))}
+function bodyStill(b){return !!b&&b.scrollHeight<=b.clientHeight+1}
+/* палец, начавший тянуть шторку с кнопки, не должен её ещё и нажать */
+document.addEventListener('click',function(e){
+  if(Date.now()-dragClickAt<350){e.preventDefault(); e.stopPropagation()}
+},true);
 /* Жест вниз закрывает шторку, а не отступает на шаг: шаг назад делает стрелка в шапке,
    и второй способ вызова ей не нужен, а закрыть целиком иначе было нечем. Исключение одно —
    карточка события: у неё три положения, и там жест меняет высоту, а не уводит с экрана */
@@ -12737,7 +12930,14 @@ function dismissSheet(){
 document.addEventListener('pointerdown',function(e){
   var pn=$('#panel');
   if(!pn||!pn.classList.contains('is-swipe'))return;
-  if(!e.target.closest('.sheet-grip')&&!e.target.closest('.chathead'))return;
+  if(!e.target.closest('.sheet-grip')&&!e.target.closest('.chathead')){
+    /* Тело ловим, только если в нём нечего прокручивать: тогда жест вниз ничей, и отдаём его
+       шторке. Решаем не сразу — сначала палец должен пойти вниз, иначе это нажатие */
+    var ib=e.target.closest('.panel__body');
+    if(!ib||!pn.contains(ib)||!bodyStill(ib)||onCtl(e.target)||(ui.panel&&ui.panel.type==='edit'))return;
+    sheetDrag={y:e.clientY,x:e.clientX,t:Date.now(),moved:0,id:e.pointerId,pending:true,fromBody:true};
+    return;
+  }
   if(e.target.closest('.iconbtn'))return;   /* кнопки в шапке не перехватываем */
   /* Захват указателя обязателен: без него браузер отдаёт жест тому, над чем оказался палец,
      и перетаскивание срывается на первом же пикселе за пределами ручки. preventDefault
@@ -12750,17 +12950,37 @@ document.addEventListener('pointerdown',function(e){
 document.addEventListener('pointermove',function(e){
   if(!sheetDrag)return;
   var pn=$('#panel'); if(!pn)return;
+  if(sheetDrag.pending){
+    var pdy=e.clientY-sheetDrag.y;
+    if(pdy<-4||Math.abs(e.clientX-sheetDrag.x)>12){sheetDrag=null;return}
+    if(pdy<8)return;
+    sheetDrag.pending=false; sheetDrag.y=e.clientY; sheetDrag.t=Date.now();
+    try{e.target.setPointerCapture(e.pointerId); sheetDrag.cap=e.target}catch(err){}
+    pn.style.transition='none';
+  }
   sheetDrag.moved=Math.max(0,e.clientY-sheetDrag.y);
   pn.style.transform='translateY('+sheetDrag.moved+'px)';
 });
 document.addEventListener('pointerup',function(e){
   if(!sheetDrag)return;
   var d=sheetDrag; sheetDrag=null;
+  if(d.pending)return;
   if(d.cap)try{d.cap.releasePointerCapture(d.id)}catch(err){}
   var pn=$('#panel'); if(pn){pn.style.transition=''; pn.style.transform=''}
+  if(d.fromBody&&d.moved>4)dragClickAt=Date.now();
   /* быстрый смах засчитываем и без порога */
   if(d.moved>90||((Date.now()-d.t)<300&&d.moved>40))dismissSheet();
 });
+
+document.addEventListener('pointercancel',function(){
+  if(!sheetDrag)return;
+  sheetDrag=null;
+  var pn=$('#panel'); if(pn){pn.style.transition=''; pn.style.transform=''}
+});
+document.addEventListener('touchmove',function(e){
+  if(!sheetDrag||!sheetDrag.fromBody||!e.touches||!e.touches[0])return;
+  if(e.touches[0].clientY-sheetDrag.y>0&&e.cancelable)e.preventDefault();
+},{passive:false});
 
 /* ============ 13. домашняя шторка на телефоне ============ */
 /* Тянется за ручку и строку поиска — за карту не тянется, иначе карту нельзя было бы двигать.
@@ -12791,13 +13011,16 @@ document.addEventListener('pointerdown',function(e){
      раскрывало шторку и перерисовка съедала само нажатие */
   if(isPin&&e.target.closest&&e.target.closest('.panel__body button,.panel__body a,.panel__body input'))return;
   var onHandle=e.target.closest('.panel__top')||e.target.closest('.sheet-grip')||e.target.closest('.pinshort');
-  if(!onHandle&&!(isPin&&inBody&&atTop))return;
+  /* раскрытый список тянется и за тело, если прокручивать в нём нечего: пусто или всё видно */
+  var bodyFree=!isPin&&!onHandle&&!!inBody&&!pn.classList.contains('is-shut')&&bodyStill(inBody)&&!onCtl(e.target);
+  if(!onHandle&&!(isPin&&inBody&&atTop)&&!bodyFree)return;
   /* тянем верхний край, а не всю шторку: нижний остаётся на верху таббара, поэтому
      навигация не уезжает под шторку даже посреди жеста */
   var peek=HOME_PEEK;
   homeDrag={y:e.clientY,moved:0,pin:isPin,open:isPin?!ui.pinShut:ui.homeOpen,fromBody:!!(inBody&&!onHandle),
     onField:!!(e.target.closest&&e.target.closest('.searchfield')),
-    max:Math.max(HOME_TOP,window.innerHeight-railH()-peek), top:HOME_OPEN_TOP+safeInset('top')};
+    max:Math.max(HOME_TOP,window.innerHeight-railH()-peek), top:HOME_OPEN_TOP+safeInset('top'),x:e.clientX};
+  if(bodyFree){homeDrag.pending=true; return}
   /* Карточка события стоит на нижнем крае экрана, а раскрытая — на линии с вырезом сверху:
      оба положения берём у самой шторки, а не пересказываем CSS числами. Тянем от того места,
      где она стоит сейчас; выше раскрытой не пускаем */
@@ -12818,6 +13041,13 @@ document.addEventListener('pointermove',function(e){
   if(!homeDrag)return;
   var pn=homeSheetEl(); if(!pn)return;
   var dy=e.clientY-homeDrag.y;
+  if(homeDrag.pending){
+    if(dy<-4||Math.abs(e.clientX-homeDrag.x)>12){homeDrag=null;return}
+    if(dy<8)return;
+    homeDrag.pending=false; homeDrag.y=e.clientY; dy=0;
+    try{e.target.setPointerCapture(e.pointerId); homeDrag.cap=e.target}catch(err){}
+    pn.style.transition='none';
+  }
   if(Math.abs(dy)>homeDrag.moved)homeDrag.moved=Math.abs(dy);
   /* жест начат в теле: вниз ведёт шторку, вверх отдаём прокрутке и больше не вмешиваемся */
   if(homeDrag.fromBody&&dy<0){homeDrag=null; pn.style.transition=''; pn.style.top=''; return}
@@ -12849,10 +13079,12 @@ document.addEventListener('touchmove',function(e){
 document.addEventListener('pointerup',function(e){
   if(!homeDrag)return;
   var d=homeDrag; homeDrag=null;
+  if(d.pending)return;
   if(d.cap)try{d.cap.releasePointerCapture(e.pointerId)}catch(err){}
   var pn=homeSheetEl();
   if(pn){pn.style.transition=''; pn.style.top=''}
   var dy=e.clientY-d.y;
+  if(d.fromBody&&d.moved>4)dragClickAt=Date.now();
   if(d.pin){
     /* Две остановки: короткая и раскрытая. Тянут вниз — на ступень ниже, из короткой
        ещё ниже это закрытие. Тянут вверх — раскрывается. Третья ступень убрана: раскрытая
