@@ -313,6 +313,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   transition:background .12s,color .12s;
 }
 .navbtn svg{width:20px;height:20px;flex:none}
+.navbtn .navava__ring{width:29px;height:29px}
 .navbtn span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .navbtn:hover{background:var(--surface-2);color:var(--ink)}
 .navbtn.is-on{background:var(--surface-3);color:var(--ink)}
@@ -454,6 +455,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 @keyframes dotShrink{from{transform:translate(-50%,-50%) scale(2.67)}}
 .pin[style*="pinGrow"]>svg{animation:pinIconIn .2s ease both;animation-delay:inherit}
 @keyframes pinIconIn{0%,50%{opacity:0}}
+@keyframes pinFlash{0%,100%{scale:1}40%{scale:1.35}}
 /* Прозрачность — у метки целиком, масштаб — у частей. Пока прозрачность была у каждой части
    своя, подложка подписи просвечивала сквозь полупрозрачный кружок, и место их наложения
    читалось третьим пятном */
@@ -485,6 +487,8 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .pin--find{background:var(--find);color:var(--find-ink)}
 .marker:hover .pin,.pin:focus-visible{transform:translate(-50%,-50%) scale(1.12)}
 .marker.is-sel .pin{transform:translate(-50%,-50%) scale(1.25)}
+/* кружок растёт из центра и остаётся на точке, а плашка отъезжает на прирост — зазор тот же */
+.marker.is-sel .pin__label:not(.pin__label--drop){translate:4px 0}
 .marker.is-sel .pin--drop,.marker:hover .pin--drop{transform:translate(-50%,-100%) rotate(-45deg) scale(1.28)}
 .marker.is-sel{z-index:5}
 /* Пока открыта карточка, остальные булавки гаснут — выбранная и так крупнее, но на плотной
@@ -526,15 +530,24 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 /* Алерт над меткой лежит поверх всего на карте — меток, подписей, станций. Панель и кнопки
    над картой выше него: у края панели он уходит под неё, а не упирается в стену */
 .mapask{z-index:1000}
-.mapask__in{position:absolute;bottom:32px;width:320px;border-radius:var(--r-m);background:var(--surface);
+.mapask__in{position:absolute;bottom:32px;width:300px;border-radius:var(--r-m);background:var(--surface);
   box-shadow:0 8px 24px rgba(0,0,0,.15);pointer-events:auto}
 .mapask__in .alert{margin:0;border-radius:var(--r-m)}
 /* ширина кнопок задана числом: мерить её по надписям на каждом кадре движения карты — это
    и были скачки */
-.mapask__in .alert__acts{width:96px}
+.mapask__in .alert__acts{width:84px}
+.mapask__in .alert{padding:12px;gap:12px}
+.mapask__in .alert__t b{font-size:var(--f-h60);line-height:var(--l-h60)}
+.mapask__in .alert .alert__t p{font-size:var(--f-s20);line-height:var(--l-s20)}
+.mapask__in .alert .pill{height:28px;font-size:var(--f-s20);line-height:var(--l-s20)}
 .mapask__in .alert__acts .pill{width:100%}
 .mapask__in .pill:not(.pill--primary){background:var(--surface-2)}
-.askfoot{display:flex;flex-direction:column;gap:8px}
+.askfoot{display:flex;flex-direction:column;gap:12px}
+/* алерт в подвале — во всю ширину, как закреп в переписке, градиент развёрнут: цвет сверху */
+.panel__foot .askfoot>.alert{margin:-12px -16px 0;padding:20px 16px;gap:16px;border-radius:0}
+.panel__foot .askfoot>.alert--act{background:linear-gradient(to bottom,var(--act-soft) 0,var(--act-soft) 35%,var(--surface) 100%)}
+.panel__foot .askfoot>.alert--offer{background:linear-gradient(to bottom,var(--offer-soft) 0,var(--offer-soft) 35%,var(--surface) 100%)}
+.panel__foot .askfoot>.alert--find{background:linear-gradient(to bottom,var(--find-soft) 0,var(--find-soft) 35%,var(--surface) 100%)}
 .askfoot__t{font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-3);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .footrow .btn.btn--ic{flex:none;width:48px;padding:0}
 .pin,.pindot{cursor:pointer}
@@ -660,6 +673,18 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    вместо иконки знак вопроса */
 .pin--pick{width:41px;height:41px;background:var(--brand);color:#fff}
 .pin--pick b{transform:rotate(45deg);font-size:18px;font-weight:700;line-height:1}
+.pin--brandc{background:var(--brand);color:#fff}
+.pin--dc b{font-size:16px;font-weight:700;line-height:1}
+.pin--dc{position:relative}
+.pin__qout{position:absolute}
+.pin__gin{display:grid;place-items:center}
+.pin__gin svg{width:16px;height:16px}
+.pin__label--draft{pointer-events:none}
+@keyframes draftToCircle{from{width:34px;height:34px;border-radius:50% 50% 50% 6px;transform:translate(-50%,-100%) rotate(-45deg) scale(1.28);box-shadow:var(--shadow-2)}}
+@keyframes draftToDrop{from{width:32px;height:32px;border-radius:50%;transform:translate(-50%,-50%) scale(1.25);box-shadow:0 0 0 2px #fff,var(--shadow-2)}}
+@keyframes draftColor{from{background:var(--from)}}
+@keyframes glyphIn{from{opacity:0;scale:.4}}
+@keyframes glyphOut{to{opacity:0;scale:.4}}
 /* во время постановки точки существующие пины приглушаем: контекст рядом остаётся видно,
    но прицел среди них не теряется */
 /* Приглушение на шаге «Место» — плавно: слой меток перерисовывается на каждом кадре, поэтому
@@ -824,6 +849,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .tag--brand{background:var(--brand-soft);border-color:transparent;color:var(--brand-icon)}
 .tag--ok{background:var(--offer-soft);border-color:transparent;color:var(--offer)}
 .author__n .tag{vertical-align:2px;margin-left:4px}
+.author__n .tag.tag--brand{background:var(--surface)}
 /* Обращения сервиса к вам: первым блоком карточки (3.27) */
 .cardnotes{display:flex;flex-direction:column;gap:8px;margin-top:4px}
 /* Алерт — обращение сервиса к человеку: «Уже вернулось?», «Ещё актуально?», «Подтвердите
@@ -1122,7 +1148,7 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    и без линии строка читалась бы как часть самой кнопки */
 .switchrow--foot{align-items:flex-start;padding:0 0 12px;margin-bottom:4px;border-bottom:1px solid var(--line)}
 /* центр тумблера на центре строки заголовка: сама строка 18, тумблер 25 */
-.switchrow .switch{margin-top:calc((var(--l-h60) - 25px) / 2)}
+.switchrow .switch{margin-top:0}
 .switchrow__txt{flex:1;min-width:0}
 .switchrow b{display:block;font-size:var(--f-h60);line-height:var(--l-h60);font-weight:600}
 /* только пояснение внутри текста: обёртка текста тоже span, и прежнее «.switchrow span» сдвигало
@@ -1170,7 +1196,7 @@ svg:has(> use[href="#i-give"]){scale:1.2}
 .cover--act{background:var(--act-soft)}
 .cover--offer{background:var(--offer-soft)}
 .cover--find{background:var(--find-soft)}
-.cover__glyph{width:44px;height:44px;opacity:.42}
+.cover__glyph{width:44px;height:44px}
 /* карточка наезжает на обложку — значок встаёт по центру того, что видно */
 .cover:has(+.pincard) .cover__glyph{translate:0 calc(var(--r-l) / -2)}
 .cover--act .cover__glyph{color:var(--act)}
@@ -1232,7 +1258,7 @@ svg:has(> use[href="#i-give"]){scale:1.2}
   color:var(--ink-2);transition:opacity .2s ease}
 .sheetfab svg{width:20px;height:20px}
 /* у стрелки тяжёлая часть внизу слева, носик вправо вверх: по геометрии в центре, на глаз нет */
-#zoomFit svg,.geofab svg{transition:color .15s ease;translate:-2px 2px}
+#zoomFit svg,.geofab svg{transition:color .15s ease;translate:-1px 1px}
 #zoomFit.is-me svg,.geofab.is-me svg{color:var(--brand)}
 .sheetfab--l{left:16px}
 .sheetfab--r{right:16px}
@@ -1247,6 +1273,7 @@ svg:has(> use[href="#i-give"]){scale:1.2}
 .pinshort__t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .pinshort__n{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pinshort__tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .pinshort__s{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap}
 /* теги мельче обычного чипа: их бывает три-четыре, и они не содержание, а опора решения */
 .stags{display:flex;flex-wrap:wrap;gap:6px}
@@ -1302,6 +1329,9 @@ svg:has(> use[href="#i-give"]){scale:1.2}
 .factrow{display:flex;gap:12px;align-items:flex-start;font-size:var(--f-h60);line-height:var(--l-h60)}
 .factrow svg{width:16px;height:16px;color:var(--ink-3);flex:none;margin-top:2px}
 .factrow b{font-weight:600}
+.factrow--btn{width:100%;text-align:left;border-radius:var(--r-s)}
+.factrow__go{color:var(--brand-icon);font-weight:500}
+.factrow--btn:hover .factrow__go{text-decoration:underline}
 /* будильник на строке времени: прижат к правому краю строки и не спорит с текстом */
 .factrow span{color:var(--ink-3);font-size:var(--f-s20);line-height:var(--l-s20);display:block;margin-top:4px}
 /* Обе кнопки — автор и участники — одного роста: содержимое внутри держится в 36, поэтому
@@ -1737,6 +1767,8 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
 .stdone .btn{pointer-events:auto}
 /* место под кнопкой, чтобы последняя станция не пряталась под ней */
 .stdone__gap{height:84px}
+.scopedone__n{display:inline-block}
+.scopedone__n.is-tick{animation:badgePop .3s ease}
 /* снимок уходящего раздела: лежит слоем поверх, ничего не занимает в потоке
    и не ловит нажатия — он уже не интерактивен, он уезжает */
 .panel__ghost{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;
@@ -1800,7 +1832,9 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
 .listrow__cat svg{width:12px;height:12px}
 .listrow__cat--l{width:24px;height:24px}
 .listrow__cat--l svg{width:14px;height:14px}
-.listrow__t--who{display:flex;align-items:center;gap:6px;min-width:0}
+.listrow__t--who{display:flex;align-items:baseline;gap:6px;min-width:0}
+/* базовую линию строки даёт имя: лицо и значок вида стоят по центру и в ней не участвуют */
+.listrow__t--who>.listrow__who,.listrow__t--who>.listrow__kind,.listrow__t--who>.avatar{align-self:center}
 .listrow__tn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .listrow__who{width:16px;height:16px;font-size:7px;flex:none}
 .listrow__kind{display:grid;place-items:center;width:16px;height:16px;flex:none;color:var(--ink-3)}
@@ -1885,7 +1919,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .sysmsg__tail{white-space:nowrap}
 .sysmsg__go{display:inline-block;width:.9em;height:.9em;margin-left:2px;vertical-align:-.12em;color:inherit}
 .sysmsg__d{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3)}
-.sysmsg__foot{display:flex;align-items:center;gap:8px}
+.sysmsg__foot{display:flex;align-items:baseline;gap:8px}
 .sysmsg__when{display:flex;align-items:center;gap:8px;font-size:var(--f-m20);line-height:var(--l-m20);font-weight:600;color:var(--ink)}
 .sysmsg__when svg{width:16px;height:16px;color:var(--ink-3);flex:none}
 /* кнопки ответа — внутри карточки последним рядом; от времени отступ больше обычного */
@@ -1894,10 +1928,13 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .chip.is-pop{animation:ovIn .2s ease}
 .sysmsg__foot .chip{margin-left:auto}
 .sysmsg__f{display:flex;align-items:center;gap:8px;font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;color:var(--ink)}
-.sysmsg__f svg{width:16px;height:16px;flex:none}
-.sysmsg__f--act svg{color:var(--act)}
-.sysmsg__f--offer svg{color:var(--offer)}
-.sysmsg__f--find svg{color:var(--find)}
+.sysmsg__f>svg{width:16px;height:16px;flex:none;color:var(--ink)}
+/* тип события — его собственным знаком справа, тем же кружком, что бейдж на миниатюре */
+.sysmsg__cat{margin-left:auto;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;flex:none;color:#fff}
+.sysmsg__cat svg{width:12px;height:12px}
+.sysmsg__cat--act{background:var(--act)}
+.sysmsg__cat--offer{background:var(--offer)}
+.sysmsg__cat--find{background:var(--find)}
 /* что произошло — основным цветом: уведомления просматривают как раз по этой строке */
 .sysmsg__m{font-size:var(--f-m20);line-height:var(--l-m20);font-weight:500;color:var(--ink)}
 .stack.sysstack{gap:12px}
@@ -2147,7 +2184,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .hintmap{display:flex;align-items:center;gap:12px}
 .hintmap--col{flex-direction:column;align-items:stretch;gap:10px}
 .hintbub .hintmap span{flex:none}
-.hintmap__sep{align-self:stretch;width:1px;flex:none;background:rgba(255,255,255,.2)}
+.hintmap__sep{align-self:stretch;width:1px;flex:none;background:color-mix(in srgb,currentColor 25%,transparent)}
 .hintmap--col .hintmap__sep{width:auto;height:1px}
 .hintmap__b{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .hint__move{width:20px;height:20px;flex:none;animation:hintShake 2.5s ease-in-out infinite}
@@ -2337,6 +2374,8 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
      и под ним останется пустая плита: общее правило ниже держит обратное для шторок,
      высота которых считается по содержимому */
   .panel.is-home .panel__body,.panel.is-screen .panel__body{flex:1 1 auto;min-height:0}
+  /* короткий список — вход в архив стоит у нижнего края раскрытой шторки */
+  .panel.is-home .panel__body{display:flex;flex-direction:column}
   /* жест перетаскивания шторки ловится с этой зоны, поэтому полю поиска внутри неё
      возвращаем собственные касания — иначе тап уходит в жест */
   .panel.is-home .panel__top{touch-action:none}
@@ -2394,7 +2433,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
   /* Растворение под кнопкой — не украшение, а сообщение «ниже ещё есть». Поэтому полоса
      выше, чем была, и включается только когда под подвалом действительно осталось
      содержимое: долистали до конца — подвал встаёт на чистую заливку */
-  .panel:not(.is-section) .panel__foot{
+  .panel:not(.is-section) .panel__foot,.panel.is-footfade .panel__foot{
     border-top:none;
     background:var(--surface);
     position:relative;
@@ -2405,7 +2444,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
   }
   /* верхнее поле подвала прозрачное: содержимое проходит под ним и растворяется, а полоса
      растворения доходит до верха кнопки */
-  .panel:not(.is-section):not(.is-shut) .panel__foot{margin-top:-12px;z-index:1;
+  .panel:not(.is-section):not(.is-shut) .panel__foot,.panel.is-footfade .panel__foot{margin-top:-12px;z-index:1;
     background:linear-gradient(to bottom,transparent 12px,var(--surface) 12px)}
   /* Ручка вынесена из потока и больше не держит верхний отступ собой — возвращаем его
      панели там, где ручка есть */
@@ -2418,12 +2457,12 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
      ничего, и он читался плотным белым прямоугольником. Теперь под полосой едет содержимое.
      Подвал не двигается и не меняет высоту — меняется только прозрачность полосы, поэтому
      признак «ниже ещё есть» не может сам себя переключить */
-  .panel:not(.is-section) .panel__foot::before{
+  .panel:not(.is-section) .panel__foot::before,.panel.is-footfade .panel__foot::before{
     content:'';position:absolute;left:0;right:0;bottom:calc(100% - 12px);height:32px;pointer-events:none;
     background:linear-gradient(to top,var(--surface),color-mix(in srgb,var(--surface) 0%,transparent));
     opacity:0;transition:opacity .15s;
   }
-  .panel.is-more:not(.is-section) .panel__foot::before{opacity:1}
+  .panel.is-more:not(.is-section) .panel__foot::before,.panel.is-more.is-footfade .panel__foot::before{opacity:1}
   /* Высота короткой карточки — по содержимому, а не числом. Числом её задавали, когда
      внутри был один заголовок; теперь там строка с миниатюрой, теги и кнопка, и любое
      число пришлось бы держать в голове вручную. По содержимому кнопка гарантированно
@@ -2981,6 +3020,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.42.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.43.0";</script>
 </body>
 </html>
