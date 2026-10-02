@@ -243,7 +243,7 @@
 html,body{height:100%}
 /* цвет полосы под часами на айфоне — см. syncTint() */
 :root{--tint:var(--ground)}
-:root{--thumb-ring:color-mix(in srgb,var(--ink) 8%,transparent)}
+:root{--thumb-ring:color-mix(in srgb,var(--ink) 8%,transparent);--slosh-fill:var(--brand-soft)}
 :root.is-dimmed{--tint:color-mix(in srgb,var(--ground) 45%,#000)}
 body{
   margin:0;background:var(--tint);color:var(--ink);transition:background-color .2s ease;
@@ -346,6 +346,8 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .avatar--ini{display:grid;place-items:center;color:#fff;font-size:12px;line-height:1;font-weight:600;letter-spacing:.02em}
 /* у фото тонкая линия внутри края, как у обложек: светлый снимок иначе растекается в фон */
 .avatar:not(.avatar--ini){outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent);outline-offset:-1px}
+/* в таббаре обводки нет: на маленьком круге айфон рисовал её с уголками — там маска и кольцо */
+.avatar.avatar--nav{outline:none}
 .avatar--s{width:24px;height:24px;font-size:10px}
 .navava{display:block;width:22px;height:22px;flex:none;position:relative}
 .avatar--nav{width:22px;height:22px;font-size:9px;display:block}
@@ -460,6 +462,11 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    своя, подложка подписи просвечивала сквозь полупрозрачный кружок, и место их наложения
    читалось третьим пятном */
 .marker.is-in{animation:markFadeIn .2s ease both;animation-delay:var(--gd,0s)}
+.marker--home{z-index:0}
+.homeplate{position:absolute;left:0;top:0;transform:translate(-50%,-50%);display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 6px;
+  border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:var(--f-xs10);line-height:var(--l-xs10);font-weight:600;
+  color:var(--ink);white-space:nowrap;pointer-events:none;box-shadow:var(--shadow-1)}
+.homeplate svg{width:12px;height:12px}
 .marker.is-in>*{animation:markScaleIn .2s ease both;animation-delay:var(--gd,0s)}
 .marker.is-out{pointer-events:none;animation:markFadeOut .15s ease forwards;animation-delay:var(--gd,0s)}
 .marker.is-out>*{animation:markScaleOut .15s ease forwards;animation-delay:var(--gd,0s);pointer-events:none}
@@ -1265,9 +1272,14 @@ svg:has(> use[href="#i-give"]){scale:1.2}
 .sheetfab svg{width:20px;height:20px}
 /* у стрелки тяжёлая часть внизу слева, носик вправо вверх: по геометрии в центре, на глаз нет */
 #zoomFit svg,.geofab svg{transition:color .15s ease;translate:-1px 1px}
+#zoomFit.is-home svg,.geofab.is-home svg{translate:none}
 #zoomFit.is-me svg,.geofab.is-me svg{color:var(--brand)}
 .sheetfab--l{left:16px}
 .sheetfab--r{right:16px}
+/* тень кнопки у кромки обрезана по краю шторки — уходит под неё, а не ложится сверху;
+   размытие под этими кнопками выключено: возле шторки оно давало чёрные полосы на айфоне */
+.sheetfab{clip-path:inset(-24px -24px -12px -24px)}
+.sheetfab.card-float{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--surface)}
 /* кнопки у кромки гаснут, только когда над шторкой не осталось карты */
 .panel.is-high .sheetfab{opacity:0;pointer-events:none}
 /* кнопка у кромки тоже лежит в шапке и тоже зовётся back — её это правило не касается */
@@ -1281,6 +1293,9 @@ svg:has(> use[href="#i-give"]){scale:1.2}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pinshort__cap{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 .pinshort__me{color:var(--brand-icon)}
+/* станция встроена в строку как текст: точка по высоте строчных, буквы на одной линии */
+.pinshort__cap .stn{display:inline}
+.pinshort__cap .stn .linedot{vertical-align:1px;margin:0 4px 0 2px}
 .pinshort__s{font-size:var(--f-s20);line-height:var(--l-s20);color:var(--ink-3);white-space:nowrap}
 /* теги мельче обычного чипа: их бывает три-четыре, и они не содержание, а опора решения */
 .stags{display:flex;flex-wrap:wrap;gap:6px}
@@ -1523,6 +1538,16 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
    после ползунка и возвращается влево порядком — так его достают состояния ползунка */
 .rangerow{display:flex;align-items:center;gap:12px}
 .rangerow .input[type=range]{flex:1;min-width:0}
+/* вязкий ползунок: выемка серая, жидкость светлая, ручка — брендовая черта; значение слева внутри */
+.rangerow{position:relative}
+.slosh{position:relative;flex:1;min-width:0;height:48px;border-radius:var(--r-m);background:var(--surface-2);
+  overflow:hidden;cursor:ew-resize;touch-action:none;outline:none}
+.slosh:focus-visible{box-shadow:0 0 0 3px var(--ring)}
+.slosh__fill{position:absolute;left:0;top:0;bottom:0;width:50%;background:var(--slosh-fill);
+  clip-path:polygon(0 0,calc(100% + var(--lean,0px)) 0,calc(100% - var(--lean,0px)) 100%,0 100%)}
+.slosh__knob{position:absolute;top:12px;bottom:12px;left:50%;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--brand);pointer-events:none}
+.rangerow .slosh~.rangeval{position:absolute;left:10px;top:50%;transform:translateY(-50%);z-index:2;pointer-events:none}
+.slosh.is-held~.rangeval{background:var(--brand);color:#fff}
 /* ширина по самому широкому значению («1,5 км»), цифры табличные: иначе чип дёргается,
    пока тащат бегунок */
 .rangeval{order:-1;flex:none;min-width:62px;justify-content:center;font-variant-numeric:tabular-nums;
@@ -1945,7 +1970,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .sysmsg__cat--offer{background:var(--offer)}
 .sysmsg__cat--find{background:var(--find)}
 /* что произошло — основным цветом: уведомления просматривают как раз по этой строке */
-.sysmsg__m{font-size:var(--f-m20);line-height:var(--l-m20);font-weight:400;color:var(--ink)}
+.sysmsg__m{font-size:var(--f-s10);line-height:var(--l-s10);font-weight:400;color:var(--ink-3)}
 .sysmsg__foot .tag{position:relative;top:1px}
 .stack.sysstack{gap:12px}
 .sysmsg .btn{width:auto;align-self:flex-start}
@@ -2119,8 +2144,8 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .welcome__brand .brand__name{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:700}
 .welcome__h{margin:0;font-size:var(--f-h30);line-height:var(--l-h30);font-weight:700}
 .welcome__p{margin:8px 0 0;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10)}
-.welcome__types{display:flex;flex-direction:column;gap:8px}
-.welcome__type{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r-m);background:var(--surface-2)}
+.welcome__types{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.welcome__type{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:16px 8px 14px;border-radius:var(--r-m);background:var(--surface-2);min-width:0}
 .welcome__type svg{width:20px;height:20px;flex:none}
 /* на месте значка — та же метка, что на карте: экран заодно становится легендой */
 .welcome__ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;box-shadow:0 0 0 2px #fff}
@@ -2130,9 +2155,44 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .welcome__type--act{background:var(--act-soft)} .welcome__type--act svg{color:var(--act)}
 .welcome__type--offer{background:var(--offer-soft)} .welcome__type--offer svg{color:var(--offer)}
 .welcome__type--find{background:var(--find-soft)} .welcome__type--find svg{color:var(--find)}
-.welcome__type b{display:block;font-size:var(--f-m20);line-height:var(--l-m20);font-weight:600}
-.welcome__type span span{display:block;font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-2)}
+.welcome__type b{display:block;font-size:var(--f-h50);line-height:var(--l-h50);font-weight:600}
+.welcome__sub{display:block;font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-2)}
+.wstack{position:relative;display:block;width:100%;max-width:124px;height:48px;margin-bottom:6px}
+.wcard{position:absolute;left:0;right:0;top:0;height:34px;display:flex;align-items:center;gap:6px;padding:0 8px 0 7px;
+  border-radius:10px;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.08);font-size:12px;line-height:14px;
+  font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-align:left;
+  transition:transform .45s cubic-bezier(.3,.7,.3,1),opacity .35s ease;transform-origin:50% 100%}
+.wcard>span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.wcard__ic{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;flex:none}
+.welcome__type .wcard__ic svg,.wcard--fly .wcard__ic svg{width:12px;height:12px;color:inherit}
+.welcome__type .wcard__ic{color:#fff}
+.welcome__type--act .wcard__ic{background:var(--act)}
+.welcome__type--offer .wcard__ic{background:var(--offer)}
+.welcome__type--find .wcard__ic{background:var(--find)}
+.welcome__type--act .wcard__ic svg{color:var(--act-ink)}
+.welcome__type--offer .wcard__ic svg{color:var(--offer-ink)}
+.welcome__type--find .wcard__ic svg{color:var(--find-ink)}
+.wghost{position:fixed;z-index:35;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;pointer-events:none;
+  box-shadow:0 0 0 2px #fff,var(--shadow-2);transform:translate(-50%,-50%)}
+.wghost svg{width:16px;height:16px}
+.wghost--act{background:var(--act);color:var(--act-ink)}
+.wghost--offer{background:var(--offer);color:var(--offer-ink)}
+.wghost--find{background:var(--find);color:var(--find-ink)}
 .ptags .ptag.is-on{background:var(--brand-soft);color:var(--brand-icon)}
+/* станции в приветствии: точка линии разливается на весь чип, текст белеет */
+.ptags--st .ptag{position:relative;overflow:hidden;isolation:isolate;gap:7px;padding:0 12px 0 10px;height:32px}
+.ptags--st .ptag .linedot{width:8px;height:8px;vertical-align:0;transition:box-shadow .2s ease}
+.wst__fill{position:absolute;left:14px;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--lc);
+  transform:scale(0);transition:transform .3s ease;z-index:-1}
+.ptags.ptags--st .ptag.is-on{background:var(--surface-2);color:#fff}
+.ptags--st .ptag.is-on .wst__fill{transform:scale(64)}
+.ptags--st .ptag.is-on .linedot{box-shadow:0 0 0 1.5px #fff}
+.ptags--st.is-enter .ptag{animation:chipIn .3s ease both}
+.ptags--st.is-enter .ptag:nth-child(2){animation-delay:.06s}
+.ptags--st.is-enter .ptag:nth-child(3){animation-delay:.12s}
+.ptags--st.is-enter .ptag:nth-child(4){animation-delay:.18s}
+@keyframes chipIn{from{opacity:0;transform:translateY(8px)}}
+@media (prefers-reduced-motion:reduce){.ptags--st.is-enter .ptag{animation:none}.wst__fill{transition:none}}
 /* пока открыто приветствие, карта живая, но размыта и не ловит нажатий; меню и кнопки
    карты спрятаны — нажимать их пока незачем. Размытие уходит плавно: это и есть момент,
    когда «район открылся» */
@@ -2191,12 +2251,20 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .hintbub.has-tail-l::after{content:'';position:absolute;right:100%;top:var(--tail-y,50%);transform:translateY(-50%);
   border-top:6px solid transparent;border-bottom:6px solid transparent;border-right:6px solid var(--ink)}
 .hintbub .pill{flex:none}
-.hintmap{display:flex;align-items:center;gap:12px}
+.hintmap{display:flex;align-items:center;gap:16px}
+.hintbub:has(.hintmap){padding-right:16px}
 .hintmap--col{flex-direction:column;align-items:stretch;gap:10px}
 .hintbub .hintmap span{flex:none}
 .hintmap__sep{align-self:stretch;width:1px;flex:none;background:color-mix(in srgb,currentColor 25%,transparent)}
 .hintmap--col .hintmap__sep{width:auto;height:1px}
-.hintmap__b{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.hintmap__b{display:flex;align-items:center;justify-content:flex-start;gap:8px}
+.hint__arw{position:relative;width:20px;height:20px;flex:none}
+.hint__arw svg{position:absolute;inset:0;width:20px;height:20px;opacity:0;animation:arwStep 1.5s linear infinite}
+.hint__arw svg:nth-child(2){animation-delay:.375s}
+.hint__arw svg:nth-child(3){animation-delay:.75s}
+.hint__arw svg:nth-child(4){animation-delay:1.125s}
+@keyframes arwStep{0%{opacity:0}6%,22%{opacity:1}31%,100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.hint__arw svg{animation:none}.hint__arw svg:first-child{opacity:1}}
 .hint__move{width:20px;height:20px;flex:none;animation:hintShake 2.5s ease-in-out infinite}
 /* крестом: вверх, вниз, влево, вправо — и пауза */
 @keyframes hintShake{0%,76%,100%{transform:none}80%{transform:translateY(-2px)}84%{transform:translateY(2px)}88%{transform:translateX(-2px)}92%{transform:translateX(2px)}96%{transform:none}}
@@ -2204,7 +2272,16 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .hintmap:not(.hintmap--col) .hintmap__a,.hintmap:not(.hintmap--col) .hintmap__tx{max-width:180px;white-space:normal;text-wrap:balance}
 @media (prefers-reduced-motion:reduce){.hint__move{animation:none}}
 .map{transition:filter .3s ease}
-.app.is-welcome .map{filter:blur(8px);pointer-events:none}
+.app.is-welcome .map{pointer-events:none;isolation:isolate}
+/* размытие — слоем поверх карты, а не фильтром на ней: в слое можно прорезать чёткое окно
+   вокруг выбранной станции. Пока станции нет — окно нулевое, размыто всё */
+.wveil{position:absolute;inset:0;z-index:30;pointer-events:none;opacity:0;transition:opacity .3s ease;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  -webkit-mask-image:radial-gradient(circle at var(--hx,50%) var(--hy,50%),transparent calc(var(--hr,0px) - 40px),#000 var(--hr,0px));
+  mask-image:radial-gradient(circle at var(--hx,50%) var(--hy,50%),transparent calc(var(--hr,0px) - 40px),#000 var(--hr,0px))}
+.app.is-welcome .wveil{opacity:1}
+/* до «Открыть район» меток нет: карта — фон, а не данные */
+.app.is-welcome .markers,.app.is-welcome .halos{visibility:hidden}
 @keyframes sheetIn{from{transform:translateY(100%)}to{transform:none}}
 @keyframes sheetOut{from{transform:none}to{transform:translateY(100%)}}
 @keyframes colIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
@@ -2659,7 +2736,7 @@ body.ds-narrow .dsmain{max-width:400px}
 <symbol id="i-bell" viewBox="0 0 24 24" fill="currentColor"><g transform="translate(0.84,0.14) scale(0.9302)"><path d="M20 18.667L20.4 19.2C20.4557 19.2743 20.4896 19.3626 20.498 19.4551C20.5063 19.5476 20.4887 19.6406 20.4472 19.7236C20.4057 19.8067 20.3419 19.8765 20.2629 19.9253C20.1839 19.9741 20.0929 20 20 20H4C3.90714 20 3.81612 19.9741 3.73713 19.9253C3.65815 19.8765 3.59431 19.8067 3.55279 19.7236C3.51126 19.6406 3.49368 19.5476 3.50202 19.4551C3.51036 19.3626 3.54429 19.2743 3.6 19.2L4 18.667V10C4 7.87827 4.84286 5.84344 6.34315 4.34315C7.84344 2.84285 9.87827 2 12 2C14.1217 2 16.1566 2.84285 17.6569 4.34315C19.1571 5.84344 20 7.87827 20 10V18.667ZM9.5 21H14.5C14.5 21.663 14.2366 22.2989 13.7678 22.7678C13.2989 23.2366 12.663 23.5 12 23.5C11.337 23.5 10.7011 23.2366 10.2322 22.7678C9.76339 22.2989 9.5 21.663 9.5 21V21Z" fill="currentColor"/></g></symbol>
 <symbol id="i-dots" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5.4" r="1.75"/><circle cx="12" cy="12" r="1.75"/><circle cx="12" cy="18.6" r="1.75"/></symbol>
 <symbol id="i-share" viewBox="0 0 24 24" fill="currentColor"><path d="M13 14H11C9.3596 13.9994 7.75023 14.4471 6.34588 15.2949C4.94152 16.1427 3.7956 17.3582 3.032 18.81C3.01054 18.5405 2.99986 18.2703 3 18C3 12.477 7.477 8 13 8V3L23 11L13 19V14Z" fill="currentColor"/></symbol>
-<symbol id="i-chev-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14.5l6-6 6 6"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path fill="currentColor" d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></symbol><symbol id="i-home" viewBox="0 0 24 24"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol><symbol id="i-chev-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14.5l6-6 6 6"/></symbol>
 <symbol id="i-chev-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol>
 </defs></svg>
 <header class="dshead">
@@ -3032,6 +3109,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.44.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.45.0";</script>
 </body>
 </html>
