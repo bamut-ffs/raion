@@ -14,7 +14,7 @@
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:site_name" content="Район">
-<meta property="og:title" content="Район — что происходит рядом с домом">
+<meta property="og:title" content="Район — соседи рядом">
 <meta property="og:description" content="Соседские встречи, просьбы и пропажи на одной карте. Живой прототип">
 <meta property="og:url" content="https://bamut-ffs.github.io/raion/">
 <meta property="og:image" content="https://bamut-ffs.github.io/raion/og.png">
@@ -24,7 +24,7 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#ededf2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121214" media="(prefers-color-scheme: dark)">
-<title>«Район» — встречи, просьбы и пропажи на карте у вашей станции</title>
+<title>Район — соседи рядом</title>
 </head>
 <body>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Golos+Text:wght@400;500;600;700&display=swap">
@@ -322,6 +322,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   display:grid;place-items:center;flex:none;
 }
 .brand__mark svg{width:16px;height:16px}
+/* логотип: сердце из двух половинок на брендовом квадрате; чёрная половинка — единственное
+   исключение из правила «на бренде только белое» */
+.brand__mark--logo{background:var(--brand)}
+.brand__mark--logo svg{width:21px;height:21px}
 .rail .brand__name{display:none}
 .navbtn{
   position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
@@ -442,6 +446,19 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    в нулевую высоту, а движок делал холст своей запасной высоты в 300 пикселей —
    карта рисовалась полосой сверху */
 .maplibregl-map{overflow:hidden;-webkit-tap-highlight-color:transparent}
+/* 7. системную подсветку нажатия не рисуем: у нажимаемого своё нажатое состояние */
+html{-webkit-tap-highlight-color:transparent}
+/* 4. долгое нажатие на сенсоре не выделяет текст и не открывает меню снимка: человек
+   зажимает фото на обложке, чтобы потянуть шторку, а получал «Скачать изображение» */
+@media (pointer:coarse){
+  button,a,img,.fcard,.listrow,.linerow,.marker,.markers *,.ptag,.chip,.tag,.navbtn,.rail,.cover,.pin__label,.hintbub,.wtcard,.wghostmk{
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  img{-webkit-user-drag:none}
+  /* 7. нажатое состояние: чуть меньше и чуть прозрачнее, на 100 мс */
+  .btn,.iconbtn,.pill,.ptag,.chip,.navbtn,.sheetfab,.toolbar button,.zoomctl button,.segctl button,.tabs button,.filterbtn,.pinshort__in{transition-property:scale,opacity,background,background-color,color,box-shadow,border-color;transition-duration:.1s}
+  .btn:active,.iconbtn:active,.pill:active,.ptag:active,.chip:active,.navbtn:active,.sheetfab:active,.toolbar button:active,.zoomctl button:active,.segctl button:active,.tabs button:active,.filterbtn:active{scale:.97;opacity:.8}
+  .fcard:active,.listrow:active,.linerow:active,.districtrow:active,.sysmsg--go:active,.factrow--btn:active{background:var(--surface-2)}
+}
 .maplibregl-canvas-container,.maplibregl-canvas{position:absolute;top:0;left:0;width:100%;height:100%}
 .maplibregl-canvas-container.maplibregl-interactive{cursor:grab}
 .maplibregl-canvas-container.maplibregl-interactive:active,.map.is-drag .maplibregl-canvas-container{cursor:grabbing}
@@ -491,6 +508,17 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .marker.is-in{animation:markFadeIn .2s ease both;animation-delay:var(--gd,0s)}
 /* дом над метками событий, но под выбранным и черновиком (у них 5) */
 .marker--home{z-index:2}
+/* Дом — рисунок, основанием на точке. Сбоку от значка станции — слева, с зазором 4 до кружка */
+.homemk{position:absolute;left:0;top:0;transform:translate(-50%,-86%);display:block;pointer-events:none;line-height:0}
+.homemk__img{height:44px;width:auto;display:block}
+.homemk--side{transform:translate(calc(-100% - 10px),-78%)}
+.homemk--wel .homemk__img{height:72px}
+.homemk[data-act]{pointer-events:auto;cursor:pointer}
+/* число событий района, собранных в дом на общем плане: круг крупнее, чем у разделов,
+   и нейтральный — брендовый круг у нас значит «новое» */
+.homecount{position:absolute;right:-8px;top:-6px;min-width:24px;height:24px;padding:0 6px;border-radius:12px;box-sizing:border-box;
+  background:var(--ink);color:var(--surface);font-size:13px;line-height:24px;font-weight:600;text-align:center;box-shadow:0 0 0 2px var(--surface)}
+@keyframes homeDrop{from{opacity:0;translate:0 -8px}}
 .homeplate{position:absolute;left:0;top:0;transform:translate(-50%,-50%);display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 6px;
   border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:var(--f-xs10);line-height:var(--l-xs10);font-weight:600;
   color:var(--ink);white-space:nowrap;pointer-events:none;box-shadow:var(--shadow-1)}
@@ -993,6 +1021,11 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 @keyframes stnNear{from{--m-bg:var(--surface);--m-ring:var(--line-2);--m-ink:#FF0013}}
 @keyframes stnFar{from{--m-bg:var(--lc);--m-ring:#fff;--m-ink:#fff}}
 .marker--stn.is-hid{display:none}
+.marker--stn.is-flash{z-index:6}
+@keyframes stnPop{0%{scale:1}35%{scale:1.4}100%{scale:1}}
+.stnring{position:absolute;left:-8px;top:-8px;width:16px;height:16px;border-radius:50%;border:2px solid var(--lc);opacity:0;pointer-events:none;
+  animation:stnRing .6s ease-out both}
+@keyframes stnRing{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(2.8)}}
 /* имя станции — обычный текст с обводкой фоном, а не плашка: плашки в этом приложении
    принадлежат событиям, и станция не должна выглядеть как ещё одно из них */
 .stnmark__n{
@@ -1584,13 +1617,15 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
 .slosh:focus-visible{box-shadow:0 0 0 3px var(--ring)}
 .slosh__fill{position:absolute;left:0;top:0;bottom:0;width:50%;background:var(--surface-2);transition:background-color .15s ease;
   clip-path:polygon(0 0,calc(100% + var(--lean,0px)) 0,calc(100% - var(--lean,0px)) 100%,0 100%)}
-.slosh__knob{position:absolute;top:12px;bottom:12px;left:50%;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--ink);pointer-events:none;
+.slosh__knob{position:absolute;top:12px;bottom:12px;left:50%;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--ink-2);pointer-events:none;
   transition:background-color .15s ease}
 .rangerow .slosh~.rangeval{position:absolute;left:8px;top:50%;transform:translateY(-50%);z-index:2;pointer-events:none}
 .slosh.is-held .slosh__fill{background:var(--slosh-on)}
 .slosh.is-held~.rangeval{background:var(--ink)}
+.slosh.is-held .slosh__knob{background:var(--ink)}
 @media (hover:hover){
   .rangerow:hover .slosh__fill{background:var(--slosh-on)}
+  .rangerow:hover .slosh__knob{background:var(--ink)}
 }
 /* у пропажи круг зоны поиска фиолетовый — ползунок его радиуса того же цвета */
 .slosh[data-field="radius"]{--slosh-on:var(--find)}
@@ -2019,7 +2054,10 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 /* что произошло — основным цветом: уведомления просматривают как раз по этой строке */
 .sysmsg__m{font-size:var(--f-s10);line-height:var(--l-s10);font-weight:400;color:var(--ink-3)}
 .sysmsg__t+.sysmsg__m,.sysmsg__t+.sysmsg__x{margin-top:-4px}
-.sysmsg__foot .tag{position:relative;top:1px}
+.sysmsg__foot .tag{position:relative;top:1px;transition:background-color .3s ease,color .3s ease,border-color .3s ease}
+/* на залитой карточке бледный тег сливался с заливкой: пока не прочитано — тег залит
+   нейтральным, как тег значения; не цветной, чтобы не спорить с кнопкой ответа */
+.sysmsg.is-new .sysmsg__foot .tag{background:var(--ink-2);color:var(--surface);border-color:transparent}
 .stack.sysstack{gap:12px}
 .sysmsg .btn{width:auto;align-self:flex-start}
 /* только прямым детям колонки: внутри шапки чип стоит в строке с шевроном, и прижатие
@@ -2187,6 +2225,10 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 /* Приветствие. Стиль экрана — на этапе стиля; сейчас собрано из наших компонентов */
 .welcome__brand{display:flex;align-items:center;gap:10px}
 .welcome__back{display:flex;align-items:center;gap:4px;margin-left:-8px}
+@media (min-width:821px){
+  .welcome__back{flex-direction:column;align-items:flex-start;gap:8px;margin-left:0}
+  .welcome__back .iconbtn{margin-left:-8px}
+}
 .welcome__brand .brand__mark{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--brand);color:#fff}
 .welcome__brand .brand__mark svg{width:19px;height:19px}
 .welcome__brand .brand__name{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:700}
@@ -2240,6 +2282,8 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 /* пример события на размытой карте приветствия: та же метка с подписью, что после входа */
 .wghostmk{position:fixed;width:0;height:0;z-index:35;pointer-events:none}
 .wghostmk .pin,.wghostmk .pin__label{pointer-events:none;cursor:default}
+/* названия примеров целиком — без многоточия */
+.wghostmk .pin__row b{max-width:none}
 .wghost{position:fixed;z-index:35;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;pointer-events:none;
   box-shadow:0 0 0 2px #fff,var(--shadow-2);transform:translate(-50%,-50%)}
 .wghost svg{width:16px;height:16px}
@@ -2264,6 +2308,9 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .ptags--st.is-enter .ptag:nth-child(3){animation-delay:.12s}
 .ptags--st.is-enter .ptag:nth-child(4){animation-delay:.18s}
 @keyframes chipIn{from{opacity:0;transform:translateY(8px)}}
+@keyframes wstIn{from{transform:scale(0)}to{transform:scale(64)}}
+@keyframes wstOut{from{transform:scale(64)}to{transform:scale(0)}}
+@keyframes wstHomeIn{from{transform:scale(0)}to{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){.ptags--st.is-enter .ptag{animation:none}.wst__fill,.wst__home,.ptags--st .ptag .linedot{transition:none}}
 /* пока открыто приветствие, карта живая, но размыта и не ловит нажатий; меню и кнопки
    карты спрятаны — нажимать их пока незачем. Размытие уходит плавно: это и есть момент,
@@ -2376,6 +2423,15 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
   mask-image:radial-gradient(circle at var(--hx,50%) var(--hy,50%),rgba(0,0,0,var(--wa)) calc(var(--hr,0px) - 40px),#000 var(--hr,0px))}
 @media (prefers-reduced-motion:reduce){.wveil{transition:opacity .3s ease}}
 .app.is-welcome .wveil{opacity:1}
+.wlogo{display:none}
+@media (max-width:820px){
+  .wlogo{display:grid;place-items:center;position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));z-index:31;width:44px;height:44px;margin-left:-22px;
+    border-radius:12px;background:var(--brand);opacity:0;pointer-events:none;transition:opacity .3s ease}
+  .wlogo svg{width:30px;height:30px}
+  .app.is-welcome .wlogo{opacity:1}
+}
+/* размытия больше нет: карта в приветствии чистая, без надписей — это фон-узор */
+.wveil{display:none}
 /* до «Открыть район» меток нет: карта — фон, а не данные */
 .app.is-welcome .markers,.app.is-welcome .halos{visibility:hidden}
 .app.is-welcome.is-wmap .markers,.app.is-welcome.is-wmap .halos{visibility:visible}
@@ -2815,18 +2871,18 @@ svg{width:16px;height:16px}
 <symbol id="i-bell" viewBox="0 0 24 24" fill="currentColor"><g transform="translate(0.84,0.14) scale(0.9302)"><path d="M20 18.667L20.4 19.2C20.4557 19.2743 20.4896 19.3626 20.498 19.4551C20.5063 19.5476 20.4887 19.6406 20.4472 19.7236C20.4057 19.8067 20.3419 19.8765 20.2629 19.9253C20.1839 19.9741 20.0929 20 20 20H4C3.90714 20 3.81612 19.9741 3.73713 19.9253C3.65815 19.8765 3.59431 19.8067 3.55279 19.7236C3.51126 19.6406 3.49368 19.5476 3.50202 19.4551C3.51036 19.3626 3.54429 19.2743 3.6 19.2L4 18.667V10C4 7.87827 4.84286 5.84344 6.34315 4.34315C7.84344 2.84285 9.87827 2 12 2C14.1217 2 16.1566 2.84285 17.6569 4.34315C19.1571 5.84344 20 7.87827 20 10V18.667ZM9.5 21H14.5C14.5 21.663 14.2366 22.2989 13.7678 22.7678C13.2989 23.2366 12.663 23.5 12 23.5C11.337 23.5 10.7011 23.2366 10.2322 22.7678C9.76339 22.2989 9.5 21.663 9.5 21V21Z" fill="currentColor"/></g></symbol>
 <symbol id="i-dots" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5.4" r="1.75"/><circle cx="12" cy="12" r="1.75"/><circle cx="12" cy="18.6" r="1.75"/></symbol>
 <symbol id="i-share" viewBox="0 0 24 24" fill="currentColor"><path d="M13 14H11C9.3596 13.9994 7.75023 14.4471 6.34588 15.2949C4.94152 16.1427 3.7956 17.3582 3.032 18.81C3.01054 18.5405 2.99986 18.2703 3 18C3 12.477 7.477 8 13 8V3L23 11L13 19V14Z" fill="currentColor"/></symbol>
-<symbol id="i-arrow" viewBox="0 0 24 24"><path fill="currentColor" d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></symbol><symbol id="i-home" viewBox="0 0 24 24"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol><symbol id="i-chev-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14.5l6-6 6 6"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path fill="currentColor" d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></symbol><symbol id="i-home" viewBox="0 0 24 24"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol><symbol id="i-plus-circle" viewBox="0 0 24 24"><path fill="currentColor" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-11H7v2h4v4h2v-4h4v-2h-4V7h-2v4z"/></symbol><symbol id="i-user-add" viewBox="0 0 24 24"><path fill="currentColor" d="M14 14.252V22H4a8 8 0 0 1 10-7.748zM12 13c-3.315 0-6-2.685-6-6s2.685-6 6-6 6 2.685 6 6-2.685 6-6 6zm6 4v-3h2v3h3v2h-3v3h-2v-3h-3v-2h3z"/></symbol><symbol id="i-logo" viewBox="16 22 68 60"><path fill="#000" d="M82.0001 43.9892C82.0037 46.4811 81.5215 48.9492 80.581 51.2517C79.6405 53.5541 78.2603 55.6455 76.5197 57.4056L65.2585 68.8402L58.9403 75.2433C57.7669 76.4343 56.3733 77.3792 54.8393 78.0239C53.3052 78.6686 51.6608 79.0005 50.0001 79.0005C48.3393 79.0005 46.6949 78.6686 45.1608 78.0239C43.6268 77.3792 42.2332 76.4343 41.0598 75.2433L34.7416 68.8402C31.1099 65.1371 31.1099 59.1043 34.7633 55.4018C36.5223 53.6271 38.9046 52.6325 41.3867 52.6367C43.8688 52.6408 46.2479 53.6432 48.0012 55.4237L49.9141 57.3618C53.568 61.043 59.5208 61.0649 63.1742 57.3618C64.046 56.4824 64.7378 55.4371 65.2098 54.2859C65.6818 53.1348 65.9248 51.9005 65.9248 50.6539C65.9248 49.4073 65.6818 48.173 65.2098 47.0218C64.7378 45.8707 64.046 44.8254 63.1742 43.9459L50.0217 30.5728C57.3295 23.1459 69.1702 23.1459 76.4981 30.5509C80.1736 34.2539 82.0001 39.1106 82.0001 43.9892Z"/><path fill="#fff" d="M65.9249 50.6539C65.9258 51.9006 65.6832 53.1351 65.2111 54.2864C64.739 55.4376 64.0467 56.4828 63.1742 57.3616C59.5202 61.0646 53.5675 61.0427 49.9141 57.3616L48.0032 55.4235C46.2499 53.6429 43.8709 52.6405 41.3887 52.6364C38.9066 52.6323 36.5243 53.6268 34.7653 55.4016C31.1114 59.1046 31.1114 65.1369 34.7437 68.8399L23.4804 57.4054C21.7399 55.6452 20.3598 53.5538 19.4193 51.2514C18.4788 48.9489 17.9964 46.4809 18 43.989C18 39.1104 19.827 34.2537 23.502 30.5506C30.8299 23.1446 42.6932 23.1446 50.0005 30.5725H50.0216L63.1742 43.9457C64.0467 44.8246 64.739 45.8698 65.2111 47.0212C65.6832 48.1725 65.9258 49.4071 65.9249 50.6539Z"/></symbol><symbol id="i-chev-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14.5l6-6 6 6"/></symbol>
 <symbol id="i-chev-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol>
 </defs></svg>
 
 <div class="app" id="app" hidden>
   <nav class="rail" aria-label="Разделы">
     <button class="brand" id="aboutBtn" type="button" title="О прототипе" aria-label="О прототипе">
-      <span class="brand__mark"><svg aria-hidden="true"><use href="#i-map"/></svg></span>
+      <span class="brand__mark brand__mark--logo"><svg aria-hidden="true"><use href="#i-logo"/></svg></span>
       <span class="brand__name">Район</span>
     </button>
     <button class="navbtn" data-nav="map"><svg aria-hidden="true"><use href="#i-map"/></svg><span>Карта</span></button>
-    <button class="navbtn" data-nav="create"><svg aria-hidden="true"><use href="#i-plus"/></svg><span>Создать</span></button>
+    <button class="navbtn" data-nav="create"><svg aria-hidden="true"><use href="#i-plus-circle"/></svg><span>Создать</span></button>
     <button class="navbtn" data-nav="chats"><svg aria-hidden="true"><use href="#i-chat"/></svg><span>Сообщения</span><span class="navbtn__badge" id="chatBadge" hidden>0</span></button>
     <button class="navbtn" data-nav="profile"><span class="navava" id="navAva" aria-hidden="true"></span><span>Профиль</span><span class="navbtn__badge" id="profileBadge" hidden>0</span></button>
     <div class="rail__spacer"></div>
@@ -3634,10 +3690,18 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.47.0';
+var VERSION='3.48.0';
+/* Дом на карте — изометрическая иллюстрация (рисунок пользователя), обрезана по содержимому
+   и ужата в WebP. Голубая крыша — цвет бренда; читается силуэтом с 44 точек */
+var HOUSE_IMG='data:image/webp;base64,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a63FWpqFBi1oXdZaNK0mIam/dCpfPL3N0Pn5//Hz9zWaZp1pzprO0FynNbIsFkvnsVhac821NZqvYFR599C5D58ioGzs819/+qt3axoMO85GW9ZizZK1jKbR0uwYxELWxETWVwEc//rEZettPGWYgX36xw9+9p0XaBgs5zGP57o0Fst9g6YGreW2Ba0z11IAIP7h+id3Wr41SNk+++BP3/vRC5phGqa1R+3SYFkWy0QmC43WgnYR7fKVrX1/yvvnzln0KD07//y793/2chpjMvejYQjTyDSNltuVtVhth2umi+Xa0gJUf9qmdMRCgUnJ9sc/vP7li9Zmuc79tNYIQ9M6azJNu4ultdCESRPaakoPEL1yxAz7zeNRGvan377343eNNXaDXR42RliW28WOERoaLXdEa1nMYVmagOTe05fafnZDzTo/+PW7P3nHMluuuyymZciCkdvFYrF0RrDDaNFyn0Xz1Y+ja65dbv8205Tzk//57k/fOcxMGGuuq2nLtV1o2spoYkGYaARZa8dadkynw75q4Hr1+ltGb9tiB+zNx78+/8aLnDENy1qmNbE8uWG15XHL41yPXWjtONsxTbRV2gCufXfdGxuOLNsBOT/842c/fbe1ztYystZkMWpPaGSyLGTIWshEI7S0PF7ka+lqb93y5d6Ltnj92T76/Sc/+N7B3Hem0fK4dZZpLcvDYJloriFosoPltmlZvs49b5/lnzaiRA2dX/yvT773w8NotGgtRLtpLWTkYWtomrCkiYUVncdal6aF1rSMAN3PH7rwCa2W/uN88z9+/9Pvv2QtIVpcrhELC7FumhZkmmgIWmTSOE5qWlbrrJUZcNdjx+26bWAu++K//M+f/eS1yLGkloIu0YJY7Fhruc00aVnktokm1yw5a1muzdeau05+ee+Vf2if/od/96u/8W690FGOEoeQFLSgBbltWZqaa9B0I9fch7ZjslxbXy9w9ME53/yDv/u//83f+nvfefXy5YuOF46O7rXD4bYgatFaS8uixeqCJuuSa+uStWix3LevGZBUv/7n//Mv/873X796cRzH8cLRkTokxyKCRBakpbXQWhq0aEIstKZGO6ZBbjPKGBB98KcXx4xDDqWklkitEFoIYqHlYas1RGtqsmCH+5U9ukbAneebN29Op4etHeSOrNyGPIwsaK0dQx7Halpa00Isy9LI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';
+function houseHTML(cls,count,act){
+  return '<span class="homemk'+(cls?' '+cls:'')+'"'+(act?' data-act="'+act+'" role="button" aria-label="Приблизить к дому"':'')+'>'+
+    '<img class="homemk__img" src="'+HOUSE_IMG+'" alt="">'+(count?'<span class="homecount">'+count+'</span>':'')+'</span>';
+}
+var IS_ANDROID=/Android/i.test(navigator.userAgent||'');
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
-var UPDATED='2 октября 2026';
+var UPDATED='3 октября 2026';
 var KEY='raion.v1';
 var db=null;
 
@@ -3818,7 +3882,7 @@ function seedMyPins(who){
   tagged('member').forEach(function(p,i){joinAs(p,'joined',(i+1)*9)});
   joinAs(tagged('approved')[0],'joined',30);
   joinAs(tagged('full-in')[0],'joined',16);
-  joinAs(tagged('pending')[0],'interested',4);
+  /* «Теннис» — по заявкам, и заявки от вас в нём нет: подать её можно самому */
 
   /* Своя активность по заявкам: четыре нерассмотренные, чтобы это был список,
      а не пара строк */
@@ -4913,7 +4977,9 @@ function welcomeFly(id){
   var r=metroRef(id), k=Math.min(maxZoom(),Math.max(view.kFit,view.kFit*2.2)), cy=view.Ht/2;
   if(!isDesktopPanel()){
     var pn=$('#panel'), stg=$('.stage');
-    if(pn&&stg&&!pn.hidden)cy=Math.max(80,(pn.getBoundingClientRect().top-stg.getBoundingClientRect().top)/2);
+    /* середина свободной полосы между знаком приложения сверху и шторкой */
+    var wlg=$('#wlogo'), lb=wlg?wlg.getBoundingClientRect().bottom+8:0;
+    if(pn&&stg&&!pn.hidden)cy=Math.max(80,(lb+pn.getBoundingClientRect().top)/2-stg.getBoundingClientRect().top+20);
   }
   /* камерой ведает движок: точка станции встаёт в центр видимой части через его смещение */
   /* масштаб чуть дальше обычного: в окне должны поместиться и дом, и события вокруг */
@@ -4939,6 +5005,17 @@ function welcomeSelect(wst){
       ui.wWinShut=false; ui.wWinOpenAt=wrm?0:Date.now(); welcomeWave(wst); renderMarkers();
     },wrm?0:340);
   },wrm?0:300);
+}
+/* Карта в приветствии — узор, а не карта для ориентирования: ни одной надписи подложки.
+   Видимость слоёв запоминаем, чтобы вернуть ровно какой была */
+var welcomeMapOff=false, symVis=null;
+function syncWelcomeMap(on){
+  if(on===welcomeMapOff||!glMap||!glMap.getStyle)return;
+  var st0; try{st0=glMap.getStyle()}catch(e){return}
+  if(!st0||!st0.layers)return;
+  if(!symVis){symVis={}; st0.layers.forEach(function(l){if(l.type==='symbol')symVis[l.id]=(l.layout&&l.layout.visibility)||'visible'})}
+  Object.keys(symVis).forEach(function(id){try{glMap.setLayoutProperty(id,'visibility',on?'none':symVis[id])}catch(e){}});
+  welcomeMapOff=on;
 }
 function flyToStation(id){
   var r=metroRef(id);
@@ -5974,6 +6051,24 @@ function placeZonePins(d){
   }
   return act;
 }
+/* «Показать на карте»: в кадре и событие, и его метро — расстояние «~430 м от метро»
+   становится видно глазами. Масштаб не дальше 13,5: дальше пропадают подписи. Не влезают
+   оба — кадр на событии, станция у края в свою сторону. После прилёта станция подмигивает */
+var stnFlash=null;
+function showWithMetro(p){
+  var st=landmarkOf(p), mr=metroRef(st);
+  stnFlash={id:st,at:Date.now()+(glMap?340:0)};
+  if(!glMap){centerOnSmooth(p.x,p.y); return}
+  var mob=!isDesktopPanel(), pn=$('#panel'), stg=$('.stage');
+  var L=mapInsetLeft()+48, R=view.W-48, T=(mob?72+safeInset('top'):24)+48;
+  var B=mob&&pn&&stg?(pn.getBoundingClientRect().top-stg.getBoundingClientRect().top-48):view.Ht-48;
+  if(R-L<80||B-T<80){glGoto(p.x,p.y,null,true,viewCX(),view.Ht/2); return}
+  var x0=Math.min(p.x,mr.x), x1=Math.max(p.x,mr.x), y0=Math.min(p.y,mr.y), y1=Math.max(p.y,mr.y);
+  var k=Math.min((R-L)/Math.max(x1-x0,1),(B-T)/Math.max(y1-y0,1));
+  var zoom=Math.min(GL_ZOOM,GEO_Z+Math.log(k)/Math.LN2);
+  if(zoom<13.5)glGoto(p.x,p.y,13.5,true,(L+R)/2,(T+B)/2);
+  else glGoto((x0+x1)/2,(y0+y1)/2,zoom,true,(L+R)/2,(T+B)/2);
+}
 function fitStationZone(d){
   /* В зоне пусто — летим на само место его масштабом, без соседних событий: иначе карта
      показывала три чужих события, а лента честно говорила «ноль». Пусто — значит пусто,
@@ -6139,10 +6234,12 @@ function layoutEvents(items,halos,pulses,pre){
      сжималась в точку и уходила под неё — пропажу закрывала «швейная машинка».
      Исключение — выбранное: его подпись видна всегда, поэтому место под неё берётся сразу */
   var creating=!!(ui.panel&&ui.panel.type==='create');
+  /* в приветствии события — только цветные точки: фокус у дома, а не у подписей вокруг */
+  var wlc=!!(ui.panel&&ui.panel.type==='welcome');
   order.forEach(function(e){
     var x=e.s[0], y=e.s[1];
     e.pb={l:x-17,t:y-17,r:x+17,b:y+17};
-    var ok=e.sel||(!hit(e.pb)&&mapZoom()>=FAR_Z);
+    var ok=!wlc&&(e.sel||(!hit(e.pb)&&mapZoom()>=FAR_Z));
     e.lv=ok?1:0;
     boxes.push(ok?e.pb:{l:x-7,t:y-7,r:x+7,b:y+7});
     if(e.sel){var ls0=labelSize(e.p); boxes.push({l:x,t:y-ls0.h/2,r:x+ls0.w,b:y+ls0.h/2}); e.lv=2}
@@ -6293,15 +6390,19 @@ function placeStations(stns,out,boxes){
     var ib={l:x-9,t:y-9,r:x+9,b:y+9};
     var w=Math.min(150,Math.max(40,e.d.name.length*6.1+8)), top=y+12;
     var nb={l:x-w/2,t:top,r:x+w/2,b:top+15};
-    if(boxHit(boxes,ib)||(named&&boxHit(boxes,nb)))return;
+    /* станция, которую подсвечиваем после «Показать на карте», видна даже на чужом месте */
+    var fl=stnFlash&&stnFlash.id===e.d.id?(tn-stnFlash.at):-1, flashing=fl>-400&&fl<700;
+    if(!flashing&&(boxHit(boxes,ib)||(named&&boxHit(boxes,nb))))return;
     boxes.push(ib); if(named)boxes.push(nb);
     shown.push({id:e.d.id,x:e.d.sx,y:e.d.sy,name:e.d.name,named:named});
     var lf=stnLife[e.d.id];
     if(!lf||lf.out)lf=stnLife[e.d.id]={at:rm?0:tn,out:0};
     seen[e.d.id]=1;
     var fe=tn-lf.at, fa=(lf.at&&fe<250)?';animation:markFadeIn .25s ease both;animation-delay:-'+(fe/1000).toFixed(3)+'s':'';
-    out.push('<div class="marker marker--stn'+(far?' is-far':'')+'" style="transform:translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px)'+fa+'">'+
-      '<svg class="stnmark'+(far?'':' is-near')+'" aria-hidden="true" style="--lc:'+e.d.lineColor+stnAnim(far)+'"><use href="#i-metro-c"/></svg>'+
+    var fx=(flashing&&fl>=0&&!rm)?'<i class="stnring" style="--lc:'+e.d.lineColor+';animation-delay:-'+(fl/1000).toFixed(3)+'s"></i>':'';
+    var fs2=(flashing&&fl>=0&&!rm)?';animation:stnPop .6s ease both;animation-delay:-'+(fl/1000).toFixed(3)+'s':'';
+    out.push('<div class="marker marker--stn'+(far?' is-far':'')+(flashing?' is-flash':'')+'" style="transform:translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px)'+fa+'">'+fx+
+      '<svg class="stnmark'+(far?'':' is-near')+'" aria-hidden="true" style="--lc:'+e.d.lineColor+stnAnim(far)+fs2+'"><use href="#i-metro-c"/></svg>'+
       (named?'<span class="stnmark__n">'+H(e.d.name)+'</span>':'')+'</div>');
   });
   for(var sid in stnLife){
@@ -6548,8 +6649,10 @@ function renderMarkers(){
   /* Волна — только у меток в кадре и не больше пяти, ближайших к центру: каждая волна
      держит два слоя и не останавливается, а на плотной карте пульсировало бы всё сразу */
   var lcx=viewCX(), lcy=view.Ht/2;
+  var inWelcome=!!(ui.panel&&ui.panel.type==='welcome');
+  syncWelcomeMap(inWelcome);
   items.filter(function(e){
-    return isLiveMark(e.p)&&e.s[0]>=0&&e.s[1]>=0&&e.s[0]<=view.W&&e.s[1]<=view.Ht;
+    return !inWelcome&&isLiveMark(e.p)&&e.s[0]>=0&&e.s[1]>=0&&e.s[0]<=view.W&&e.s[1]<=view.Ht;
   }).sort(function(a,b){
     return Math.hypot(a.s[0]-lcx,a.s[1]-lcy)-Math.hypot(b.s[0]-lcx,b.s[1]-lcy);
   }).slice(0,LIVE_MAX).forEach(function(e){e.live=true});
@@ -6559,8 +6662,16 @@ function renderMarkers(){
      встаёт слева от значка своей станции, а не на нём. На улицах дома нет — там он и так виден.
      Место дом занимает первым, до событий, и рисуется над ними: на дальнем плане цветные точки
      событий иначе съедали его целиком */
-  var homeHTML='', homePre=[];
+  var homeHTML='', homePre=[], homeN=0;
   var hpt=(!ui.picking&&mapZoom()<NEAR_Z&&!(ui.panel&&ui.panel.type==='welcome'))?homePoint():null;
+  /* Общий план: события зоны своей станции собираются в дом, у дома — их число. Остальные
+     районы остаются точками. Нажатие на дом приближает, и события разлетаются по местам */
+  if(hpt&&hpt.x!=null&&mapZoom()<FAR_Z&&hpt.st){
+    items=items.filter(function(e){
+      if(e.sel||e.p.district_id!==hpt.st)return true;
+      homeN++; return false;
+    });
+  }
   if(hpt&&hpt.x!=null){
     var hkey=Math.round(hpt.x)+','+Math.round(hpt.y);
     if(hkey!==homeKey){homeAt=homeKey?Date.now():0; homeKey=hkey}
@@ -6569,10 +6680,11 @@ function renderMarkers(){
       var hm=metroPt(district(hpt.st)), hms=toScreen(hm.x,hm.y);
       if(Math.hypot(hms[0]-hs2[0],hms[1]-hs2[1])<24){hs2=hms; hside=true}
     }
-    homePre.push(hside?{l:hs2[0]-68,t:hs2[1]-11,r:hs2[0]-12,b:hs2[1]+11}:{l:hs2[0]-28,t:hs2[1]-11,r:hs2[0]+28,b:hs2[1]+11});
+    homePre.push(hside?{l:hs2[0]-54,t:hs2[1]-36,r:hs2[0]-10,b:hs2[1]+8}:{l:hs2[0]-22,t:hs2[1]-40,r:hs2[0]+22,b:hs2[1]+6});
+    /* появление — дом чуть «падает» на место */
     homeHTML='<div class="marker marker--home" style="transform:translate('+hs2[0].toFixed(1)+'px,'+hs2[1].toFixed(1)+'px)'+
-      ((homeAt&&hEl2<.4&&!reduceMotion())?';animation:markFadeIn .4s ease both;animation-delay:-'+hEl2.toFixed(3)+'s':'')+'">'+
-      '<span class="homeplate'+(hside?' homeplate--side':'')+'">'+icon('home')+'Дом</span></div>';
+      ((homeAt&&hEl2<.3&&!reduceMotion())?';animation:homeDrop .3s ease both;animation-delay:-'+hEl2.toFixed(3)+'s':'')+'">'+
+      houseHTML(hside?'homemk--side':'',homeN,homeN?'home-zoom':'')+'</div>';
   }
   var placed=layoutEvents(items,halos,pulses,homePre);
   /* Смена фильтра: ушедшие гаснут и чуть сжимаются, новые проявляются. Уходящие — копии
@@ -6629,7 +6741,7 @@ function renderMarkers(){
     var pcx=viewCX(), pcy=pickCenterY();
     placed.boxes.push({l:pcx-18,t:pcy-44,r:pcx+18,b:pcy+2});
   }
-  placeStations(stationMarks(),out,placed.boxes);
+  if(!(ui.panel&&ui.panel.type==='welcome'))placeStations(stationMarks(),out,placed.boxes);
   /* Десктоп: вопрос о подтверждении — алертом над меткой, как карточка у Яндекса. Только у
      открытой карточки этой встречи и пока метка в кадре; иначе вопрос стоит в подвале
      карточки. Два одинаковых вопроса на экране разом не бывает */
@@ -6693,7 +6805,7 @@ function renderMarkers(){
         var wan=(ui.wWinOpenAt&&wo<.4&&!reduceMotion())?';animation:markFadeIn .4s ease both;animation-delay:-'+wo.toFixed(3)+'s':'';
         out.push('<div class="marker marker--wel" style="transform:translate('+wsp[0].toFixed(1)+'px,'+wsp[1].toFixed(1)+'px)'+wan+'">'+
           '<svg class="stnmark is-near" aria-hidden="true" style="--lc:'+wd2.lineColor+'"><use href="#i-metro-c"/></svg>'+
-          '<span class="homeplate homeplate--side">'+icon('home')+'Дом</span></div>');
+          houseHTML('homemk--side homemk--wel')+'</div>');
       }
     }else{wv.style.setProperty('--hr','0px'); wv.style.setProperty('--wa','1')}
   }
@@ -6912,6 +7024,10 @@ function syncSegs(){
     if(!on||!sc.offsetWidth){th.style.opacity=on?'':'0'; return}
     th.style.opacity='';
     var key=dataKey(sc.querySelector('button')), L=on.offsetLeft, W=on.offsetWidth, pv=segPos[key];
+    /* подложка, созданная перерисовкой, встаёт на место сразу: из угла она «выезжала» на
+       каждое нажатие по соседнему фильтру, хотя выбор не менялся */
+    if(!th._set&&!(pv&&(pv.l!==L||pv.w!==W))){th.style.transition='none'; th.style.left=L+'px'; th.style.width=W+'px'; void th.offsetWidth; th.style.transition=''}
+    th._set=true;
     if(pv&&(pv.l!==L||pv.w!==W)&&!reduceMotion()){
       th.style.transition='none'; th.style.left=pv.l+'px'; th.style.width=pv.w+'px'; void th.offsetWidth; th.style.transition='';
     }
@@ -7204,6 +7320,58 @@ var renderHold=0, renderWait=null;
 function holdRender(ms){renderHold=Date.now()+(ms||220)}
 /* Самопочинка: если высота приложения отстала от окна или холст карты — от своего места,
    пересчитываем всё. Причину чёрной полосы поймать не удалось, а след не остаётся так */
+/* Системное «Назад» (Android — кнопка или жест от края, в браузере — стрелка) ведёт по
+   экранам приложения, а не уводит со страницы. Глубина экрана хранится в записях истории:
+   открыли глубже — запись добавилась, вернулись кнопкой в приложении — история отматывается.
+   Самая нижняя запись — страж: «Назад» на главной карте просит нажать ещё раз, второе
+   нажатие уводит со страницы. Совсем удержать человека браузер не даёт — и правильно */
+var histReady=false, histIgnore=0, histBusy=false, exitArmed=0;
+function appDepth(){
+  var p=ui.panel;
+  if(!p)return (ui.homeOpen&&!isDesktopPanel())?1:0;
+  if(p.type==='welcome')return (ui.welcomeStep||1)-1;
+  if(p.type==='create')return (ui.draft&&ui.draft.step)||1;
+  var d=0, x=p; while(x&&d<8){d++; x=oneUp(x)}
+  if(p.type==='pin'&&p.origin&&p.origin.type==='list'&&!isDesktopPanel())d++;
+  return d;
+}
+function syncHist(){
+  if(!histReady||histBusy)return;
+  var d=appDepth(), st=history.state, cur=(st&&st.raion)?st.d:-1;
+  if(cur<0)return;
+  if(d>cur){for(var i=cur+1;i<=d;i++){try{history.pushState({raion:1,d:i},'')}catch(e){}}}
+  else if(d<cur){histIgnore++; history.go(d-cur)}
+}
+function doAppBack(){
+  if($('#overlay .scrim')){closeModal(); return true}
+  var p=ui.panel;
+  if(!p){if(ui.homeOpen&&!isDesktopPanel()){ui.homeOpen=false; render(); return true} return false}
+  var c=function(sel){var b=[].slice.call(document.querySelectorAll(sel)).filter(function(x){return x.getClientRects().length})[0]; if(b){b.click(); return true} return false};
+  if(p.type==='welcome'){return (ui.welcomeStep||1)===2?c('[data-act="welcome-back"]'):false}
+  if(p.type==='create'){var s0=ui.draft&&ui.draft.step||1; return s0>1?c('#panel [data-act="step"][data-step="'+(s0-1)+'"]'):c('#panel [data-act="create-close"], #panel [data-act="back"]')}
+  if(c('#panelB [data-act="close-detail"]'))return true;
+  if(c('#panel [data-act="back"]'))return true;
+  ui.panel=null; render(); return true;
+}
+window.addEventListener('popstate',function(e){
+  if(histIgnore){histIgnore--; return}
+  if(!histReady)return;
+  var t=(e.state&&e.state.raion)?e.state.d:-1;
+  histBusy=true;
+  var g=0; while(appDepth()>Math.max(0,t)&&g++<6){if(!doAppBack())break}
+  histBusy=false;
+  if(t>=0){var st2=history.state; if(appDepth()>t){for(var i=t+1;i<=appDepth();i++){try{history.pushState({raion:1,d:i},'')}catch(err){}}} return}
+  /* ушли ниже стража — на главной карте */
+  if(g>0){try{history.pushState({raion:1,d:0},'')}catch(err){} syncHist(); return}
+  if(Date.now()-exitArmed<2000){history.back(); return}
+  exitArmed=Date.now(); toast('Нажмите «Назад» ещё раз, чтобы выйти');
+  try{history.pushState({raion:1,d:0},'')}catch(err){}
+});
+
+/* страж ставится при запуске. Chrome запись без действия человека при «Назад» может
+   пропустить — тогда с главной карты «Назад» уводит сразу, как раньше; записи экранов
+   добавляются уже после нажатий и не пропускаются */
+function histBoot(){try{history.pushState({raion:1,d:0},'')}catch(e){return} histReady=true; syncHist()}
 function healLayout(){
   if(isDesktopPanel()||kbOpenNow||typingNow()||!mapEl)return;
   var vh=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vh'))||0;
@@ -7223,6 +7391,7 @@ function render(){
   renderMarkers();
   renderPanel();
   healLayout();
+  syncHist();
 }
 /* Движение карты меняет выдачу, но не состояние приложения: метки уже перерисованы
    каждым кадром, обновить надо список и число над ним. Метки здесь не трогаем — иначе
@@ -8068,6 +8237,8 @@ function canSwipeBack(){
 }
 document.addEventListener('touchstart',function(e){
   backSwipe=null;
+  /* на Android край экрана — системный «Назад»; он и так ведёт по экранам приложения */
+  if(IS_ANDROID)return;
   if(e.touches.length!==1||!canSwipeBack())return;
   var el=$('#panel'); if(!el||el.hidden)return;
   /* у шторки свой жест — вниз; вбок над картой ей возвращаться некуда */
@@ -8284,6 +8455,8 @@ function tabSaveScroll(ctx){var b=$('#panelBody'); if(b)tabScroll[ctx.kind+':'+c
 function tabRestoreScroll(ctx,k){var b=$('#panelBody'); if(b)b.scrollTop=tabScroll[ctx.kind+':'+k]||0}
 document.addEventListener('touchstart',function(e){
   tabDrag=null;
+  /* на Android свайп от края система принимает за «Назад» — вкладки там переключают нажатием */
+  if(IS_ANDROID)return;
   if(e.touches.length!==1)return;
   var sw=e.target.closest&&e.target.closest('#panel .swrap'); if(!sw)return;
   var ctx=tabCtx(); if(!ctx)return;
@@ -8562,67 +8735,76 @@ function welcomeStacks(){
    убирал назад — две трети пропадали за новой верхней, и казалось, что она исчезла */
 function wShuffle(st){
   var top=st.firstElementChild; if(!top||st._busy||st.children.length<2)return; st._busy=true;
-  var r=top.getBoundingClientRect(), h=r.height, w=r.width, side=isDesktopPanel();
-  var cl=top.cloneNode(true);
-  cl.style.cssText='position:fixed;left:'+r.left+'px;top:'+r.top+'px;width:'+w+'px;height:'+h+'px;z-index:40;margin:0;transform:none;transition:none;pointer-events:none';
-  document.body.appendChild(cl);
+  var side=isDesktopPanel(), dr=st.getBoundingClientRect(), h=top.offsetHeight, w=dr.width;
+  /* копия летит от исходной коробки карточки, без её трансформа: так конечное положение —
+     ровно трансформ последней карточки в стопке, и подмена в конце незаметна */
+  function boxCss(z){return 'position:fixed;left:'+dr.left+'px;top:'+dr.top+'px;width:'+w+'px;height:'+h+'px;z-index:'+z+';margin:0;transition:none;pointer-events:none;transform-origin:50% 100%'}
+  var cl=top.cloneNode(true); cl.style.cssText=boxCss(42); document.body.appendChild(cl);
   top.style.transition='none'; top.style.opacity='0';
   st.appendChild(top); wRestack(st);
-  var ease=function(u){return u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2};
-  var N=30, out=side?w+24:h+24, frames=[];
-  for(var i=0;i<=N;i++){
-    var t=i/N, o, cut, rot;
-    if(t<=.42){var u=ease(t/.42); o=out*u; rot=4*u; cut=0}
-    else{
-      var u2=ease((t-.42)/.58); o=out-(out+24)*u2; rot=4*(1-u2);
-      /* обратный путь — за передней карточкой: прячем то, что зашло на неё */
-      cut=Math.max(0,Math.min(side?w:h,(side?w:h)-o));
-    }
-    frames.push(side
-      ? {offset:t,transform:'translateX('+o.toFixed(1)+'px) rotate('+rot.toFixed(2)+'deg)',clipPath:'inset(0 0 0 '+cut.toFixed(1)+'px)'}
-      : {offset:t,transform:'translateY('+(-o).toFixed(1)+'px) rotate('+(-rot).toFixed(2)+'deg)',clipPath:'inset(0 0 '+cut.toFixed(1)+'px 0)'});
-  }
-  var an=cl.animate(frames,{duration:950,easing:'linear',fill:'forwards'});
+  /* Копии карточек стопки поверх летящей — на обратном пути она уходит ПОД них, со всеми
+     скруглениями. Каждую копию каждый кадр ставим туда же, где сейчас настоящая */
+  var occ=[].slice.call(st.children,0,st.children.length-1).map(function(c,k){
+    var o=c.cloneNode(true); o.style.cssText=boxCss(41-k); o.style.opacity='1'; document.body.appendChild(o); return {o:o,c:c};
+  });
+  var last=top.style.transform||'translateY(24px) scale(.88)';
+  var out=side?'translateX('+(w+24)+'px) rotate(4deg)':'translateY('+(-(h+24))+'px) rotate(-4deg)';
+  var dur=side?550:800, t0=performance.now(), swapped=false;
+  var an=cl.animate([{transform:'none',easing:'cubic-bezier(.4,0,.2,1)'},{transform:out,offset:.45,easing:'cubic-bezier(.4,0,.2,1)'},{transform:last}],{duration:dur,fill:'forwards'});
+  (function frame(){
+    var p=(performance.now()-t0)/dur;
+    occ.forEach(function(x){x.o.style.transform=getComputedStyle(x.c).transform})
+    /* вверх/вбок карточка идёт поверх стопки, обратно — под неё */
+    if(!swapped&&p>=.45){swapped=true; cl.style.zIndex='39'}
+    if(p<1&&cl.parentNode)requestAnimationFrame(frame);
+  })();
   an.onfinish=function(){
+    top.style.transition='none'; top.style.opacity='';
     if(cl.parentNode)cl.parentNode.removeChild(cl);
-    top.style.transition='opacity .2s ease, transform .45s cubic-bezier(.3,.7,.3,1)'; top.style.opacity='';
-    setTimeout(function(){top.style.transition=''; st._busy=false},220);
+    occ.forEach(function(x){if(x.o.parentNode)x.o.parentNode.removeChild(x.o)});
+    setTimeout(function(){top.style.transition=''; st._busy=false},30);
   };
-  /* десктоп: наверху теперь другой тип — на карте проявляется его пример */
-  if(side){var nt=st.firstElementChild; if(nt)setTimeout(function(){wGhost(nt.getAttribute('data-wt'),nt.getAttribute('data-wg'))},300)}
+  /* наверху теперь другой тип — на карте проявляются его события */
+  var nt=st.firstElementChild; if(nt)setTimeout(function(){wGhostSet(nt.getAttribute('data-wt'),nt.getAttribute('data-wg'))},side?200:350);
 }
-/* Примеры на карте — настоящие метки с подписью, как после входа в район: круг цвета типа и
-   плашка с названием. Встают в свободное место справа от панели, не друг на друга */
-var WGHOST_T={act:['Пробежка у прудов','Футбол 5×5','Уборка двора'],
-              offer:['Отдам лампу','Одолжу дрель','Помогу с ремонтом'],
-              find:['Нашлись ключи','Пропала варежка','Ищем рыжего кота']};
-var wGhostAt=[], wGhostN={act:0,offer:0,find:0};
-function wGhost(cls,glyph){
-  var pn=$('#panel'); if(!pn||!WGHOST_T[cls])return;
-  var pr=pn.getBoundingClientRect(), W=window.innerWidth, Hh=window.innerHeight;
-  var x0=pr.right+40, x1=W-240, y0=110, y1=Hh-110, x=0, y=0;
-  if(x1<x0)return;
-  wGhostAt=wGhostAt.filter(function(g){return g.until>Date.now()});
-  for(var k=0;k<12;k++){
-    x=x0+Math.random()*(x1-x0); y=y0+Math.random()*(y1-y0);
-    if(wGhostAt.every(function(g){return Math.abs(g.x-x)>200||Math.abs(g.y-y)>60}))break;
-  }
-  var txt=WGHOST_T[cls][wGhostN[cls]++%WGHOST_T[cls].length];
-  var g=document.createElement('div');
-  g.className='wghostmk'; g.style.left=x.toFixed(0)+'px'; g.style.top=y.toFixed(0)+'px';
-  g.innerHTML='<span class="pin pin--'+cls+'">'+icon(glyph)+'</span><span class="pin__label"><span class="pin__row"><b>'+H(txt)+'</b></span></span>';
-  document.body.appendChild(g);
-  wGhostAt.push({x:x,y:y,until:Date.now()+2800});
-  var an=g.animate([{opacity:0,transform:'scale(.85)'},{opacity:1,transform:'scale(1)',offset:.1},
-                    {opacity:1,transform:'scale(1)',offset:.85},{opacity:0,transform:'scale(.95)'}],
-                   {duration:2800,easing:'ease',fill:'forwards'});
-  an.onfinish=function(){if(g.parentNode)g.parentNode.removeChild(g)};
+/* Примеры на карте — настоящие метки с подписью, как после входа в район. На десктопе по
+   4–5 сразу справа от панели, на телефоне по 2–3 в видимой части над шторкой. Подписи
+   целиком, метки не наезжают друг на друга; прежний набор гаснет, когда приходит новый */
+var WGHOST_T={act:['Пробежка у прудов','Футбол 5×5','Уборка двора','Настолки в кафе','Прогулка с собаками'],
+              offer:['Отдам лампу','Одолжу дрель','Помогу с ремонтом','Нужна стремянка','Отдам детские книги'],
+              find:['Нашлись ключи','Пропала варежка','Ищем рыжего кота','Нашёлся самокат','Потерялся зонт']};
+var wGhosts=[];
+function wGhostClear(){wGhosts.forEach(function(g){var a=g.animate([{opacity:1},{opacity:0}],{duration:200,fill:'forwards'}); a.onfinish=function(){if(g.parentNode)g.parentNode.removeChild(g)}}); wGhosts=[]}
+function wGhostSet(cls,glyph){
+  var pn=$('#panel'); if(!pn||!WGHOST_T[cls]||!(ui.panel&&ui.panel.type==='welcome'))return;
+  if((ui.welcomeStep||1)!==1){wGhostClear(); return}
+  wGhosts.forEach(function(g){var a=g.animate([{opacity:1},{opacity:0}],{duration:250,fill:'forwards'}); a.onfinish=function(){if(g.parentNode)g.parentNode.removeChild(g)}});
+  wGhosts=[];
+  var pr=pn.getBoundingClientRect(), W=window.innerWidth, Hh=window.innerHeight, desk=isDesktopPanel();
+  var area=desk?{l:pr.right+40,t:90,r:W-40,b:Hh-90}:{l:16,t:110,r:W-16,b:pr.top-30};
+  if(area.r-area.l<200||area.b-area.t<60)return;
+  var list=WGHOST_T[cls].slice().sort(function(){return Math.random()-.5}).slice(0,desk?(4+Math.round(Math.random())):(2+Math.round(Math.random())));
+  var boxes=[];
+  list.forEach(function(txt,i){
+    var lw=34+txt.length*7.6, bx=null;
+    for(var k=0;k<40&&!bx;k++){
+      var x=area.l+17+Math.random()*Math.max(1,area.r-area.l-17-lw), y=area.t+Math.random()*(area.b-area.t);
+      var b={l:x-24,t:y-26,r:x+lw+8,b:y+26};
+      if(boxes.every(function(o){return b.l>o.r||b.r<o.l||b.t>o.b||b.b<o.t}))bx={x:x,y:y,b:b};
+    }
+    if(!bx)return;
+    boxes.push(bx.b);
+    var g=document.createElement('div');
+    g.className='wghostmk'; g.style.left=bx.x.toFixed(0)+'px'; g.style.top=bx.y.toFixed(0)+'px';
+    g.innerHTML='<span class="pin pin--'+cls+'">'+icon(glyph)+'</span><span class="pin__label"><span class="pin__row"><b>'+H(txt)+'</b></span></span>';
+    document.body.appendChild(g); wGhosts.push(g);
+    g.animate([{opacity:0,transform:'scale(.85)'},{opacity:1,transform:'scale(1)'}],{duration:220,delay:i*80,easing:'ease',fill:'backwards'});
+  });
 }
 function viewWelcome(){
   if((ui.welcomeStep||1)===2)return viewWelcome2();
   var sel=ui.welcomeSt||WELCOME_ST[0];
   var body='<div class="pad stack welcome">'+
-    '<div class="welcome__brand"><span class="brand__mark">'+icon('map')+'</span><span class="brand__name">Район</span></div>'+
     '<div><h1 class="welcome__h">Познакомьтесь со своим районом</h1>'+
     '<p class="welcome__p">Рядом с вами живут люди, с которыми можно поделиться умениями, вещами или временем — а взамен получить то же. Здесь соседи находят друг друга, чтобы вместе что-то сделать. Посмотрите, что происходит рядом</p></div>'+
     wdeckHTML()+
@@ -8637,12 +8819,12 @@ function viewWelcome2(){
       '<h1 class="welcome__h">Как вас представить соседям?</h1></div>'+
     '<p class="welcome__p welcome__p--top">Пока «Район» работает в центре Москвы — выберите станцию поближе к дому, с неё начнётся ваша карта. Где именно вы живёте, соседи не увидят</p>'+
     '<div class="field"><label for="welcomeName">Имя</label>'+
-      '<input class="input" id="welcomeName" maxlength="40" autocomplete="given-name" placeholder="Анна" value="'+H(ui.welcomeName||'')+'">'+
+      '<input class="input" id="welcomeName" maxlength="40" enterkeyhint="done" autocomplete="given-name" placeholder="Анна" value="'+H(ui.welcomeName||'')+'">'+
       '<span class="hint" data-namehint="first">'+H(nameSeen(ui.welcomeName||'',true))+'</span></div>'+
     '<div class="field"><label>Ваша станция</label>'+
       '<div class="ptags ptags--field ptags--st'+((Date.now()-(ui.wStepAt||0))<700?' is-enter':'')+'">'+WELCOME_ST.map(function(id){
         var d=district(id);
-        return '<button class="ptag'+(id===sel?' is-on':'')+'" data-welcome-st="'+id+'" style="--lc:'+d.lineColor+'"><i class="wst__fill"></i>'+icon('home','wst__home')+lineDot(id)+'<span>'+H(d.name)+'</span></button>';
+        return '<button class="ptag'+(id===sel?' is-on':'')+'" data-welcome-st="'+id+'" style="--lc:'+d.lineColor+'">'+stChipInner(id)+'<span>'+H(d.name)+'</span></button>';
       }).join('')+'</div>'+
       '</div>'+
   '</div>';
@@ -8678,7 +8860,7 @@ function moveHome(st){
   m.home_point={x:d.sx,y:d.sy}; m.home_st=st; m.district_id=st;
   save();
   ui.districtId=st;
-  render(); toast('Дом — '+d.name);
+  render();
   askedMove(); if(!(glMap&&fitStationZone(d)))fitOnStation(st);
 }
 /* Выход из приветствия: шторка уезжает, размытие спадает — и только потом открывается карта */
@@ -8773,6 +8955,21 @@ function pullInside(){
   });
   db.insideFixed=true;
 }
+/* Заявка в демо-встречу принимается автором сама, по часам: и если вкладку перезагрузили
+   в эти полминуты, ответ всё равно придёт при следующем запуске */
+function autoAccept(){
+  var me0=db.currentUserId, any=false;
+  db.responses.forEach(function(r){
+    if(r.user_id!==me0||r.status!=='interested'||!r.auto_at||r.auto_at>now())return;
+    var p=pin(r.pin_id); r.auto_at=null;
+    if(!p||p.status!=='active')return;
+    r.status='joined'; groupAdd(p,me0); any=true;
+    var au=user(p.author_id);
+    sysNotify('Заявку приняли','вы в списке участников, '+district(landmarkOf(p)).name,'open-pin',p.id,'Открыть');
+    toast((au?shortName(au):'Автор')+' — заявку приняли','Открыть',function(){openPin(p.id,{type:'sys'})});
+  });
+  if(any){save(); render()}
+}
 /* Ссылки-задания для кейса: #try=lost | meet | offer | create | chat открывают прототип сразу
    в нужном месте. Читатель кейса пришёл проверить решение, о котором только что прочёл, —
    онбординг для него лишняя дверь. Приветствие проходится само: демо-имя и первая станция.
@@ -8827,6 +9024,94 @@ function clearStations(){
   if(moved)save();
   return moved;
 }
+/* Демо-состояния, которых иначе не увидеть: разные итоги в архиве, «вам вернули» и «вы
+   получили», ушедшее место, отменённая встреча, отклонённая заявка, своя встреча идёт
+   и своя без мест. Каждое пришло уведомлением, как в жизни; три последних — непрочитанные.
+   Один раз на профиль */
+function seedStates(who){
+  who=who||db.currentUserId;
+  var m=user(who); if(!m||m.welcome||db.statesSeeded)return;
+  var t=now(), st=sysThread(true), home=homePoint();
+  function by(f){return db.pins.filter(f)}
+  function note(title,text,p,ago){
+    db.messages.push({id:uid('msg'),thread_id:st.id,author_id:null,mine_seed:true,title:title,text:text,
+      act:'open-pin',obj:p.id,label:'Открыть',created_at:t-ago});
+  }
+  function demoOf(p){var u=user(p.author_id); return u&&u.demo}
+  function dist(p){return Math.hypot(p.x-home.x,p.y-home.y)}
+  /* «Теннис» — по заявкам и без вашей заявки, рядом с домом */
+  var tn=by(function(p){return p.seed_tag==='pending'&&p.status==='active'})[0];
+  if(tn){
+    db.responses=db.responses.filter(function(r){return !(r.pin_id===tn.id&&r.user_id===who&&r.mine_seed)});
+    var R0=420/METERS_PER_UNIT, a0=3.4;
+    setPlaceXY(tn,Math.round(home.x+Math.cos(a0)*R0),Math.round(home.y+Math.sin(a0)*R0)); tn.district_id=districtOf(tn.x,tn.y);
+  }
+  var act=function(p){return isAct(p)&&p.status==='active'&&p.x!=null};
+  var foreign=by(function(p){return act(p)&&p.author_id!==who&&demoOf(p)&&!responseOf(p.id,who)&&p!==tn&&!p.approval})
+    .sort(function(a,b){return dist(b)-dist(a)});
+  /* ушедшее место: записались, не подтвердили вовремя */
+  var rl=foreign.shift();
+  if(rl){
+    db.responses.push({id:uid('rsp'),pin_id:rl.id,user_id:who,status:'released',created_at:t-30*HOUR,reminded_at:t-9*HOUR,mine_seed:true});
+    note('Место ушло','вы не подтвердили участие вовремя — место отдали другому соседу',rl,5*HOUR);
+  }
+  /* отменённая встреча, куда вы были записаны */
+  var cn=foreign.shift();
+  if(cn){
+    db.responses.push({id:uid('rsp'),pin_id:cn.id,user_id:who,status:'joined',created_at:t-40*HOUR,mine_seed:true});
+    cn.status='closed'; cn.close_reason='cancel'; cn.closed_at=t-3*HOUR;
+    note('Встреча отменена','автор отменил встречу, чат встречи закрыт',cn,3*HOUR);
+  }
+  /* отклонённая заявка: заявку убрали, осталось уведомление */
+  var dc=foreign.shift();
+  if(dc){
+    dc.approval=true;
+    note('Заявку не приняли','автор уже набрал участников',dc,70*MIN);
+  }
+  /* своя встреча идёт сейчас и своя без мест */
+  var own=by(function(p){return act(p)&&p.author_id===who&&p.seed_tag!=='byreq'&&p.seed_tag!=='confirm'});
+  var lv=own[0];
+  if(lv){lv.seed_start=-1/4; lv.dur=120; lv.starts_at=seedStart(-1/4,t); lv.expires_at=actEnd(lv);
+    note('Ваша встреча началась','идёт сейчас — участники в чате встречи',lv,15*MIN)}
+  var fl=own[1];
+  if(fl){
+    var ppl=['u_olga','u_ira','u_mark','u_dima','u_sasha','u_ksu'].filter(function(id){return user(id)&&!responseOf(fl.id,id)});
+    ppl.slice(0,Math.max(0,4-joinedOf(fl.id).length)).forEach(function(id,i){
+      db.responses.push({id:uid('rsp'),pin_id:fl.id,user_id:id,status:'joined',created_at:t-(i+2)*HOUR,mine_seed:true});
+    });
+    fl.participant_limit=joinedOf(fl.id).length; groupAdd(fl,who);
+    note('Все места заняты','записалось '+fl.participant_limit+' из '+fl.participant_limit,fl,40*MIN);
+  }
+  /* вам вернули и вы получили */
+  var fd=by(function(p){return p.type==='lost_found'&&p.subtype==='found'&&p.status!=='active'&&p.author_id!==who})[0];
+  if(fd&&!responseOf(fd.id,who)){
+    db.responses.push({id:uid('rsp'),pin_id:fd.id,user_id:who,status:'interested',created_at:t-3*DAY,settled_at:t-26*HOUR,mine_seed:true});
+    note('Ваша вещь у вас','сосед отметил, что вернул её вам',fd,26*HOUR);
+  }
+  var ga=by(function(p){return p.type==='need_offer'&&p.subtype==='give_away'&&p.status!=='active'&&p.author_id!==who&&!responseOf(p.id,who)})[0];
+  if(ga){
+    db.responses.push({id:uid('rsp'),pin_id:ga.id,user_id:who,status:'interested',created_at:t-4*DAY,settled_at:t-2*DAY,mine_seed:true});
+    note('Вам отдали «'+ga.title+'»','автор отметил вас получателем',ga,2*DAY);
+  }
+  /* разные итоги в своём архиве */
+  var oa=by(function(p){return p.author_id===who&&p.status!=='active'&&isAct(p)});
+  if(oa[0]){oa[0].close_reason='noone'}
+  var oh=by(function(p){return p.author_id===who&&p.status!=='active'&&p.type==='need_offer'})[0];
+  if(oh){oh.close_reason='noone'; note('Ушло в архив','на «'+oh.title+'» никто не откликнулся — можно вернуть на карту',oh,3*DAY)}
+  var ol=by(function(p){return p.author_id===who&&p.type==='lost_found'&&p.subtype==='lost'})[0];
+  if(ol){
+    var c=JSON.parse(JSON.stringify(ol));
+    c.id=uid('pin'); c.title='потерялась связка ключей с брелоком-мишкой'; c.description='Где-то между метро и домом. Три ключа и брелок.';
+    c.status='archived'; c.close_reason='noone'; c.created_at=t-12*DAY; c.closed_at=t-5*DAY; delete c.photos; delete c.photo;
+    db.pins.push(c);
+  }
+  /* три последних — непрочитанные */
+  st.seen_at=t-75*MIN;
+  db.messages.forEach(function(x){
+    if(x.thread_id===st.id&&x.created_at>st.seen_at&&['Ваша встреча началась','Все места заняты','Заявку не приняли'].indexOf(x.title)<0)x.created_at=st.seen_at-10*MIN;
+  });
+  db.statesSeeded=true; save();
+}
 function welcomeGoNow(){
   var m=me(); if(!m||!welcomeValid())return;
   var st=ui.welcomeSt||WELCOME_ST[0], d=district(st);
@@ -8837,7 +9122,7 @@ function welcomeGoNow(){
   catNearHome(d);
   /* у профиля, заведённого до 3.32, свои события уже есть — второй раз не заводим */
   if(!db.pins.some(function(p){return p.author_id===m.id&&p.mine_seed}))seedMyPins(m.id);
-  stageHome(d,m.id); clearStations();
+  stageHome(d,m.id); seedStates(m.id); clearStations();
   /* stageHome записывает в две встречи — их общие чаты тоже не должны стоять пустыми */
   db.groupFill=false; fillGroups(m.id);
   /* волна меток от дома наружу: ближние раньше, ~40 мс между соседями */
@@ -9030,6 +9315,10 @@ function renderPanel(){
     });
   }
   var secOld=secLayer?el.innerHTML:null;
+  /* страховка: если панель перерисовалась, пока в её поле шёл набор, фокус и курсор
+     возвращаются в то же поле — иначе на Android закрылась бы клавиатура */
+  var fae=document.activeElement, fid=(fae&&fae.id&&el.contains(fae)&&/^(INPUT|TEXTAREA)$/.test(fae.tagName))?fae.id:null, fs0=null, fs1=null;
+  if(fid){try{fs0=fae.selectionStart; fs1=fae.selectionEnd}catch(e){}}
   /* Короткая карточка сменилась другой (нажали соседнюю метку): раньше содержимое просто
      подменялось на месте, и смену было не заметить. Теперь шторка приседает на 24 и
      возвращается, а старое содержимое растворяется поверх нового */
@@ -9038,6 +9327,7 @@ function renderPanel(){
     var so=el.querySelector('.pinshort__in'); if(so)shortOld=so.outerHTML;
   }
   el.innerHTML=html; el._html=html;
+  if(fid){var nfe=document.getElementById(fid); if(nfe&&nfe!==document.activeElement){try{nfe.focus({preventScroll:true}); if(fs0!=null)nfe.setSelectionRange(fs0,fs1)}catch(e){}}}
   if(shortOld){
     var psn=el.querySelector('.pinshort');
     if(psn){
@@ -9056,7 +9346,7 @@ function renderPanel(){
   /* выбор в ряду тегов: прежнее состояние на кадр, потом текущее — заливка перетекает */
   if(!sameScreen)tagPrev={};
   $$('.ptags .ptag',el).forEach(function(t){
-    var dk=dataKey(t); if(!dk)return;
+    var dk=dataKey(t); if(!dk||t.closest('.ptags--st'))return;
     var tk=dk+'='+t.getAttribute(dk), on=t.classList.contains('is-on'), was=tagPrev[tk];
     if(was!==undefined&&was!==on&&!reduceMotion()){t.classList.toggle('is-on',was); void t.offsetWidth; t.classList.toggle('is-on',on)}
     tagPrev[tk]=on;
@@ -9428,7 +9718,7 @@ function viewPin(id){
         foot='<button class="btn btn--primary" data-act="write" data-id="'+p.id+'">'+icon('chat')+'Написать автору</button>';
       }else{
         foot='<button class="btn btn--primary" data-act="join" data-id="'+p.id+'">'+
-          icon('people')+(p.approval?'Подать заявку':'Участвую')+'</button>';
+          icon('user-add')+(p.approval?'Подать заявку':'Участвую')+'</button>';
       }
     }else{
       var t=threadOf(p.id,p.author_id);
@@ -9671,19 +9961,19 @@ function fldBasic(d,act){
      прошёл обязательное подряд, а необязательное осталось после. Иначе получается
      «обязательное — пропускаемое — снова обязательное», и конец требований не угадать */
   var need=(d.type==='lost_found'&&d.lfsub==='found');
-  var photos='<div class="field"><label>Фотографии'+(need?req():'')+'</label>'+
+  var photos='<div class="field"><label>Фото'+(need?req():'')+'</label>'+
       (d.photos.length?'<div class="thumbs">'+d.photos.map(function(src,i){
         return '<div class="thumb"><img src="'+src+'" alt=""><button data-act="rmphoto" data-i="'+i+'" aria-label="Удалить фото">'+icon('close')+'</button></div>';
       }).join('')+'</div>':'')+
       /* пустая зона крупная и зовущая, с первой фотографией сжимается в строку:
          миниатюры над ней уже занимают это место */
-      (d.photos.length<3?'<button class="uploader'+(d.photos.length?' uploader--compact':'')+'" data-act="addphoto">'+
-        icon('camera')+(d.photos.length?'Добавить ещё':'Добавить фото')+'</button>':'')+
-      '<span class="hint">'+(need
-        ? 'Без фотографии находку не опознают — она здесь обязательна'
-        : 'До трёх штук, хранятся в вашем браузере')+'</span></div>';
+      /* одно фото: выбор файла в браузере даёт взять только один снимок, и обещание
+         «до трёх» читалось как поломка */
+      '<button class="uploader'+(d.photos.length?' uploader--compact':'')+'" data-act="addphoto">'+
+        icon('camera')+(d.photos.length?'Заменить фото':'Добавить фото')+'</button>'+
+      (need?'<span class="hint">Без фотографии находку не опознают — она здесь обязательна</span>':'')+'</div>';
   var main='<div class="field"><label for="f-title">Заголовок'+req()+'</label>'+
-      '<input class="input" id="f-title" data-field="title" maxlength="80" value="'+H(d.title)+'" placeholder="'+H(titleHint(d))+'">'+
+      '<input class="input" id="f-title" data-field="title" maxlength="80" enterkeyhint="next" value="'+H(d.title)+'" placeholder="'+H(titleHint(d))+'">'+
       '<span class="hint">Коротко и по делу — это единственное, что видно на карте</span></div>'+
     '<div class="field"><label for="f-desc">Описание</label>'+
       '<textarea class="textarea" id="f-desc" data-field="description" maxlength="600" placeholder="'+(act?'Что делаем, где собираемся, что взять с собой':'Состояние, размер, когда удобно забрать')+'">'+H(d.description)+'</textarea></div>';
@@ -9705,7 +9995,7 @@ function fldActivity(d){
       (d.repeat!=='none'?'<span class="hint">Отклики относятся к ближайшей дате: после неё список участников обнуляется</span>':'')+
     '</div>'+
     '<div class="field"><label for="f-limit">Сколько человек нужно</label>'+
-      '<input class="input" type="number" min="0" max="99" id="f-limit" data-field="limit" value="'+H(d.limit)+'" placeholder="без ограничения"></div>'+
+      '<input class="input" type="number" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" min="0" max="99" id="f-limit" data-field="limit" value="'+H(d.limit)+'" placeholder="без ограничения"></div>'+
     /* по умолчанию выключено: одобрение подтверждает, что автор хочет участника,
        а не что тот придёт, зато превращает каждую встречу в закрытый клуб, а автора
        из соседа в вахтёра. Нужно там, где отбор осмыслен: мало мест, свой инвентарь */
@@ -9932,7 +10222,7 @@ function savePin(){
   }
   save(); ui.draft=null;
   openPanel({type:'pin',id:p.id});
-  toast('Изменения сохранены');
+
 }
 function draftDur(d){
   if(!d||!d.endTime||!d.time)return null;
@@ -10044,7 +10334,7 @@ function mineFact(p,m){
   return rowFact(p);
 }
 function mineRows(list,m){
-  var mx=mixedCats(list);
+  var mx=true;   /* тип на миниатюре — всегда: фото без кружка теряет связь с цветом типа */
   return list.map(function(p){
     return '<button class="listrow listrow--chat'+openRowCls(p)+'" data-pin="'+p.id+'">'+
       pinCover(p,false,mx)+
@@ -10122,7 +10412,7 @@ function viewProfile(){
   var soon=planned.length
     ? '<div class="divider divider--lg"></div>'+
       '<div class="secthead" style="padding:24px 16px 16px"><span class="secthead__t">Ближайшее</span>'+
-        goLink('active','Все текущие',active.length)+'</div>'+mineRows(planned,m)
+        goLink('active','Смотреть все',active.length)+'</div>'+mineRows(planned,m)
     : '';
   /* В профиле было четыре блока про две сущности: «Ближайшее» — витрина текущих дел,
      «Законченные дела» — витрина архива, и под ними ещё две строки, ведущие туда же.
@@ -10148,7 +10438,7 @@ function viewProfile(){
     'или отдать то, что вам не нужно</p>'+
     '<button class="btn btn--primary btn--sm" data-nav="create">'+icon('plus')+'Создать событие</button></div>';
   /* тот же блок фактов, что в профиле соседа: полоса состава дел, круг знакомств, свежесть */
-  var body=head+profileFacts(m.id,true,my.length>0,goLink('archive','Весь архив',archive.length))+soon+rows;
+  var body=head+profileFacts(m.id,true,my.length>0,goLink('archive','Смотреть все',archive.length))+soon+rows;
 
   return {title:'Профиль',body:body,section:true,
   };
@@ -10285,7 +10575,7 @@ function viewMe(){
     '</div>'+
     (m.avatar?'<div style="text-align:center"><button class="linkbtn linkbtn--danger" data-act="me-photo-off">Удалить снимок</button></div>':'')+
     '<div class="field"><label for="meName">Имя и фамилия</label>'+
-      '<input class="input" id="meName" maxlength="40" value="'+H(m.name)+'">'+
+      '<input class="input" id="meName" maxlength="40" enterkeyhint="done" value="'+H(m.name)+'">'+
       '<span class="hint" data-namehint="full">'+H(nameSeen(m.name))+'</span></div>'+
     /* у демо-профиля телефона нет, и подпись про подтверждение кодом была бы неправдой */
     (m.phone?'<div class="field"><label>Телефон</label>'+
@@ -10474,7 +10764,7 @@ function viewUser(id,pinctx){
   /* Полоса состава отвечает на «чем именно человек занят» за полсекунды — организатор
      встреч перед вами или раздающий вещи. Текстовые строки ниже говорят про роль */
   var facts=profileFacts(id,self,!!(act.length||past.length));  function rows(list){
-    var mx=mixedCats(list);
+    var mx=true;
     return list.map(function(p){
       return '<button class="listrow listrow--chat'+openRowCls(p)+'" data-pin="'+p.id+'">'+pinCover(p,false,mx)+
         '<span class="listrow__body"><span class="listrow__t">'+H(p.title)+'</span>'+
@@ -10646,8 +10936,7 @@ function viewSettings(){
     return '<div class="pad"><div class="field"><label>Дом</label><div class="ptags ptags--field ptags--st">'+
       ids.map(function(id){
         var d=district(id);
-        return '<button class="ptag'+(id===cur?' is-on':'')+'" data-home-pick="'+id+'" style="--lc:'+d.lineColor+'"><i class="wst__fill"></i>'+
-          icon('home','wst__home')+lineDot(id)+'<span>'+H(d.name)+'</span></button>';
+        return '<button class="ptag'+(id===cur?' is-on':'')+'" data-home-pick="'+id+'" style="--lc:'+d.lineColor+'">'+stChipInner(id)+'<span>'+H(d.name)+'</span></button>';
       }).join('')+'</div></div></div>';
   })()+
   blocked+
@@ -10803,7 +11092,7 @@ function threadRow(t){
     /* Вид переписки — знаком перед именем, как в Телеграме: личная — лицо собеседника,
        общий чат — серый значок группы. Лицо в углу обложки спорило с бейджем категории
        и с самой фотографией */
-    var cat=(p&&photoOf(p)&&ui.msgTab==='all')?'<span class="listrow__cat listrow__cat--l listrow__cat--'+ptype(p).cls+'">'+icon(pinGlyph(p))+'</span>':'';
+    var cat=(p&&photoOf(p))?'<span class="listrow__cat listrow__cat--l listrow__cat--'+ptype(p).cls+'">'+icon(pinGlyph(p))+'</span>':'';
     cover='<span class="listrow__pic">'+cat+(photoOf(p)
       ? '<img class="listrow__cover listrow__cover--lg" src="'+thumbOf(photoOf(p))+'" alt="">'
       : '<span class="listrow__cover listrow__cover--lg listrow__cover--'+(p?ptype(p).cls:'muted')+'">'+icon(p?pinGlyph(p):'pin')+'</span>')+
@@ -10922,6 +11211,13 @@ function sysLine(m,op){
     case 'Скоро встреча': return 'Начало совсем скоро';
     case 'Всё получилось': return 'Всё получилось'+(x?' — '+x:'');
     case 'Событие закрыто': return 'Автор закрыл событие';
+    case 'Место ушло': return 'Место ушло — вы не подтвердили участие вовремя';
+    case 'Встреча отменена': return 'Встреча отменена автором, чат закрыт';
+    case 'Заявку не приняли': return 'Заявку не приняли — автор набрал участников';
+    case 'Ваша встреча началась': return 'Ваша встреча началась — участники в чате';
+    case 'Все места заняты': return 'Все места заняты — '+x;
+    case 'Ваша вещь у вас': return 'Ваша вещь у вас — сосед вернул её';
+    case 'Ушло в архив': return 'Ушло в архив — никто не откликнулся';
   }
   return cap(x)||t;
 }
@@ -11118,7 +11414,7 @@ function viewThread(id){
   }
   var foot='<div class="composer">'+
     /* черновик живёт по переписке: перерисовка экрана или уход и возврат его не стирают */
-    '<textarea class="textarea" id="msgInput" rows="1" placeholder="'+(isGroup?'Сообщение участникам':'Сообщение соседу')+'" aria-label="Сообщение">'+H((ui.msgDrafts||{})[t.id]||'')+'</textarea>'+
+    '<textarea class="textarea" id="msgInput" rows="1" enterkeyhint="send" placeholder="'+(isGroup?'Сообщение участникам':'Сообщение соседу')+'" aria-label="Сообщение">'+H((ui.msgDrafts||{})[t.id]||'')+'</textarea>'+
     '<button class="iconbtn" data-act="send" aria-label="Отправить">'+icon('send')+'</button></div>';
 
   return {title:H(tname),head:head,section:true,body:settle+chat,foot:foot,after:function(){
@@ -11183,6 +11479,24 @@ function catDotsHTML(){
 /* Точка в цвет линии вместо значка метро: в мелком элементе кружок с буквой превращается
    в грязь, а цвет линии читается и в шесть пикселей. Полный значок остаётся там, где
    станция сама по себе предмет разговора — в списке станций и на карте */
+/* Заливка чипа станции и домик ведутся от момента нажатия, а не от отрисовки: выбор сразу
+   двигает карту, карта перерисовывает экран, и новая разметка продолжает анимацию с того
+   же места — прежде она подменяла её готовым состоянием */
+function stFillCss(id){
+  var f=ui.stFill; if(!f||reduceMotion())return '';
+  var e=Date.now()-f.at; if(e>=320)return '';
+  var dl=';animation-delay:-'+(e/1000).toFixed(3)+'s';
+  return id===f.id?'animation:wstIn .3s ease both'+dl:(id===f.prev?'animation:wstOut .3s ease both'+dl:'');
+}
+function stHomeCss(id){
+  var f=ui.stFill; if(!f||reduceMotion()||id!==f.id)return '';
+  var e=Date.now()-f.at; if(e>=400)return '';
+  return 'animation:wstHomeIn .2s ease both;animation-delay:'+(0.15-e/1000).toFixed(3)+'s';
+}
+function stChipInner(id){
+  var fc=stFillCss(id), hc=stHomeCss(id);
+  return '<i class="wst__fill"'+(fc?' style="'+fc+'"':'')+'></i>'+icon('home','wst__home').replace('<svg','<svg'+(hc?' style="'+hc+'"':''))+lineDot(id);
+}
 function lineDot(id){
   return '<i class="linedot" style="background:'+district(id).lineColor+'"></i>';
 }
@@ -11866,7 +12180,7 @@ function pickPhoto(opts){
           if(data.length>900000)data=cv.toDataURL('image/jpeg',0.55);
         }
         if(opts.then)opts.then(data);
-        else if(ui.draft){ui.draft.photos.push(data);render()}
+        else if(ui.draft){ui.draft.photos=[data];render()}
       };
       img.onerror=function(){toast('Не получилось открыть снимок')};
       img.src=fr.result;
@@ -12278,22 +12592,15 @@ function onAction(act,el,e){
     case 'show-on-map':
       var sp=pin(id); if(!sp||sp.x==null)break;
       flashId=sp.id; flashAt=Date.now()+(isDesktopPanel()?320:420);
-      if(isDesktopPanel()){glMap?glGoto(sp.x,sp.y,null,true,viewCX(),view.Ht/2):centerOnSmooth(sp.x,sp.y)}
-      else{
-        ui.pinShut=true; render();
-        setTimeout(function(){
-          var pn2=$('#panel'), top=pn2?pn2.getBoundingClientRect().top:view.Ht;
-          if(glMap)glGoto(sp.x,sp.y,null,true,viewCX(),Math.round(Math.max(80,top/2)));
-          else centerOnSmooth(sp.x,sp.y);
-        },260);
-      }
+      if(isDesktopPanel())showWithMetro(sp);
+      else{ui.pinShut=true; render(); setTimeout(function(){showWithMetro(sp)},260)}
       break;
     case 'toast-act':
       var ta=toastAct; toastAct=null;
       $('#toast').classList.remove('is-on');
       if(ta)ta();
       break;
-    case 'filters-reset': markFade(); resetFilters(); render(); toast('Фильтры сброшены'); break;
+    case 'filters-reset': markFade(); resetFilters(); render(); break;
 
     case 'whose-all': markFade(); ui.whose='all'; render(); break;
     case 'cats-all': markFade();
@@ -12370,12 +12677,16 @@ function onAction(act,el,e){
       break;
     case 'publish': publish(); break;
     case 'welcome-go': welcomeGo(); break;
-    case 'welcome-next': stepAnim=1; ui.welcomeStep=2; ui.wStepAt=Date.now(); render();
+    case 'welcome-next': stepAnim=1; ui.welcomeStep=2; ui.wStepAt=Date.now(); wGhostClear(); render();
       /* шторка второго шага другой высоты — станцию ставим, когда она встала */
       ui.welcomeSt=ui.welcomeSt||WELCOME_ST[0];
       setTimeout(function(){if(ui.panel&&ui.panel.type==='welcome'&&ui.welcomeStep===2)welcomeSelect(ui.welcomeSt)},360);
       break;
     case 'welcome-back': stepAnim=-1; ui.welcomeStep=1; render(); break;
+    case 'home-zoom':
+      var hzd=district(homePoint().st);
+      askedMove(); if(!(glMap&&fitStationZone(hzd)))fitOnStation(hzd.id);
+      break;
     case 'addphoto': pickPhoto(); break;
     case 'rmphoto': ui.draft.photos.splice(parseInt(el.getAttribute('data-i'),10),1); render(); break;
     case 'remind':
@@ -12384,8 +12695,8 @@ function onAction(act,el,e){
         ru.reminders=ru.reminders||{};
         /* записываем решение явно, а не удалением ключа: у ключа три состояния, и
            «выключено руками» надо отличать от «не трогали» */
-        if(remindOn(id)){ru.reminders[id]=0; save(); render(); toast('Напоминание выключено')}
-        else {ru.reminders[id]=1; save(); render(); toast('Напомним за час до начала')}
+        if(remindOn(id)){ru.reminders[id]=0; save(); render()}
+        else {ru.reminders[id]=1; save(); render()}
       }
       break;
     case 'join':
@@ -12400,18 +12711,21 @@ function onAction(act,el,e){
         back.status='joined'; back.confirmed_at=now();
         delete back.released_at; delete back.reminded_at;
         joinNote(groupAdd(p,db.currentUserId),db.currentUserId);
-        save(); render(); toast('Вы снова в списке участников');
+        save(); render();
         break;
       }
       /* вход свободный: намерение подтверждается не на входе, а перед самой встречей.
          Заявки — исключение, которое автор включает сам */
       if(p.approval){
-        db.responses.push({id:uid('rsp'),pin_id:id,user_id:db.currentUserId,status:'interested',created_at:now()});
+        /* демо-автор отвечает сам через полминуты: путь «подал — жду — приняли» проходится целиком */
+        var au0=user(p.author_id);
+        db.responses.push({id:uid('rsp'),pin_id:id,user_id:db.currentUserId,status:'interested',created_at:now(),auto_at:(au0&&au0.demo)?now()+30000:null});
+        setTimeout(autoAccept,30500);
         save(); render(); toast('Заявка отправлена — автор решит');
       }else{
         db.responses.push({id:uid('rsp'),pin_id:id,user_id:db.currentUserId,status:'joined',created_at:now()});
         joinNote(groupAdd(p,db.currentUserId),db.currentUserId);
-        save(); render(); toast('Вы в списке участников и в чате встречи');
+        save(); render();
       }
       break;
     case 'leave':
@@ -12420,7 +12734,12 @@ function onAction(act,el,e){
       function doLeave(){
         var wasReq=!!(mr&&mr.status==='interested');
         if(mr)db.responses=db.responses.filter(function(r){return r.id!==mr.id});
-        save(); render(); toast(wasReq?'Заявка отозвана':'Участие отменено');
+        save(); render();
+        /* отказ обратим: случайное нажатие отменяется тут же */
+        toast(wasReq?'Заявка отозвана':'Участие отменено','Вернуть',function(){
+          if(mr&&!db.responses.some(function(r){return r.id===mr.id}))db.responses.push(mr);
+          save(); render();
+        },'undo');
       }
       /* Отозвать заявку можно молча: вы пока никому ничего не обещали. А выход из
          набранного состава задевает и автора, и разговор, поэтому спрашиваем */
@@ -12441,7 +12760,7 @@ function onAction(act,el,e){
       if(blockedWith(pp.author_id)){save(); toast(DM_CLOSED); break}
       var th=ensureThread(id,pp.author_id);
       save(); openPanel({type:'thread',id:th.id,from:'pin'});
-      toast('Открыли переписку с автором');
+
       break;
     case 'write':
       var p2=pin(id);
@@ -12474,14 +12793,14 @@ function onAction(act,el,e){
       p3.status='closed'; p3.closed_at=now();
       p3.close_reason=closeReason||null;
       closeModal(); notifyResponders(p3); save(); render();
-      toast(p3.close_reason?'Закрыто: '+reasonLabel(p3):'Событие закрыто');
+
       break;
     case 'reopen':
       var p4=pin(id);
       p4.status='active';
       if(p4.type==='activity'&&p4.starts_at<now()){p4.starts_at=now()+DAY;p4.expires_at=actEnd(p4)}
       else p4.expires_at=now()+30*DAY;
-      save(); render(); toast('Событие снова на карте');
+      save(); render();
       break;
     case 'delete-pin':
       confirmDialog('Удалить событие?','Событие, отклики и переписка по нему исчезнут. Отменить это будет нельзя','Удалить',true,function(){
@@ -12521,17 +12840,17 @@ function onAction(act,el,e){
     case 'me-photo':
       pickPhoto({square:256,then:function(data){
         var mm=me(); if(!mm)return;
-        mm.avatar=data; save(); render(); toast('Снимок обновлён');
+        mm.avatar=data; save(); render();
       }});
       break;
     case 'me-photo-off':
-      var mo=me(); if(mo){delete mo.avatar; save(); render(); toast('Снимок удалён')}
+      var mo=me(); if(mo){delete mo.avatar; save(); render()}
       break;
     case 'me-save':
       var mn=$('#meName'), nv=mn?mn.value.trim():'';
       if(!nv){toast('Как вас зовут?'); if(mn)mn.focus(); break}
       var ms=me(); ms.name=nv; save();
-      openPanel({type:'profile'}); toast('Профиль сохранён');
+      openPanel({type:'profile'});
       break;
     case 'mine-cats':
       var mcItems=[];
@@ -12681,11 +13000,11 @@ function onAction(act,el,e){
       if(ar&&pinFull(pin(ar.pin_id))){toast('Мест больше нет');break}
       if(ar){ar.status='joined'; var ap=pin(ar.pin_id);
         if(ap)joinNote(groupAdd(ap,ar.user_id),ar.user_id);
-        save(); render(); toast('Сосед в списке участников')}
+        save(); render()}
       break;
     case 'decline':
       db.responses=db.responses.filter(function(r){return r.id!==id});
-      save(); render(); toast('Заявка отклонена');
+      save(); render();
       break;
     case 'confirm-go':
     case 'confirm-no':
@@ -12737,8 +13056,7 @@ function onAction(act,el,e){
       });
       break;
     case 'toggle-alerts':
-      var mm=me(); if(mm){mm.lost_alerts=!alertsOn(); save(); render();
-        toast(alertsOn()?'Оповещения о пропажах включены':'Оповещения о пропажах выключены')}
+      var mm=me(); if(mm){mm.lost_alerts=!alertsOn(); save(); render()}
       break;
     /* кнопка системного сообщения ведёт на объект, о котором оно говорит */
     /* origin обязателен: без него карточка открывалась поверх всего и уводила из сообщений,
@@ -12828,6 +13146,17 @@ function homeSumToggle(){
 }
 document.addEventListener('keydown',function(e){
   if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.id==='homeSum'){e.preventDefault(); homeSumToggle()}
+  /* 9. «Далее» в названии ведёт в описание, «Готово» в имени закрывает клавиатуру */
+  if(e.key==='Enter'&&e.target){
+    if(e.target.id==='f-title'){e.preventDefault(); var fd=$('#f-desc'); if(fd)fd.focus()}
+    else if(e.target.id==='welcomeName'||e.target.id==='meName'||e.target.id==='f-limit'){e.preventDefault(); e.target.blur()}
+  }
+});
+/* меню долгого нажатия на сенсоре — только там, где копируют: поля и текст сообщений */
+document.addEventListener('contextmenu',function(e){
+  if(!window.matchMedia||!matchMedia('(pointer:coarse)').matches)return;
+  if(e.target.closest&&e.target.closest('input,textarea,[contenteditable],.msg'))return;
+  e.preventDefault();
 });
 document.addEventListener('click',function(e){
   /* дальше не пускаем: после перерисовки цель уже вне шторки, и общий обработчик принял бы
@@ -12855,13 +13184,13 @@ document.addEventListener('click',function(e){
     ui.lineOpen=(ui.lineOpen===ln)?null:ln;
     render(); return;
   }
-  if((el=e.target.closest('[data-home-pick]'))){moveHome(el.getAttribute('data-home-pick')); return}
+  if((el=e.target.closest('[data-home-pick]'))){var hpk=el.getAttribute('data-home-pick'); if(hpk!==homePoint().st)ui.stFill={id:hpk,prev:homePoint().st,at:Date.now()}; moveHome(hpk); return}
   /* выбор дома: точка дома — сама станция, как при регистрации. Карту не трогаем */
   if((el=e.target.closest('[data-home-set]'))){
     var hm=me(), hs=district(el.getAttribute('data-home-set'));
     if(hm&&hs){hm.home_point={x:hs.sx,y:hs.sy}; hm.home_st=hs.id; save()}
     ui.panel=(ui.panel&&ui.panel.prev)||null;
-    render(); toast('Дом — '+hs.name); return;
+    render(); return;
   }
   /* строка места переносит карту — выдача догоняет её сама */
   if((el=e.target.closest('[data-station-toggle]'))){
@@ -12943,10 +13272,13 @@ document.addEventListener('click',function(e){
   if((el=e.target.closest('[data-welcome-st]'))){
     var wst=el.getAttribute('data-welcome-st'), wrm=reduceMotion();
     if(wst===ui.welcomeSt)return;
-    ui.welcomeSt=wst;
+    var wold=ui.welcomeSt||WELCOME_ST[0];
+    ui.welcomeSt=wst; ui.stFill={id:wst,prev:wold,at:Date.now()};
     $$('[data-welcome-st]').forEach(function(b){
+      var bid=b.getAttribute('data-welcome-st');
       b.classList.toggle('is-on',b===el);
-      tagPrev['data-welcome-st='+b.getAttribute('data-welcome-st')]=(b===el);
+      var fl=b.querySelector('.wst__fill'), hm=b.querySelector('.wst__home');
+      if(fl)fl.setAttribute('style',stFillCss(bid)); if(hm)hm.setAttribute('style',stHomeCss(bid));
     });
     welcomeSelect(wst);
     return;
@@ -13187,8 +13519,12 @@ document.addEventListener('input',function(e){
   var miss2=draftMissing(), ok=!miss2;
   var dm=$('#draftMiss');
   if(dm){dm.textContent=miss2||''; dm.hidden=!miss2}
-  var next=$('.panel__foot [data-act="step"][data-step="3"]')||$('.panel__foot [data-act="publish"]');
-  if(next)next.disabled=!ok;
+  /* кнопка шага проверяется по своему шагу: «К описанию» — тип, а у встречи дата и время;
+     «Опубликовать» — всё. Прежде обе проверялись по последнему шагу, и любая цифра
+     в поле на шаге «Условия» гасила кнопку — названия-то ещё нет */
+  var n3=$('.panel__foot [data-act="step"][data-step="3"]'), npub=$('.panel__foot [data-act="publish"]');
+  if(n3)n3.disabled=!step2Valid();
+  else if(npub)npub.disabled=!ok;
   var sv=$('.panel__foot [data-act="save-pin"]');
   if(sv)sv.disabled=!editValid();
 });
@@ -13823,7 +14159,26 @@ function selfCheck(){
   if(bad.length&&window.console)console.warn('«Район» — самопроверка нашла '+bad.length+':\n'+bad.slice(0,20).join('\n'));
   return bad;
 }
+/* Стили наведения на сенсорных экранах срабатывают от касания и остаются, пока не нажмёшь
+   в другое место: кнопка выглядит выбранной. На устройствах без курсора убираем из наших
+   стилей все части селекторов с :hover — один раз, при запуске */
+function dropHover(){
+  if(!window.matchMedia||!matchMedia('(hover:none)').matches)return;
+  function walk(list){
+    for(var i=list.length-1;i>=0;i--){
+      var r=list[i];
+      if(r.cssRules&&!r.selectorText){try{walk(r.cssRules)}catch(e){} continue}
+      if(!r.selectorText||r.selectorText.indexOf(':hover')<0)continue;
+      var keep=r.selectorText.split(',').filter(function(x){return x.indexOf(':hover')<0});
+      try{if(keep.length)r.selectorText=keep.join(','); else (r.parentRule||r.parentStyleSheet).deleteRule(i)}catch(e){}
+    }
+  }
+  [].slice.call(document.styleSheets).forEach(function(sh){try{if(sh.cssRules)walk(sh.cssRules)}catch(e){}});
+}
 function startApp(){
+  dropHover(); histBoot();
+  /* знак приложения над картой в приветствии (телефон); после входа растворяется */
+  if(!$('#wlogo')){var wl=document.createElement('div'); wl.id='wlogo'; wl.className='wlogo'; wl.innerHTML='<svg aria-hidden="true"><use href="#i-logo"/></svg>'; $('#app').appendChild(wl)}
   $('#app').hidden=false;
   selfCheck();
   cacheDom();
@@ -13847,7 +14202,17 @@ function startApp(){
       measure(); clampView(); applyView();
     }).observe($('.stage'));
   }
-  window.addEventListener('resize',function(){measure();clampView();applyView();renderPanel()});
+  /* На Android клавиатура укорачивает само окно, и приходит resize. Полная перерисовка
+     панели пересоздавала поле ввода — фокус терялся, и система тут же убирала клавиатуру:
+     она открывалась и сразу закрывалась. Пока человек печатает и меняется только высота —
+     раскладку пересчитываем, а панель не трогаем */
+  var lastW=window.innerWidth;
+  window.addEventListener('resize',function(){
+    measure();clampView();applyView();
+    var wChanged=window.innerWidth!==lastW; lastW=window.innerWidth;
+    if(typingNow()&&!wChanged)return;
+    renderPanel();
+  });
   /* обновляем относительное время; не трогаем экраны, где человек что-то печатает */
   setInterval(function(){
     if(ui.panel&&(ui.panel.type==='thread'||ui.panel.type==='create'))return;
@@ -13971,6 +14336,7 @@ renderPanel=function(){
   var apw=$('#app'), wOn=!!(ui.panel&&ui.panel.type==='welcome');
   var wEnter=!!(apw&&wOn&&!apw.classList.contains('is-welcome')&&!ui.wLeaving);
   if(apw&&!ui.wLeaving)apw.classList.toggle('is-welcome',wOn);
+  if(!wOn&&wGhosts.length){wGhosts.forEach(function(g){if(g.parentNode)g.parentNode.removeChild(g)}); wGhosts=[]}
   /* на втором шаге метки на карте видны — их скрывает размытие, видно только то, что в окне */
   if(apw&&!ui.wLeaving)apw.classList.toggle('is-wmap',wOn&&(ui.welcomeStep||1)===2);
   if(ui.sysFresh&&!(ui.panel&&ui.panel.type==='thread'&&ui.panel.id===ui.sysFresh.tid))ui.sysFresh=null;
@@ -14434,7 +14800,7 @@ document.addEventListener('pointerup',function(){
 
 db=loadDB();
 if(!db){db=seedDB();save()}
-else {migrateCoords(); migrateArea(); geoPins(); migrateDemo(); reanchorDemo(); flushHeldStored(); dedupeDemo(); dedupeResponses(); lengthenChats(); fillGroups(); pullInside(); clearStations();}
+else {migrateCoords(); migrateArea(); geoPins(); migrateDemo(); reanchorDemo(); flushHeldStored(); dedupeDemo(); dedupeResponses(); lengthenChats(); fillGroups(); pullInside(); seedStates(); clearStations(); setTimeout(autoAccept,1500);}
 /* Тумблер человек уже включал — значит разрешение, скорее всего, выдано; поднимаем
    слежение молча. Откажут — тумблер погаснет сам, как и при первом включении */
 if(db.currentUserId&&user(db.currentUserId)&&me()&&me().geo)geoStart(function(ok){

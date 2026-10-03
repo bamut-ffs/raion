@@ -305,6 +305,10 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   display:grid;place-items:center;flex:none;
 }
 .brand__mark svg{width:16px;height:16px}
+/* логотип: сердце из двух половинок на брендовом квадрате; чёрная половинка — единственное
+   исключение из правила «на бренде только белое» */
+.brand__mark--logo{background:var(--brand)}
+.brand__mark--logo svg{width:21px;height:21px}
 .rail .brand__name{display:none}
 .navbtn{
   position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
@@ -425,6 +429,19 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
    в нулевую высоту, а движок делал холст своей запасной высоты в 300 пикселей —
    карта рисовалась полосой сверху */
 .maplibregl-map{overflow:hidden;-webkit-tap-highlight-color:transparent}
+/* 7. системную подсветку нажатия не рисуем: у нажимаемого своё нажатое состояние */
+html{-webkit-tap-highlight-color:transparent}
+/* 4. долгое нажатие на сенсоре не выделяет текст и не открывает меню снимка: человек
+   зажимает фото на обложке, чтобы потянуть шторку, а получал «Скачать изображение» */
+@media (pointer:coarse){
+  button,a,img,.fcard,.listrow,.linerow,.marker,.markers *,.ptag,.chip,.tag,.navbtn,.rail,.cover,.pin__label,.hintbub,.wtcard,.wghostmk{
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  img{-webkit-user-drag:none}
+  /* 7. нажатое состояние: чуть меньше и чуть прозрачнее, на 100 мс */
+  .btn,.iconbtn,.pill,.ptag,.chip,.navbtn,.sheetfab,.toolbar button,.zoomctl button,.segctl button,.tabs button,.filterbtn,.pinshort__in{transition-property:scale,opacity,background,background-color,color,box-shadow,border-color;transition-duration:.1s}
+  .btn:active,.iconbtn:active,.pill:active,.ptag:active,.chip:active,.navbtn:active,.sheetfab:active,.toolbar button:active,.zoomctl button:active,.segctl button:active,.tabs button:active,.filterbtn:active{scale:.97;opacity:.8}
+  .fcard:active,.listrow:active,.linerow:active,.districtrow:active,.sysmsg--go:active,.factrow--btn:active{background:var(--surface-2)}
+}
 .maplibregl-canvas-container,.maplibregl-canvas{position:absolute;top:0;left:0;width:100%;height:100%}
 .maplibregl-canvas-container.maplibregl-interactive{cursor:grab}
 .maplibregl-canvas-container.maplibregl-interactive:active,.map.is-drag .maplibregl-canvas-container{cursor:grabbing}
@@ -474,6 +491,17 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .marker.is-in{animation:markFadeIn .2s ease both;animation-delay:var(--gd,0s)}
 /* дом над метками событий, но под выбранным и черновиком (у них 5) */
 .marker--home{z-index:2}
+/* Дом — рисунок, основанием на точке. Сбоку от значка станции — слева, с зазором 4 до кружка */
+.homemk{position:absolute;left:0;top:0;transform:translate(-50%,-86%);display:block;pointer-events:none;line-height:0}
+.homemk__img{height:44px;width:auto;display:block}
+.homemk--side{transform:translate(calc(-100% - 10px),-78%)}
+.homemk--wel .homemk__img{height:72px}
+.homemk[data-act]{pointer-events:auto;cursor:pointer}
+/* число событий района, собранных в дом на общем плане: круг крупнее, чем у разделов,
+   и нейтральный — брендовый круг у нас значит «новое» */
+.homecount{position:absolute;right:-8px;top:-6px;min-width:24px;height:24px;padding:0 6px;border-radius:12px;box-sizing:border-box;
+  background:var(--ink);color:var(--surface);font-size:13px;line-height:24px;font-weight:600;text-align:center;box-shadow:0 0 0 2px var(--surface)}
+@keyframes homeDrop{from{opacity:0;translate:0 -8px}}
 .homeplate{position:absolute;left:0;top:0;transform:translate(-50%,-50%);display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 6px;
   border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:var(--f-xs10);line-height:var(--l-xs10);font-weight:600;
   color:var(--ink);white-space:nowrap;pointer-events:none;box-shadow:var(--shadow-1)}
@@ -976,6 +1004,11 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 @keyframes stnNear{from{--m-bg:var(--surface);--m-ring:var(--line-2);--m-ink:#FF0013}}
 @keyframes stnFar{from{--m-bg:var(--lc);--m-ring:#fff;--m-ink:#fff}}
 .marker--stn.is-hid{display:none}
+.marker--stn.is-flash{z-index:6}
+@keyframes stnPop{0%{scale:1}35%{scale:1.4}100%{scale:1}}
+.stnring{position:absolute;left:-8px;top:-8px;width:16px;height:16px;border-radius:50%;border:2px solid var(--lc);opacity:0;pointer-events:none;
+  animation:stnRing .6s ease-out both}
+@keyframes stnRing{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(2.8)}}
 /* имя станции — обычный текст с обводкой фоном, а не плашка: плашки в этом приложении
    принадлежат событиям, и станция не должна выглядеть как ещё одно из них */
 .stnmark__n{
@@ -1567,13 +1600,15 @@ input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-sea
 .slosh:focus-visible{box-shadow:0 0 0 3px var(--ring)}
 .slosh__fill{position:absolute;left:0;top:0;bottom:0;width:50%;background:var(--surface-2);transition:background-color .15s ease;
   clip-path:polygon(0 0,calc(100% + var(--lean,0px)) 0,calc(100% - var(--lean,0px)) 100%,0 100%)}
-.slosh__knob{position:absolute;top:12px;bottom:12px;left:50%;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--ink);pointer-events:none;
+.slosh__knob{position:absolute;top:12px;bottom:12px;left:50%;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--ink-2);pointer-events:none;
   transition:background-color .15s ease}
 .rangerow .slosh~.rangeval{position:absolute;left:8px;top:50%;transform:translateY(-50%);z-index:2;pointer-events:none}
 .slosh.is-held .slosh__fill{background:var(--slosh-on)}
 .slosh.is-held~.rangeval{background:var(--ink)}
+.slosh.is-held .slosh__knob{background:var(--ink)}
 @media (hover:hover){
   .rangerow:hover .slosh__fill{background:var(--slosh-on)}
+  .rangerow:hover .slosh__knob{background:var(--ink)}
 }
 /* у пропажи круг зоны поиска фиолетовый — ползунок его радиуса того же цвета */
 .slosh[data-field="radius"]{--slosh-on:var(--find)}
@@ -2002,7 +2037,10 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 /* что произошло — основным цветом: уведомления просматривают как раз по этой строке */
 .sysmsg__m{font-size:var(--f-s10);line-height:var(--l-s10);font-weight:400;color:var(--ink-3)}
 .sysmsg__t+.sysmsg__m,.sysmsg__t+.sysmsg__x{margin-top:-4px}
-.sysmsg__foot .tag{position:relative;top:1px}
+.sysmsg__foot .tag{position:relative;top:1px;transition:background-color .3s ease,color .3s ease,border-color .3s ease}
+/* на залитой карточке бледный тег сливался с заливкой: пока не прочитано — тег залит
+   нейтральным, как тег значения; не цветной, чтобы не спорить с кнопкой ответа */
+.sysmsg.is-new .sysmsg__foot .tag{background:var(--ink-2);color:var(--surface);border-color:transparent}
 .stack.sysstack{gap:12px}
 .sysmsg .btn{width:auto;align-self:flex-start}
 /* только прямым детям колонки: внутри шапки чип стоит в строке с шевроном, и прижатие
@@ -2170,6 +2208,10 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 /* Приветствие. Стиль экрана — на этапе стиля; сейчас собрано из наших компонентов */
 .welcome__brand{display:flex;align-items:center;gap:10px}
 .welcome__back{display:flex;align-items:center;gap:4px;margin-left:-8px}
+@media (min-width:821px){
+  .welcome__back{flex-direction:column;align-items:flex-start;gap:8px;margin-left:0}
+  .welcome__back .iconbtn{margin-left:-8px}
+}
 .welcome__brand .brand__mark{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--brand);color:#fff}
 .welcome__brand .brand__mark svg{width:19px;height:19px}
 .welcome__brand .brand__name{font-size:var(--f-h50);line-height:var(--l-h50);font-weight:700}
@@ -2223,6 +2265,8 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 /* пример события на размытой карте приветствия: та же метка с подписью, что после входа */
 .wghostmk{position:fixed;width:0;height:0;z-index:35;pointer-events:none}
 .wghostmk .pin,.wghostmk .pin__label{pointer-events:none;cursor:default}
+/* названия примеров целиком — без многоточия */
+.wghostmk .pin__row b{max-width:none}
 .wghost{position:fixed;z-index:35;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;pointer-events:none;
   box-shadow:0 0 0 2px #fff,var(--shadow-2);transform:translate(-50%,-50%)}
 .wghost svg{width:16px;height:16px}
@@ -2247,6 +2291,9 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .ptags--st.is-enter .ptag:nth-child(3){animation-delay:.12s}
 .ptags--st.is-enter .ptag:nth-child(4){animation-delay:.18s}
 @keyframes chipIn{from{opacity:0;transform:translateY(8px)}}
+@keyframes wstIn{from{transform:scale(0)}to{transform:scale(64)}}
+@keyframes wstOut{from{transform:scale(64)}to{transform:scale(0)}}
+@keyframes wstHomeIn{from{transform:scale(0)}to{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){.ptags--st.is-enter .ptag{animation:none}.wst__fill,.wst__home,.ptags--st .ptag .linedot{transition:none}}
 /* пока открыто приветствие, карта живая, но размыта и не ловит нажатий; меню и кнопки
    карты спрятаны — нажимать их пока незачем. Размытие уходит плавно: это и есть момент,
@@ -2359,6 +2406,15 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
   mask-image:radial-gradient(circle at var(--hx,50%) var(--hy,50%),rgba(0,0,0,var(--wa)) calc(var(--hr,0px) - 40px),#000 var(--hr,0px))}
 @media (prefers-reduced-motion:reduce){.wveil{transition:opacity .3s ease}}
 .app.is-welcome .wveil{opacity:1}
+.wlogo{display:none}
+@media (max-width:820px){
+  .wlogo{display:grid;place-items:center;position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));z-index:31;width:44px;height:44px;margin-left:-22px;
+    border-radius:12px;background:var(--brand);opacity:0;pointer-events:none;transition:opacity .3s ease}
+  .wlogo svg{width:30px;height:30px}
+  .app.is-welcome .wlogo{opacity:1}
+}
+/* размытия больше нет: карта в приветствии чистая, без надписей — это фон-узор */
+.wveil{display:none}
 /* до «Открыть район» меток нет: карта — фон, а не данные */
 .app.is-welcome .markers,.app.is-welcome .halos{visibility:hidden}
 .app.is-welcome.is-wmap .markers,.app.is-welcome.is-wmap .halos{visibility:visible}
@@ -2818,7 +2874,7 @@ body.ds-narrow .dsmain{max-width:400px}
 <symbol id="i-bell" viewBox="0 0 24 24" fill="currentColor"><g transform="translate(0.84,0.14) scale(0.9302)"><path d="M20 18.667L20.4 19.2C20.4557 19.2743 20.4896 19.3626 20.498 19.4551C20.5063 19.5476 20.4887 19.6406 20.4472 19.7236C20.4057 19.8067 20.3419 19.8765 20.2629 19.9253C20.1839 19.9741 20.0929 20 20 20H4C3.90714 20 3.81612 19.9741 3.73713 19.9253C3.65815 19.8765 3.59431 19.8067 3.55279 19.7236C3.51126 19.6406 3.49368 19.5476 3.50202 19.4551C3.51036 19.3626 3.54429 19.2743 3.6 19.2L4 18.667V10C4 7.87827 4.84286 5.84344 6.34315 4.34315C7.84344 2.84285 9.87827 2 12 2C14.1217 2 16.1566 2.84285 17.6569 4.34315C19.1571 5.84344 20 7.87827 20 10V18.667ZM9.5 21H14.5C14.5 21.663 14.2366 22.2989 13.7678 22.7678C13.2989 23.2366 12.663 23.5 12 23.5C11.337 23.5 10.7011 23.2366 10.2322 22.7678C9.76339 22.2989 9.5 21.663 9.5 21V21Z" fill="currentColor"/></g></symbol>
 <symbol id="i-dots" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5.4" r="1.75"/><circle cx="12" cy="12" r="1.75"/><circle cx="12" cy="18.6" r="1.75"/></symbol>
 <symbol id="i-share" viewBox="0 0 24 24" fill="currentColor"><path d="M13 14H11C9.3596 13.9994 7.75023 14.4471 6.34588 15.2949C4.94152 16.1427 3.7956 17.3582 3.032 18.81C3.01054 18.5405 2.99986 18.2703 3 18C3 12.477 7.477 8 13 8V3L23 11L13 19V14Z" fill="currentColor"/></symbol>
-<symbol id="i-arrow" viewBox="0 0 24 24"><path fill="currentColor" d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></symbol><symbol id="i-home" viewBox="0 0 24 24"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol><symbol id="i-chev-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14.5l6-6 6 6"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path fill="currentColor" d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></symbol><symbol id="i-home" viewBox="0 0 24 24"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol><symbol id="i-plus-circle" viewBox="0 0 24 24"><path fill="currentColor" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-11H7v2h4v4h2v-4h4v-2h-4V7h-2v4z"/></symbol><symbol id="i-user-add" viewBox="0 0 24 24"><path fill="currentColor" d="M14 14.252V22H4a8 8 0 0 1 10-7.748zM12 13c-3.315 0-6-2.685-6-6s2.685-6 6-6 6 2.685 6 6-2.685 6-6 6zm6 4v-3h2v3h3v2h-3v3h-2v-3h-3v-2h3z"/></symbol><symbol id="i-logo" viewBox="16 22 68 60"><path fill="#000" d="M82.0001 43.9892C82.0037 46.4811 81.5215 48.9492 80.581 51.2517C79.6405 53.5541 78.2603 55.6455 76.5197 57.4056L65.2585 68.8402L58.9403 75.2433C57.7669 76.4343 56.3733 77.3792 54.8393 78.0239C53.3052 78.6686 51.6608 79.0005 50.0001 79.0005C48.3393 79.0005 46.6949 78.6686 45.1608 78.0239C43.6268 77.3792 42.2332 76.4343 41.0598 75.2433L34.7416 68.8402C31.1099 65.1371 31.1099 59.1043 34.7633 55.4018C36.5223 53.6271 38.9046 52.6325 41.3867 52.6367C43.8688 52.6408 46.2479 53.6432 48.0012 55.4237L49.9141 57.3618C53.568 61.043 59.5208 61.0649 63.1742 57.3618C64.046 56.4824 64.7378 55.4371 65.2098 54.2859C65.6818 53.1348 65.9248 51.9005 65.9248 50.6539C65.9248 49.4073 65.6818 48.173 65.2098 47.0218C64.7378 45.8707 64.046 44.8254 63.1742 43.9459L50.0217 30.5728C57.3295 23.1459 69.1702 23.1459 76.4981 30.5509C80.1736 34.2539 82.0001 39.1106 82.0001 43.9892Z"/><path fill="#fff" d="M65.9249 50.6539C65.9258 51.9006 65.6832 53.1351 65.2111 54.2864C64.739 55.4376 64.0467 56.4828 63.1742 57.3616C59.5202 61.0646 53.5675 61.0427 49.9141 57.3616L48.0032 55.4235C46.2499 53.6429 43.8709 52.6405 41.3887 52.6364C38.9066 52.6323 36.5243 53.6268 34.7653 55.4016C31.1114 59.1046 31.1114 65.1369 34.7437 68.8399L23.4804 57.4054C21.7399 55.6452 20.3598 53.5538 19.4193 51.2514C18.4788 48.9489 17.9964 46.4809 18 43.989C18 39.1104 19.827 34.2537 23.502 30.5506C30.8299 23.1446 42.6932 23.1446 50.0005 30.5725H50.0216L63.1742 43.9457C64.0467 44.8246 64.739 45.8698 65.2111 47.0212C65.6832 48.1725 65.9258 49.4071 65.9249 50.6539Z"/></symbol><symbol id="i-chev-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14.5l6-6 6 6"/></symbol>
 <symbol id="i-chev-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"/></symbol>
 </defs></svg>
 <header class="dshead">
@@ -3191,6 +3247,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.47.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.48.0";</script>
 </body>
 </html>
