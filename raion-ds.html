@@ -307,8 +307,8 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .brand__mark svg{width:16px;height:16px}
 /* логотип: сердце из двух половинок на брендовом квадрате; чёрная половинка — единственное
    исключение из правила «на бренде только белое» */
-.brand__mark--logo{background:var(--brand)}
-.brand__mark--logo svg{width:21px;height:21px}
+.brand__mark--logo{background:var(--brand);width:40px;height:40px;border-radius:10px}
+.brand__mark--logo svg{width:28px;height:28px}
 .rail .brand__name{display:none}
 .navbtn{
   position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
@@ -473,7 +473,7 @@ html{-webkit-tap-highlight-color:transparent}
 .halos{position:absolute;inset:0;pointer-events:none;z-index:0}
 /* Отдельного слоя у метки больше нет: узлы меток пересоздаются каждым кадром движения
    карты, и заранее выделенный слой ничего не ускорял, а память держал на каждую */
-.marker{position:absolute;left:0;top:0}
+.marker{position:absolute;left:0;top:0;z-index:1}
 /* смена фильтра: у метки своё положение в transform, поэтому анимируем детей, а масштаб —
    отдельным свойством scale, чтобы не затирать поворот булавки */
 @keyframes markIn{from{opacity:0;scale:.85}}
@@ -484,15 +484,18 @@ html{-webkit-tap-highlight-color:transparent}
 @keyframes dotShrink{from{transform:translate(-50%,-50%) scale(2.67)}}
 .pin[style*="pinGrow"]>svg{animation:pinIconIn .2s ease both;animation-delay:inherit}
 @keyframes pinIconIn{0%,50%{opacity:0}}
-@keyframes pinFlash{0%,100%{scale:1}40%{scale:1.35}}
+/* рост — трансформом вместе со сдвигом к центру: отдельный scale у метки со сдвигом
+   масштабировал её вокруг угла, и она росла вбок */
+@keyframes pinFlash{0%,100%{transform:translate(-50%,-50%) scale(1)}40%{transform:translate(-50%,-50%) scale(1.3)}}
 /* Прозрачность — у метки целиком, масштаб — у частей. Пока прозрачность была у каждой части
    своя, подложка подписи просвечивала сквозь полупрозрачный кружок, и место их наложения
    читалось третьим пятном */
 .marker.is-in{animation:markFadeIn .2s ease both;animation-delay:var(--gd,0s)}
-/* дом над метками событий, но под выбранным и черновиком (у них 5) */
-.marker--home{z-index:2}
+/* дом под событиями: ориентир, а не помеха */
+.marker--home{z-index:0}
+.marker--wel{z-index:2}
 /* Дом — рисунок, основанием на точке. Сбоку от значка станции — слева, с зазором 4 до кружка */
-.homemk{position:absolute;left:0;top:0;transform:translate(-50%,-86%);display:block;pointer-events:none;line-height:0}
+.homemk{position:absolute;left:0;top:0;transform:translate(-50%,-86%);transform-origin:50% 86%;display:block;pointer-events:none;line-height:0}
 .homemk__img{height:44px;width:auto;display:block}
 .homemk--side{transform:translate(calc(-100% - 10px),-78%)}
 .homemk--wel .homemk__img{height:72px}
@@ -815,7 +818,7 @@ html{-webkit-tap-highlight-color:transparent}
 .work.has-detail:not(.is-collapsed) .panel-collapse{left:calc(var(--panel-w) + var(--panel-b-w) + 4px)}
 .iconbtn{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--ink-2);flex:none}
 .iconbtn:hover{background:var(--surface-2);color:var(--ink)}
-.iconbtn svg{width:17px;height:17px}
+.iconbtn svg{width:18px;height:18px}
 /* отклонение заявки — иконка без подписи, но по высоте вровень с «Принять» рядом */
 .iconbtn--34{width:32px;height:32px}
 /* шестерня в шапке профиля равняется на иконки таббара, а не на стрелки в шапках */
@@ -992,7 +995,8 @@ html{-webkit-tap-highlight-color:transparent}
 /* Станция метро — наш значок, а не подпись карты: заливка кружка приходит из color,
    поэтому цвет линии меняется одной строкой, а на будущий ориентир другого вида
    (парк, площадь) встанет свой значок без переделки слоя */
-.marker--stn{z-index:1}
+/* станции — под подписями событий: наехало — плашка закрывает метро, а не наоборот */
+.marker--stn{z-index:0}
 /* Один значок на всех зумах: круг 16 с буквой М. На общем плане круг цветом поверхности
    с тонким кольцом и красная М, с 14 — круг цветом ветки и белая М. Размер не прыгает */
 @property --m-bg{syntax:'<color>';inherits:true;initial-value:#fff}
@@ -1005,10 +1009,13 @@ html{-webkit-tap-highlight-color:transparent}
 @keyframes stnFar{from{--m-bg:var(--lc);--m-ring:#fff;--m-ink:#fff}}
 .marker--stn.is-hid{display:none}
 .marker--stn.is-flash{z-index:6}
-@keyframes stnPop{0%{scale:1}35%{scale:1.4}100%{scale:1}}
-.stnring{position:absolute;left:-8px;top:-8px;width:16px;height:16px;border-radius:50%;border:2px solid var(--lc);opacity:0;pointer-events:none;
+@keyframes stnPop{0%{transform:translate(-50%,-50%) scale(1)}25%{transform:translate(-50%,-50%) scale(1.5)}80%{transform:translate(-50%,-50%) scale(1.5)}100%{transform:translate(-50%,-50%) scale(1)}}
+/* пульсация станции — как волна у идущей встречи: два мягких пятна цвета линии */
+.stnring{position:absolute;left:-40px;top:-40px;width:80px;height:80px;border-radius:50%;opacity:0;pointer-events:none;
+  background:radial-gradient(circle,color-mix(in srgb,var(--lc) 55%,transparent) 0%,color-mix(in srgb,var(--lc) 25%,transparent) 45%,transparent 70%);
   animation:stnRing .6s ease-out both}
-@keyframes stnRing{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(2.8)}}
+@keyframes stnRing{0%{opacity:0;transform:scale(.15)}10%{opacity:.95;transform:scale(.25)}100%{opacity:0;transform:scale(1)}}
+.stnring+.stnring{animation-delay:.4s}
 /* имя станции — обычный текст с обводкой фоном, а не плашка: плашки в этом приложении
    принадлежат событиям, и станция не должна выглядеть как ещё одно из них */
 .stnmark__n{
@@ -1722,8 +1729,10 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
    у невыбранных он приглушён. Одного кольца мало в тёмной теме */
 .typecard.is-on{box-shadow:0 0 0 3px var(--ring)}
 .typecard .typecard__ic{transition:background .14s,color .14s}
-.typecard__ic{width:38px;height:38px;border-radius:var(--r-m);display:grid;place-items:center;flex:none}
-.typecard__ic svg{width:19px;height:19px}
+/* квадрат 40 — тот же, что у миниатюры в шапке переписки; значок 20: отступ 10, целый.
+   При 19 в 38 отступ выходил 9,5, и на экране значок съезжал на пиксель влево */
+.typecard__ic{width:40px;height:40px;border-radius:var(--r-s);display:grid;place-items:center;flex:none}
+.typecard__ic svg{width:20px;height:20px}
 .typecard--act .typecard__ic{background:var(--act-soft);color:var(--act)}
 .typecard--offer .typecard__ic{background:var(--offer-soft);color:var(--offer)}
 .typecard--find .typecard__ic{background:var(--find-soft);color:var(--find)}
@@ -1953,7 +1962,7 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
 .listrow__cover--act{background:var(--act-soft);color:var(--act)}
 .listrow__cover--offer{background:var(--offer-soft);color:var(--offer)}
 .listrow__cover--find{background:var(--find-soft);color:var(--find)}
-.listrow__cover svg{width:19px;height:19px}
+.listrow__cover svg{width:20px;height:20px}
 .listrow__cover--s{width:40px;height:40px}
 /* светлое фото без границы растекалось в фон: тонкая линия внутри края, поверх снимка */
 img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent);outline-offset:-1px}
@@ -2345,6 +2354,8 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .hintbub.is-morph{opacity:1;transform:none;overflow:hidden;padding:8px 16px;
   transition:left .25s ease,top .25s ease,width .25s ease,height .25s ease,padding .25s ease,opacity .15s ease}
 .hintbub.is-morph>*{opacity:0;transition:opacity .12s ease}
+/* шторка сдвинулась, пока подсказка видна, — подсказка доезжает следом, а не прыгает */
+@media (max-width:820px){.hintbub:has(.hintmap){transition:top .25s ease}}
 @media (prefers-reduced-motion:reduce){.hintbub.is-in{animation:markFadeIn .2s both}.hintbub.is-out{animation:none;opacity:0}}
 .hintbub span{flex:1;min-width:0;text-wrap:balance}
 .hintbub.has-tail::after{content:'';position:absolute;top:100%;left:var(--tail-x,50%);transform:translateX(-50%);
@@ -2436,8 +2447,21 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
    меню — это таббар, и он прячется целиком */
 .app.is-welcome .rail .navbtn,.app.is-welcome .panel-collapse{display:none}
 @media (max-width:820px){.app.is-welcome .rail{display:none}}
+.rail.is-railin{animation:markFadeIn .3s ease both}
+@keyframes navBounce{0%{transform:none}30%{transform:translateY(-5px) scale(1.05,.95)}55%{transform:translateY(0) scale(.95,1.05)}75%{transform:translateY(-1px)}100%{transform:none}}
+@keyframes navTurn{0%{transform:rotate(0) scale(1)}50%{transform:rotate(90deg) scale(1.15)}100%{transform:rotate(90deg) scale(1)}}
+@keyframes navWob{0%{transform:none}25%{transform:rotate(-12deg) scale(1.1)}50%{transform:rotate(9deg)}75%{transform:rotate(-4deg)}100%{transform:none}}
+@keyframes navPress{0%{transform:scale(1)}35%{transform:scale(.8)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
+@keyframes navRing{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.12)}100%{opacity:1;transform:none}}
+.navbtn[data-nav="map"].is-go>svg{animation:navBounce .45s ease;transform-origin:50% 60%}
+.navbtn[data-nav="create"].is-go>svg{animation:navTurn .4s ease}
+.navbtn[data-nav="chats"].is-go>svg{animation:navWob .5s ease;transform-origin:50% 60%}
+.navbtn[data-nav="profile"].is-go .navava{animation:navPress .35s cubic-bezier(.3,.7,.3,1.4)}
+.navbtn[data-nav="profile"].is-go .navava__ring{animation:navRing .4s ease both}
 @media (min-width:821px){.welcome__brand{display:none}}
 .app.is-welcome .toolbar,.app.is-welcome .zoomctl,.app.is-welcome .mapmeta{opacity:0;pointer-events:none}
+/* невидимая строка поиска принимала касания — по знаку сверху открывалась клавиатура */
+.app.is-welcome .topbar,.app.is-welcome .topbar *{opacity:0;pointer-events:none!important}
 .mapmeta{transition:opacity .3s ease,bottom .22s ease}
 .brandbig .brand__mark{width:38px;height:38px;border-radius:10px}
 .brandbig .brand__mark svg{width:21px;height:21px}
@@ -3247,6 +3271,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.48.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.49.0";</script>
 </body>
 </html>
