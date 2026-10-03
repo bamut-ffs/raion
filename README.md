@@ -6,10 +6,12 @@
 
 ## Посмотреть
 
-- **Прототип** — https://bamut-ffs.github.io/raion/
-- **Дизайн-система** — https://bamut-ffs.github.io/raion/raion-ds.html
-- **Техзадание v0.3** — https://bamut-ffs.github.io/raion/raion-tz-v03.html
-- **Техзадание v0.2** — https://bamut-ffs.github.io/raion/raion-tz-v02.html
+Открывается в России без VPN. Запасной адрес — https://bamut-ffs.github.io/raion/
+
+- **Прототип** — https://raion-prototype.website.yandexcloud.net/
+- **Дизайн-система** — https://raion-prototype.website.yandexcloud.net/raion-ds.html
+- **Техзадание v0.3** — https://raion-prototype.website.yandexcloud.net/raion-tz-v03.html
+- **Техзадание v0.2** — https://raion-prototype.website.yandexcloud.net/raion-tz-v02.html
 
 ## Что внутри
 

@@ -487,6 +487,13 @@ html{-webkit-tap-highlight-color:transparent}
 /* рост — трансформом вместе со сдвигом к центру: отдельный scale у метки со сдвигом
    масштабировал её вокруг угла, и она росла вбок */
 @keyframes pinFlash{0%,100%{transform:translate(-50%,-50%) scale(1)}40%{transform:translate(-50%,-50%) scale(1.3)}}
+/* выбранная метка уже увеличена до 1,25 — вспышка идёт от её размера и к нему же возвращается,
+   иначе в конце она падала до 1 и прыгала обратно */
+@keyframes pinFlashSel{0%,100%{transform:translate(-50%,-50%) scale(1.25)}45%{transform:translate(-50%,-50%) scale(1.6)}}
+/* дом по кнопке «Дом»: вырастает и держится, пока расходятся две волны цвета крыши */
+@keyframes homePulse{0%{transform:scale(1)}25%{transform:scale(1.5)}70%{transform:scale(1.5)}100%{transform:scale(1)}}
+.homemk__img{transform-origin:50% 90%}
+.homering{left:calc(50% - 40px);top:calc(50% - 40px)}
 /* Прозрачность — у метки целиком, масштаб — у частей. Пока прозрачность была у каждой части
    своя, подложка подписи просвечивала сквозь полупрозрачный кружок, и место их наложения
    читалось третьим пятном */
@@ -2452,12 +2459,10 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 @keyframes navTurn{0%{transform:rotate(0) scale(1)}50%{transform:rotate(90deg) scale(1.15)}100%{transform:rotate(90deg) scale(1)}}
 @keyframes navWob{0%{transform:none}25%{transform:rotate(-12deg) scale(1.1)}50%{transform:rotate(9deg)}75%{transform:rotate(-4deg)}100%{transform:none}}
 @keyframes navPress{0%{transform:scale(1)}35%{transform:scale(.8)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
-@keyframes navRing{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.12)}100%{opacity:1;transform:none}}
 .navbtn[data-nav="map"].is-go>svg{animation:navBounce .45s ease;transform-origin:50% 60%}
 .navbtn[data-nav="create"].is-go>svg{animation:navTurn .4s ease}
 .navbtn[data-nav="chats"].is-go>svg{animation:navWob .5s ease;transform-origin:50% 60%}
 .navbtn[data-nav="profile"].is-go .navava{animation:navPress .35s cubic-bezier(.3,.7,.3,1.4)}
-.navbtn[data-nav="profile"].is-go .navava__ring{animation:navRing .4s ease both}
 @media (min-width:821px){.welcome__brand{display:none}}
 .app.is-welcome .toolbar,.app.is-welcome .zoomctl,.app.is-welcome .mapmeta{opacity:0;pointer-events:none}
 /* невидимая строка поиска принимала касания — по знаку сверху открывалась клавиатура */
@@ -3271,6 +3276,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.49.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.50.0";</script>
 </body>
 </html>
