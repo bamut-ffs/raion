@@ -392,6 +392,8 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .avatar--nav{clip-path:circle(50%)}
 .navava__ring{display:none;position:absolute;left:-3.5px;top:-3.5px;width:29px;height:29px;fill:none;stroke:var(--ink);stroke-width:1.5;pointer-events:none;overflow:visible}
 .avatar--l{width:42px;height:42px;font-size:15px}
+/* лицо в строке списка — того же размера, что обложка в «Сообщениях» */
+.avatar.avatar--row{width:60px;height:60px;font-size:20px;flex:none}
 /* Снимок в форме правки показан кружком того же вида, что увидят соседи, — только крупно:
    кадрирования у нас нет, и человек должен сразу видеть, что попало в кадр */
 .avatar--xl{width:96px;height:96px;font-size:34px}
@@ -1417,14 +1419,14 @@ svg:has(> use[href="#i-give"]){scale:1.2}
    на телефоне, в 3.25 — и на десктопе: карточка одна, раскладка одна */
 .pincard{padding:24px 16px;gap:0}
 .pcg{display:flex;flex-direction:column;gap:8px}
-.pcg+.pcg{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
+.pcg+.pcg{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
 /* после алертов линии нет и отступ один: правило стояло выше общего и проигрывало ему */
-.pcg.pcg--notes+.pcg{padding-top:0;border-top:none;margin-top:20px}
+.pcg.pcg--notes+.pcg{padding-top:0;border-top:none;margin-top:24px}
 .pcg .cardnotes{margin-top:0}
 /* над группой, которая начинается с карточки (автор, участники, обращение), линию не рисуем:
    край карточки — заливка или рамка — уже граница, и линия над ним была второй. Отступ прежний */
-/* где линии между группами нет, отступ один — 20, а не 16 до линии и 16 после */
-.pcg+.pcg:has(> .author:first-child),.pcg+.pcg:has(> .cardnotes:first-child){border-top:none;padding-top:0;margin-top:20px}
+/* где линии между группами нет, отступ один — 24: внешнее больше внутреннего, ступень после 16 */
+.pcg+.pcg:has(> .author:first-child),.pcg+.pcg:has(> .cardnotes:first-child){border-top:none;padding-top:0;margin-top:24px}
 .pincard h2{font-size:var(--f-h30);line-height:var(--l-h30);font-weight:600;margin:0;text-wrap:balance}
 .pincard p{margin:0;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10);white-space:pre-wrap}
 /* описание — не заголовок и не подпись: 14/20 обычным, на 15 оно спорило с названием */
@@ -1443,7 +1445,10 @@ svg:has(> use[href="#i-give"]){scale:1.2}
 .metaline>.chip:last-child{flex:0 1 auto;min-width:0}
 .metaline .stn{min-width:0;overflow:hidden}
 .stn__n{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.facts{display:flex;flex-direction:column;gap:8px}
+/* Между строками фактов 12, а не 8: строка часто в два этажа, с подстрокой, и при 8 соседние
+   слипались. Исключение из лестницы 4/8/16/24 — по прямому решению */
+.facts{display:flex;flex-direction:column;gap:12px}
+.pcg>.factrow+.factrow{margin-top:4px}
 .factrow{display:flex;gap:12px;align-items:flex-start;font-size:var(--f-h60);line-height:var(--l-h60)}
 .factrow svg{width:16px;height:16px;color:var(--ink-3);flex:none;margin-top:2px}
 .factrow b{font-weight:600}
@@ -3208,8 +3213,9 @@ function pinDistText(p,u){
    register    вход по имени и телефону с кодом (renderOnboard, finishOnboard). Вместо него
                приветствие: прототип не собирает телефоны
    repeat      повтор встреч при создании (REPEATS, поле f-repeat в fldActivity). Смысл виден
-               только через неделю, когда отклики обнуляются. Подпись повтора у уже созданных
-               событий остаётся. Вернуть вместе с регулярными встречами с постоянным составом
+               только через неделю, когда отклики обнуляются. Пока флаг выключен, повтор не
+               виден нигде (repeatWord) и не работает (sweep): такие встречи живут как разовые.
+               Вернуть вместе с регулярными встречами с постоянным составом
    sortNear    сортировка «рядом» в ленте (sortDistUnits, distKey, кнопка data-sort="near").
                Без геолокации считала от центра экрана, а список и так равен кадру.
                Вернуть, когда геолокация станет основой
@@ -3236,8 +3242,10 @@ var REPEATS={
   month:{label:'Раз в месяц',hint:'То же число каждого месяца'}
 };
 
+/* скрыто флагом repeat — не удалять: пока повтор выключен, подписи «↻ еженедельно» нет нигде,
+   иначе событие повторялось бы, а поставить повтор было бы нельзя */
 function repeatWord(p){
-  if(!p||!p.repeat||p.repeat==='none')return '';
+  if(!FEATURES.repeat||!p||!p.repeat||p.repeat==='none')return '';
   return REPEAT_WORD[p.repeat]||'';
 }
 function whenPin(p){
@@ -3758,7 +3766,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.50.0';
+var VERSION='3.51.0';
 /* Дом на карте — изометрическая иллюстрация (рисунок пользователя), обрезана по содержимому,
    PNG без потерь: WebP с потерями портил прозрачность — вокруг дома был серый прямоугольник. Голубая крыша — цвет бренда; читается силуэтом с 44 точек */
 var HOUSE_IMG='media/7395ec63a31d.png';
@@ -4540,11 +4548,13 @@ function seedDB(){
   });
   /* несколько уже закрытых вещей и одна возвращённая находка: иначе летопись района
      и счётчики в профилях соседей были бы пусты, и обе механики не увидеть */
+  /* опубликовано раньше, чем закрыто: иначе карточка говорила «Опубликовано 5 ч назад»
+     и «Снято с карты 30 сентября» разом */
   pins.filter(function(p){return p.type==='need_offer'}).slice(0,5).forEach(function(p,i){
-    p.status='closed'; p.close_reason='done'; p.closed_at=t-(i+2)*2*DAY;
+    p.status='closed'; p.close_reason='done'; p.closed_at=t-(i+2)*2*DAY; p.created_at=Math.min(p.created_at,p.closed_at-(2+i)*DAY);
   });
   pins.filter(function(p){return p.type==='lost_found'&&p.subtype==='found'}).slice(0,1).forEach(function(p){
-    p.status='closed'; p.close_reason='done'; p.closed_at=t-3*DAY;
+    p.status='closed'; p.close_reason='done'; p.closed_at=t-3*DAY; p.created_at=Math.min(p.created_at,p.closed_at-2*DAY);
   });
   return {v:1,seed:SEED_VERSION,currentUserId:null,users:users,pins:pins,responses:responses,
           threads:[],messages:[],reports:[],created_at:t,demo_anchor:t};
@@ -4629,6 +4639,12 @@ function reanchorDemo(){
   });
   db.demo_anchor=t;
   save();
+}
+/* То же для наборов, заведённых до 3.51: закрытое не может быть опубликовано позже закрытия */
+function fixClosedOrder(){
+  var ch=false;
+  db.pins.forEach(function(p){if(p.closed_at&&p.created_at>p.closed_at){p.created_at=p.closed_at-2*DAY; ch=true}});
+  if(ch)save();
 }
 function user(id){for(var i=0;i<db.users.length;i++)if(db.users[i].id===id)return db.users[i];return null}
 function me(){return user(db.currentUserId)}
@@ -4766,7 +4782,9 @@ function sweep(){
     /* Прежде демо-события не умирали: прошедшее переносилось на такой же слот через неделю.
        Костыль уехал вместе с временем суток и днём недели, а нужен он был ровно для того,
        что теперь делает пересчёт при запуске (reanchorDemo) — честно и от смещения */
-    if(p.type==='activity'&&p.repeat&&p.repeat!=='none'){
+    /* скрыто флагом repeat: без видимого повтора встреча живёт как разовая и уходит в архив;
+       демо-набор при следующем запуске вернёт её на карту сам (reanchorDemo) */
+    if(FEATURES.repeat&&p.type==='activity'&&p.repeat&&p.repeat!=='none'){
       p.starts_at=nextOccurrence(p.starts_at,p.repeat);
       p.expires_at=actEnd(p);
       db.responses=db.responses.filter(function(r){return r.pin_id!==p.id});
@@ -6116,10 +6134,28 @@ function placeZonePins(d){
 /* «Показать на карте»: в кадре и событие, и его метро — расстояние «~430 м от метро»
    становится видно глазами. Масштаб не дальше 13,5: дальше пропадают подписи. Не влезают
    оба — кадр на событии, станция у края в свою сторону. После прилёта станция подмигивает */
-var stnFlash=null;
+var stnFlash=null, flashUntil=0;
+/* Вспышка рисуется только перерисовкой слоя меток, а слой перерисовывается от движения
+   карты. Камера успевала встать раньше начала вспышки — и, если больше ничего не двигалось,
+   ни метка, ни метро так и не вспыхивали: на телефоне это выходило «через раз». Теперь
+   вспышка стартует, когда камера доехала, а кадры на её время ведём сами */
+function flashTick(){
+  if(Date.now()>flashUntil)return;
+  renderMarkers(); requestAnimationFrame(flashTick);
+}
+function flashStart(){
+  var t=Date.now();
+  if(stnFlash)stnFlash.at=t;
+  if(flashId)flashAt=t;
+  flashUntil=t+1500; requestAnimationFrame(flashTick);
+}
 function showWithMetro(p){
   var st=landmarkOf(p), mr=metroRef(st);
   stnFlash={id:st,at:Date.now()+(glMap?340:0)};
+  if(glMap){
+    var fdone=false, fgo=function(){if(fdone)return; fdone=true; flashStart()};
+    glMap.once('moveend',fgo); setTimeout(fgo,450);
+  }else setTimeout(flashStart,340);
   if(!glMap){centerOnSmooth(p.x,p.y); return}
   var mob=!isDesktopPanel(), pn=$('#panel'), stg=$('.stage');
   var L=mapInsetLeft()+48, R=view.W-48, T=(mob?72+safeInset('top'):24)+48;
@@ -9633,7 +9669,8 @@ function viewPin(id){
      нет, там остаётся «Встреча». Везде выходит три чипа: состояние, предмет, место */
   var thing=act?ptype(p).one:(subLabel(p,closed)||ptype(p).one);
   var chips='<div class="metaline">'+
-    (closed?'<span class="chip chip--muted">'+icon('archive')+'В архиве</span>':'')+
+    /* тега «В архиве» нет: исход назван строкой фактов («Никто не откликнулся», у встречи —
+       «Состоялась» под датой), а внизу свои действия закрытого */
     ((!closed&&act&&myResponse(p.id)&&myResponse(p.id).status==='interested')
       ?'<span class="chip chip--me">'+icon('clock')+'Вы подали заявку</span>':'')+
     '<span class="chip chip--'+ptype(p).cls+'">'+icon(pinGlyph(p))+H(thing)+'</span>'+
@@ -9677,10 +9714,9 @@ function viewPin(id){
   }else{
     facts+='<div class="factrow">'+icon('clock')+'<div><b>Опубликовано '+H(agoText(p.created_at))+'</b></div></div>';
   }
-  /* исход — факт, а не состояние: состояние сказал чип «В архиве» первой строкой */
+  /* исход — факт и заодно состояние: тега «В архиве» наверху больше нет */
   if(closed&&!act){
-    /* исход и дата одной строкой: «Состоялась 22 сентября». Слово «архив» уже сказал тег —
-       третий раз его не повторяем */
+    /* исход и дата одной строкой: «Состоялась 22 сентября» */
     /* итог и дата — разные факты: итог строкой, когда закрыто — серой подстрокой, тем же
        глаголом, что у кнопки закрытия */
     var rl=upperFirst(reasonLabel(p)||'Завершено');
@@ -9696,8 +9732,7 @@ function viewPin(id){
   if(p.x==null){
     if(!closed)facts+='<div class="factrow">'+icon('walk')+'<div><b>Место не указано</b><span>Автор не знает, где именно</span></div></div>';
   }else if(closed){
-    var mr0=metroRef(landmarkOf(p)), du0=Math.sqrt(Math.pow(p.x-mr0.x,2)+Math.pow(p.y-mr0.y,2));
-    facts+='<div class="factrow">'+icon('walk')+'<div><b>'+H((p.type==='need_offer'&&du0*METERS_PER_UNIT<1000?approxDistText(du0):distText(du0))+' от метро')+'</b></div></div>';
+    /* у закрытого расстояния нет: идти некуда, станция названа тегом наверху */
   }else{
     var pb=dist==null?'':(pinDistText(p,dist)+(geoOn()?' от вас':' от метро'));
     var ps=[];
@@ -11052,14 +11087,18 @@ function blockCtxOf(pn){
   return p?'событие «'+p.title+'»':'';
 }
 /* Список — только указатель: разблокировка живёт в профиле соседа, туда же ведёт и его
-   имя в участниках общей встречи. Одно место действия вместо двух */
+   имя в участниках общей встречи. Одно место действия вместо двух.
+   Строка устроена как в «Сообщениях»: крупное лицо, имя и дата блокировки в одной строке,
+   ниже — событие, из которого заблокировали. Шеврона нет — в чатах его тоже нет */
 function viewBlocked(){
-  var bl=blockedList();
+  var bl=blockedList(), m=me();
   var body=bl.length?bl.map(function(u){
-      var cx=blockCtxText(u.id);
-      return '<button class="listrow" data-act="user" data-id="'+H(u.id)+'">'+avatarHTML(u,'')+
-        '<span class="listrow__body"><span class="listrow__t">'+H(shortName(u))+'</span>'+
-          (cx?'<span class="listrow__s">'+H(upperFirst(cx))+'</span>':'')+'</span>'+icon('chev-right')+'</button>';
+      var b=m&&m.blocked&&m.blocked[u.id], at=b&&typeof b==='object'&&b.at;
+      var ev=(b&&typeof b==='object'&&b.ctx)?((String(b.ctx).match(/«(.+)»$/)||[])[1]||''):'';
+      return '<button class="listrow listrow--chat" data-act="user" data-id="'+H(u.id)+'">'+avatarHTML(u,'avatar--row')+
+        '<span class="listrow__body"><span class="listrow__top"><span class="listrow__t">'+H(shortName(u))+'</span>'+
+          (at?'<span class="listrow__time">'+H(listTime(at))+'</span>':'')+'</span>'+
+          (ev?'<span class="listrow__pinrow"><span class="listrow__pin">'+H(upperFirst(ev))+'</span></span>':'')+'</span></button>';
     }).join('')
     :'<div class="empty">'+icon('shield')+'<b>Никого нет</b></div>';
   return {title:'Заблокированные',section:true,back:true,body:body};
@@ -11072,8 +11111,9 @@ function viewSettings(){
      никого не блокировал, — лишний повод задуматься о том, чего не было */
   var bl=blockedList();
   var blocked=bl.length?'<div class="divider divider--lg"></div>'+
-    '<button class="linerow" data-act="open-blocked"><span class="linerow__t"><b>Заблокированные</b></span>'+
-      '<span class="linerow__v">'+bl.length+'</span>'+icon('chev-right')+'</button>':'';
+    /* число — «сколько всего», значит суперскрипт вплотную к слову, как на вкладках */
+    '<button class="linerow" data-act="open-blocked"><span class="linerow__t"><b>Заблокированные<sup class="tabs__n">'+bl.length+'</sup></b></span>'+
+      icon('chev-right')+'</button>':'';
   var theme='<div class="field"><label>Тема оформления</label><div class="segctl">'+
     [['auto','Системная'],['light','Светлая'],['dark','Тёмная']].map(function(o){
       return '<button data-theme-set="'+o[0]+'" class="'+(tm===o[0]?'is-on':'')+'">'+o[1]+'</button>';
@@ -11087,7 +11127,8 @@ function viewSettings(){
     '<div class="divider"></div>'+
     '<div class="switchrow"><span class="switchrow__txt">'+
       '<b>Оповещения о пропажах</b>'+
-      '<span>Пропажи приходят сразу, находки — строкой в сообщениях</span>'+
+      /* радиус без ползунка нигде больше не назван — подпись говорит его (скрыто флагом lostRadius) */
+      '<span>'+(FEATURES.lostRadius?'Пропажи приходят сразу':'Пропажи в 1 км от дома приходят сразу')+', находки — строкой в сообщениях</span>'+
     '</span><button class="switch'+(alertsOn()?' is-on':'')+'" data-act="toggle-alerts" role="switch" aria-checked="'+(alertsOn()?'true':'false')+'" aria-label="Оповещения о пропажах"><i></i></button></div>'+
     /* радиус показывается только при включённых оповещениях: у выключенных он настраивал бы
        то, чего не происходит */
@@ -13303,6 +13344,9 @@ document.addEventListener('click',function(e){
     var on=!sw.classList.contains('is-on');
     sw.classList.toggle('is-on',on);
     if(sw.getAttribute('role')==='switch')sw.setAttribute('aria-checked',on?'true':'false');
+    /* перерисовка после действия не должна проигрывать переход второй раз: кружок уже
+       доехал на этом узле, и новое положение записываем как известное */
+    var swk=sw.getAttribute('data-act'); if(swk)switchPrev[swk]=on;
     holdRender(220);
   }
 },true);
@@ -15043,7 +15087,7 @@ document.addEventListener('pointerup',function(){
 
 db=loadDB();
 if(!db){db=seedDB();save()}
-else {migrateCoords(); migrateArea(); geoPins(); migrateDemo(); reanchorDemo(); flushHeldStored(); dedupeDemo(); dedupeResponses(); lengthenChats(); fillGroups(); pullInside(); seedStates(); clearStations(); setTimeout(autoAccept,1500);}
+else {migrateCoords(); migrateArea(); geoPins(); migrateDemo(); reanchorDemo(); fixClosedOrder(); flushHeldStored(); dedupeDemo(); dedupeResponses(); lengthenChats(); fillGroups(); pullInside(); seedStates(); clearStations(); setTimeout(autoAccept,1500);}
 /* Тумблер человек уже включал — значит разрешение, скорее всего, выдано; поднимаем
    слежение молча. Откажут — тумблер погаснет сам, как и при первом включении */
 if(db.currentUserId&&user(db.currentUserId)&&me()&&me().geo)geoStart(function(ok){

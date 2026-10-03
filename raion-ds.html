@@ -362,6 +362,8 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
 .avatar--nav{clip-path:circle(50%)}
 .navava__ring{display:none;position:absolute;left:-3.5px;top:-3.5px;width:29px;height:29px;fill:none;stroke:var(--ink);stroke-width:1.5;pointer-events:none;overflow:visible}
 .avatar--l{width:42px;height:42px;font-size:15px}
+/* лицо в строке списка — того же размера, что обложка в «Сообщениях» */
+.avatar.avatar--row{width:60px;height:60px;font-size:20px;flex:none}
 /* Снимок в форме правки показан кружком того же вида, что увидят соседи, — только крупно:
    кадрирования у нас нет, и человек должен сразу видеть, что попало в кадр */
 .avatar--xl{width:96px;height:96px;font-size:34px}
@@ -1387,14 +1389,14 @@ svg:has(> use[href="#i-give"]){scale:1.2}
    на телефоне, в 3.25 — и на десктопе: карточка одна, раскладка одна */
 .pincard{padding:24px 16px;gap:0}
 .pcg{display:flex;flex-direction:column;gap:8px}
-.pcg+.pcg{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
+.pcg+.pcg{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
 /* после алертов линии нет и отступ один: правило стояло выше общего и проигрывало ему */
-.pcg.pcg--notes+.pcg{padding-top:0;border-top:none;margin-top:20px}
+.pcg.pcg--notes+.pcg{padding-top:0;border-top:none;margin-top:24px}
 .pcg .cardnotes{margin-top:0}
 /* над группой, которая начинается с карточки (автор, участники, обращение), линию не рисуем:
    край карточки — заливка или рамка — уже граница, и линия над ним была второй. Отступ прежний */
-/* где линии между группами нет, отступ один — 20, а не 16 до линии и 16 после */
-.pcg+.pcg:has(> .author:first-child),.pcg+.pcg:has(> .cardnotes:first-child){border-top:none;padding-top:0;margin-top:20px}
+/* где линии между группами нет, отступ один — 24: внешнее больше внутреннего, ступень после 16 */
+.pcg+.pcg:has(> .author:first-child),.pcg+.pcg:has(> .cardnotes:first-child){border-top:none;padding-top:0;margin-top:24px}
 .pincard h2{font-size:var(--f-h30);line-height:var(--l-h30);font-weight:600;margin:0;text-wrap:balance}
 .pincard p{margin:0;color:var(--ink-2);font-size:var(--f-m10);line-height:var(--l-m10);white-space:pre-wrap}
 /* описание — не заголовок и не подпись: 14/20 обычным, на 15 оно спорило с названием */
@@ -1413,7 +1415,10 @@ svg:has(> use[href="#i-give"]){scale:1.2}
 .metaline>.chip:last-child{flex:0 1 auto;min-width:0}
 .metaline .stn{min-width:0;overflow:hidden}
 .stn__n{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.facts{display:flex;flex-direction:column;gap:8px}
+/* Между строками фактов 12, а не 8: строка часто в два этажа, с подстрокой, и при 8 соседние
+   слипались. Исключение из лестницы 4/8/16/24 — по прямому решению */
+.facts{display:flex;flex-direction:column;gap:12px}
+.pcg>.factrow+.factrow{margin-top:4px}
 .factrow{display:flex;gap:12px;align-items:flex-start;font-size:var(--f-h60);line-height:var(--l-h60)}
 .factrow svg{width:16px;height:16px;color:var(--ink-3);flex:none;margin-top:2px}
 .factrow b{font-weight:600}
@@ -3016,7 +3021,7 @@ body.ds-narrow .dsmain{max-width:400px}
     <div class="dsitem"><span class="dsitem__n">Роль и место</span><span class="dsitem__c">.chip--brand / .chip--muted</span>
       <span class="dsitem__b">
         <span class="chip chip--brand">Вы автор</span>
-        <span class="chip chip--muted">В архиве</span>
+        <span class="chip chip--muted">Курская</span>
         <span class="chip chip--muted">~7 мин</span></span></div>
     <div class="dsitem"><span class="dsitem__n">Теги</span><span class="dsitem__c">.tag / .tag--solid</span>
       <span class="dsitem__b">
@@ -3065,7 +3070,7 @@ body.ds-narrow .dsmain{max-width:400px}
   <div class="dsgrid">
     <div class="dsitem dsitem--flat"><span class="dsitem__n">Карточка ленты</span><span class="dsitem__c">.fcard — feedCard</span>
       <button class="fcard"><span class="fcard__main"><i class="fcard__rule fcard__rule--act"></i><span class="fcard__col">
-        <span class="fcard__when"><span>завтра, 12:30</span><span class="fcard__rep">↻ еженедельно</span></span>
+        <span class="fcard__when"><span>завтра, 12:30</span></span>
         <span class="fcard__t">футбол 5х5 у оленьих прудов</span>
         <span class="fcard__d">не хватает троих, уровень любой, главное без подкатов</span>
         <span class="fcard__m"><span class="chip chip--brand">Вы участвуете</span>
@@ -3276,6 +3281,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.50.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.51.0";</script>
 </body>
 </html>
