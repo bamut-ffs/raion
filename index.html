@@ -2576,7 +2576,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
   /* кольцо — отдельный круг вокруг аватара: тенью на обрезанном круге айфон рисовал квадрат */
   /* кольцо — векторная окружность: и тень, и рамка со скруглением на айфоне в таббаре
      давали уголки. Аватар вдобавок обрезается маской-кругом */
-  .rail .navbtn.is-on .navava__ring{display:block}
+  /* кольца у активного аватара нет: вкладку отмечает подпись, как у остальных */
   /* Счётчик меньше и сдвинут в угол значка: 18 на значке 20 закрывал его половину.
      Цифра 10 — графика внутри фигуры, а не текст строкой, как счётчики на плашках.
      Обводка цветом таббара отделяет плашку от значка, как в iOS */
@@ -3766,7 +3766,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.51.0';
+var VERSION='3.52.0';
 /* Дом на карте — изометрическая иллюстрация (рисунок пользователя), обрезана по содержимому,
    PNG без потерь: WebP с потерями портил прозрачность — вокруг дома был серый прямоугольник. Голубая крыша — цвет бренда; читается силуэтом с 44 точек */
 var HOUSE_IMG='media/7395ec63a31d.png';
@@ -3778,7 +3778,7 @@ var IS_ANDROID=/Android/i.test(navigator.userAgent||'');
 var IS_IOS=/iPhone|iPad|iPod/i.test(navigator.userAgent||'')||(/Macintosh/.test(navigator.userAgent||'')&&navigator.maxTouchPoints>1);
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
-var UPDATED='3 октября 2026';
+var UPDATED='4 октября 2026';
 var KEY='raion.v1';
 var db=null;
 
@@ -3787,7 +3787,7 @@ function noStorage(){
   storageOK=false;
   if(storageWarned)return;
   storageWarned=true;
-  setTimeout(function(){toast('Браузер не сохраняет данные — всё пропадёт после перезагрузки')},900);
+  setTimeout(function(){toast('Данные не сохранятся после перезагрузки')},900);
 }
 /* Место события — широта и долгота, и только они. Координаты рабочей сетки (x/y, а у вещей
    ещё и точная точка до смещения) остаются рабочим представлением для геометрии: радиусы,
@@ -3845,7 +3845,7 @@ function save(){
   try{ localStorage.setItem(KEY,JSON.stringify(db)); }
   catch(e){
     if(e&&(e.name==='QuotaExceededError'||e.code===22))
-      toast('Кончилось место в браузере — удалите фото из своих событий');
+      toast('Нет места — удалите фото из своих событий');
     else noStorage();
   }
 }
@@ -4871,7 +4871,15 @@ function districtOf(x,y){return nearestStation(x,y)}
    у неё ту, что называется как наш значок, — ближайшую к узлу. Пока подложка её не отдала
    (дальний масштаб, тайл не загружен), значок стоит в точке узла */
 var metroAnchor={};
-function metroPt(d){return metroAnchor[d.id]||{x:d.sx,y:d.sy}}
+/* Точки станций сняты с подложки заранее (3.52) и вшиты: раньше их узнавали из загруженных
+   кусков карты, и пока кусок не пришёл, значок и дом стояли в точке узла, а потом
+   перескакивали на настоящий выход — в приветствии это был рывок при выборе станции.
+   findAnchors остаётся для станций, которых здесь нет */
+var METRO_LL={"d_arbatskaya":[55.751852,37.600654],"d_belorusskaya":[55.776703,37.583574],"d_dobryninskaya":[55.729107,37.624419],"d_dostoevskaya":[55.78146,37.615074],"d_kievskaya":[55.743682,37.565646],"d_kitay_gorod":[55.755653,37.633565],"d_komsomolskaya":[55.774582,37.654492],"d_barr":[55.761186,37.57733],"d_krasnoselskaya":[55.780356,37.667656],"d_krasnye_vorota":[55.769024,37.648988],"d_kropot":[55.745431,37.603809],"d_kursk":[55.757199,37.65933],"d_lubyanka":[55.759873,37.627857],"d_mayak":[55.77017,37.595086],"d_kuznec":[55.741436,37.629204],"d_novoslobodskaya":[55.779852,37.603476],"d_oktyabrskaya":[55.729777,37.609398],"d_ohotnyy_ryad":[55.757772,37.616512],"d_paveleckaya":[55.730499,37.637841],"d_park_kultury":[55.735812,37.591304],"d_polyanka":[55.738168,37.617198],"d_proletarskaya":[55.731856,37.66588],"d_prospekt_mira":[55.779632,37.631752],"d_smolenskaya":[55.748809,37.582721],"d_sportivnaya":[55.723382,37.564214],"d_sretenka":[55.772955,37.631205],"d_tagan":[55.740466,37.651901],"d_tverskaya":[55.764895,37.606314],"d_frunzenskaya":[55.72688,37.578328],"d_cvetnoy":[55.770873,37.617912],"d_chisty":[55.76587,37.639026]};
+function metroPt(d){
+  if(!metroAnchor[d.id]&&METRO_LL[d.id]){var w=latLonToWorld(METRO_LL[d.id][0],METRO_LL[d.id][1]); metroAnchor[d.id]={x:w[0],y:w[1]}}
+  return metroAnchor[d.id]||{x:d.sx,y:d.sy};
+}
 function findAnchors(){
   if(!glMap)return false;
   var fs; try{fs=glMap.querySourceFeatures('ofm',{sourceLayer:'poi',filter:['==',['get','class'],'railway']})}catch(e){return false}
@@ -9395,7 +9403,7 @@ function renderPanel(){
   var fixedSheet=!!main&&['archive','user','people','me','edit'].indexOf(main.type)>=0;
   el.classList.toggle('is-screen',(!!v.screen||fixedSheet)&&!isDesktopPanel()&&!v.section);
   var homeSheet=!!v.home&&!isDesktopPanel();
-  var pinSheet=!isDesktopPanel()&&!!main&&main.type==='pin';
+  var pinSheet=!isDesktopPanel()&&!!main&&main.type==='pin'&&!v.section;
   el.classList.toggle('is-home',homeSheet);
   el.classList.toggle('is-pin',pinSheet);
   /* Состояний у карточки два: короткая и раскрытая. Полноэкранное убрано — оно было
@@ -9956,7 +9964,10 @@ function viewPin(id){
   /* Шапка карточки события не превращается при прокрутке в белую полосу с названием: над
      обложкой и над текстом остаются только крестик и «ещё» на своих плашках. Название
      в шапке остаётся скрытым — оно есть в самой карточке, и второй раз его не повторяем */
+  /* закрытое событие на телефоне — раздел во весь экран, а не шторка: на карте его нет,
+     и карта за шторкой ничего не говорила. Кнопки остаются на обложке, названия в шапке нет */
   return {title:H(p.title),fadeTitle:true,stillHead:true,overHead:true,overPhoto:!!photoOf(p),body:body,foot:foot,
+    section:closed&&!isDesktopPanel(), back:closed&&!isDesktopPanel(),
     action:'<button class="iconbtn chathead__act" data-act="pin-menu" data-id="'+p.id+'" aria-label="Ещё">'+icon('dots')+'</button>'};
 }
 
@@ -11111,8 +11122,8 @@ function viewSettings(){
      никого не блокировал, — лишний повод задуматься о том, чего не было */
   var bl=blockedList();
   var blocked=bl.length?'<div class="divider divider--lg"></div>'+
-    /* число — «сколько всего», значит суперскрипт вплотную к слову, как на вкладках */
-    '<button class="linerow" data-act="open-blocked"><span class="linerow__t"><b>Заблокированные<sup class="tabs__n">'+bl.length+'</sup></b></span>'+
+    /* число — тегом сразу после слова, как на вкладках «Сообщений» */
+    '<button class="linerow" data-act="open-blocked"><span class="linerow__t"><b>Заблокированные <span class="tag">'+bl.length+'</span></b></span>'+
       icon('chev-right')+'</button>':'';
   var theme='<div class="field"><label>Тема оформления</label><div class="segctl">'+
     [['auto','Системная'],['light','Светлая'],['dark','Тёмная']].map(function(o){
@@ -12316,7 +12327,7 @@ function autoReply(threadId){
 }
 /* Личная переписка с заблокированным закрыта на самом действии, а не только спрятана из
    списка: любой путь к ней — профиль, карточка, уведомление, открытый экран — упирается сюда */
-var DM_CLOSED='Личная переписка с этим соседом закрыта';
+var DM_CLOSED='Переписка с соседом закрыта';
 function sendMessage(){
   var inp=$('#msgInput'); if(!inp)return;
   var text=inp.value.trim(); if(!text)return;
@@ -12346,7 +12357,7 @@ function openPin(id,origin){
   /* С карты карточка открывается короткой: человек пришёл к точке и хочет видеть карту
      вокруг неё. Из списка, переписки или уведомления карта ему не нужна — там открываем
      сразу раскрытую */
-  ui.pinShut=!isDesktopPanel()&&!(origin&&origin.type);
+  ui.pinShut=!isDesktopPanel()&&!(origin&&origin.type)&&p.status==='active';
   /* Точку отсчёта района карточка не трогает: она принадлежит охвату и задаётся выбором
      станции. Раньше открытие события с другой станции молча переписывало её, от неё зависят
      подпись над картой и счётчики — и фон под шторкой менялся, хотя фильтр оставался прежним */
@@ -12452,7 +12463,7 @@ function confettiAt(p){
 function publish(){
   var d=ui.draft; if(!d||!draftValid())return;
   if(d.type==='lost_found'&&lfThisWeek(db.currentUserId)>=LF_WEEK_LIMIT){
-    toast('За неделю можно опубликовать не больше '+LF_WEEK_LIMIT+' находок и пропаж');
+    toast('Не больше '+LF_WEEK_LIMIT+' находок и пропаж в неделю');
     return;
   }
   var noPlace=(d.type==='lost_found'&&!!d.noPlace);
@@ -12490,9 +12501,9 @@ function publish(){
      мотивации автора, а его чаты — единственный источник плотности на холодном старте.
      Никакой рассылки: кнопка открывает системное «Поделиться», и куда отправить, решает
      человек. Показывается один раз — ушёл с карточки, и предложения больше нет */
-  var pmsg=p.type==='activity'?'Встреча опубликована — соседи её уже видят'
-    :p.type==='lost_found'?(p.subtype==='lost'?'Пропажа опубликована — соседи получат оповещение':'Находка опубликована — она в сообщениях у соседей')
-    :'Событие опубликовано у станции «'+district(landmarkOf(p)).name+'»';
+  var pmsg=p.type==='activity'?'Встреча опубликована'
+    :p.type==='lost_found'?(p.subtype==='lost'?'Пропажа опубликована, соседи оповещены':'Находка опубликована, соседи оповещены')
+    :'Событие опубликовано';
   if(!isDesktopPanel()&&p.x!=null&&!reduceMotion()){publishStage(p,d,pmsg);return}
   ui.inviteFor=p.id;
   openPanel({type:'pin',id:p.id});
@@ -12945,7 +12956,7 @@ function onAction(act,el,e){
         var au0=user(p.author_id);
         db.responses.push({id:uid('rsp'),pin_id:id,user_id:db.currentUserId,status:'interested',created_at:now(),auto_at:(au0&&au0.demo)?now()+30000:null});
         setTimeout(autoAccept,30500);
-        save(); render(); toast('Заявка отправлена — автор решит');
+        save(); render(); toast('Заявка отправлена');
       }else{
         db.responses.push({id:uid('rsp'),pin_id:id,user_id:db.currentUserId,status:'joined',created_at:now()});
         joinNote(groupAdd(p,db.currentUserId),db.currentUserId);
@@ -12978,7 +12989,7 @@ function onAction(act,el,e){
       if(groupKind(pp)&&!isAct(pp)){
         var gth=groupAdd(pp,db.currentUserId);
         save(); openPanel({type:'thread',id:gth.id,from:'pin'});
-        toast('Вы в поиске — пишите, где видели');
+        toast('Вы в поиске');
         break;
       }
       if(blockedWith(pp.author_id)){save(); toast(DM_CLOSED); break}
@@ -13198,7 +13209,7 @@ function onAction(act,el,e){
     case 'report':
       confirmDialog('Пожаловаться на событие?','Мы скроем его у вас сразу. Если пожалуются трое соседей, пин уходит с карты района до проверки','Пожаловаться','soft',function(){
         db.reports.push({id:uid('rep'),pin_id:id,user_id:db.currentUserId,created_at:now()});
-        save(); closePanel(); toast('Спасибо, событие скрыто');
+        save(); closePanel(); toast('Событие скрыто');
       },'Не жаловаться');
       break;
     case 'extend':
@@ -13247,7 +13258,7 @@ function onAction(act,el,e){
       if(act==='confirm-no'){onAction('confirm-no-x',el,e); break}
       var cr=null;
       for(var ci=0;ci<db.responses.length;ci++)if(db.responses[ci].id===id)cr=db.responses[ci];
-      if(cr){cr.confirmed_at=now(); save(); render(); toast('Спасибо, автор видит, что вы идёте')}
+      if(cr){cr.confirmed_at=now(); save(); render()}
       break;
     case 'confirm-no-x':
       var nr=null;
@@ -13259,7 +13270,7 @@ function onAction(act,el,e){
         db.responses.splice(nix,1);
         db.held=[{kind:'response',index:nix,obj:nr}];
         save(); render();
-        holdAction('Место освободилось для другого соседа',
+        holdAction('Участие отменено',
           function(){db.held=[]; save()},
           function(){db.responses.splice(Math.min(nix,db.responses.length),0,nr); db.held=[]; save(); render()});
       }
@@ -13275,7 +13286,7 @@ function onAction(act,el,e){
         else{
           var g2=me(); if(g2){g2.geo=false; save()}
           render();
-          toast('Нет доступа к месту — считаем от ориентира');
+          toast('Нет доступа к геопозиции');
         }
       });
       break;
@@ -13357,7 +13368,8 @@ document.addEventListener('click',function(e){
   var hk=e.target.closest&&e.target.closest('[data-hint-ok]');
   if(hk){hintDone(hk.getAttribute('data-hint-ok')); return}
   var hb=$('#hintBubble');
-  if(hb&&hb._k==='card'&&e.target.closest&&e.target.closest('.panel__foot .btn--primary,.panel__foot .btn--brand'))hintDone('card');
+  /* целевое действие снимает подсказку навсегда — даже если её самой на экране не было */
+  if(e.target.closest&&e.target.closest('[data-act="write"],[data-act="join"]')&&!hintSeen('card'))hintDone('card');
 },true);
 window.addEventListener('resize',function(){
   syncHint(); fitAlerts();
@@ -14070,7 +14082,7 @@ function finishOnboard(){
 var HINTS={
   /* до двух строк на самом узком телефоне — около пятидесяти знаков */
   map:'Подвиньте карту — список покажет, что там',
-  card:'После отклика откроется переписка с автором',
+  card:'Дальше — переписка: договоритесь о деталях',
   create:'Двигайте карту — событие встанет под прицел'
 };
 function hintSeen(k){var m=me(); return !!(m&&m.hints&&m.hints[k])}
@@ -14094,7 +14106,12 @@ function currentHint(){
   /* пока список развёрнут, карты не видно — учить её двигать нечему. Пройденной подсказка
      от этого не считается: свернул шторку — она вернётся */
   if(!p&&!hintSeen('map')&&(isDesktopPanel()||!ui.homeOpen))return 'map';
-  /* подсказки у кнопки отклика нет: кнопка называется «Написать автору» и объясняет себя */
+  /* Шаг знакомства «откликнулся — что дальше». Пройден первым нажатием главной кнопки на
+     любой чужой карточке, даже если саму подсказку человек не видел, или «Ок» */
+  if(p&&p.type==='pin'&&!hintSeen('card')){
+    var hp=pin(p.id), hb0=cardMainBtn();
+    if(hp&&hp.status==='active'&&hp.author_id!==db.currentUserId&&hb0&&/^(write|join)$/.test(hb0.getAttribute('data-act')||''))return 'card';
+  }
   if(p&&p.type==='create'&&ui.draft&&ui.draft.step===1&&!ui.draft.stOpen&&!hintSeen('create'))return 'create';
   return null;
 }
@@ -14268,8 +14285,12 @@ function syncHint(){
       hb.style.top='calc(16px + env(safe-area-inset-top,0px))';
       tailAt=null;
     }else{
-      /* раскрыли карточку — кнопка на виду, объяснять её поздно: подсказка показана */
-      hintDone('card'); hideHint(hb); return;
+      /* раскрытая карточка: над главной кнопкой, ножкой к ней. Снимает подсказку само
+         нажатие кнопки или «Ок» — раскрыть карточку ещё не значит понять, что будет дальше */
+      var tw2=fitHint(hb,Math.min(320,W-32));
+      hb.style.left=Math.round((W-tw2)/2)+'px';
+      hb.style.top=Math.round(r.top-12-hb.offsetHeight)+'px';
+      tailAt=r.left+r.width/2;
     }
   }else{
     /* над прицелом, над головой булавки; на десктопе — поверх плашки расстояния, нижние
@@ -14319,7 +14340,7 @@ function shareOut(text){
   }else if(navigator.clipboard&&navigator.clipboard.writeText){
     navigator.clipboard.writeText(text+'\n'+url).then(
       function(){toast('Ссылка скопирована')},
-      function(){toast('Браузер не дал скопировать ссылку')});
+      function(){toast('Не удалось скопировать ссылку')});
   }else toast('Браузер не поддерживает «Поделиться»');
 }
 function hintsReset(){var m=me(); if(m){m.hints={}; save()} syncHint()}
