@@ -368,6 +368,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   display:grid;place-items:center;font-variant-numeric:tabular-nums;
 }
 .rail__spacer{flex:1}
+/* в окне «О прототипе» два абзаца — один текст: между ними 8, до заголовка 16 */
+.about__text{display:flex;flex-direction:column;gap:8px}
+.modal--about .modal__head{margin-bottom:16px}
 .about__meta{display:flex;flex-direction:column;gap:8px;font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-2)}
 .about__meta b{display:inline-block;min-width:78px;color:var(--ink-3);font-weight:500}
 
@@ -2082,6 +2085,11 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 /* тип события — его собственным знаком справа, тем же кружком, что бейдж на миниатюре */
 .sysmsg__cat{margin-left:auto;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;flex:none;color:#fff}
 .sysmsg__cat svg{width:12px;height:12px}
+/* наведение на строку слегка увеличивает кружок категории — только там, где есть мышь */
+@media (hover:hover) and (pointer:fine){
+  .listrow__cat,.sysmsg__cat{transition:transform .15s ease}
+  .listrow:hover .listrow__cat,.sysmsg:hover .sysmsg__cat{transform:scale(1.1)}
+}
 .sysmsg__cat--act{background:var(--act)}
 .sysmsg__cat--offer{background:var(--offer)}
 .sysmsg__cat--find{background:var(--find)}
@@ -3766,7 +3774,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.52.0';
+var VERSION='3.53.0';
 /* Дом на карте — изометрическая иллюстрация (рисунок пользователя), обрезана по содержимому,
    PNG без потерь: WebP с потерями портил прозрачность — вокруг дома был серый прямоугольник. Голубая крыша — цвет бренда; читается силуэтом с 44 точек */
 var HOUSE_IMG='media/7395ec63a31d.png';
@@ -3778,7 +3786,7 @@ var IS_ANDROID=/Android/i.test(navigator.userAgent||'');
 var IS_IOS=/iPhone|iPad|iPod/i.test(navigator.userAgent||'')||(/Macintosh/.test(navigator.userAgent||'')&&navigator.maxTouchPoints>1);
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
-var UPDATED='4 октября 2026';
+var UPDATED='5 октября 2026';
 var KEY='raion.v1';
 var db=null;
 
@@ -5078,7 +5086,8 @@ function welcomeFly(id){
   }
   /* камерой ведает движок: точка станции встаёт в центр видимой части через его смещение */
   /* масштаб чуть дальше обычного: в окне должны поместиться и дом, и события вокруг */
-  if(glMap){glGoto(r.x,r.y,14.3,true,viewCX(),cy); return}
+  /* на десктопе кадр широкий — ближе, чтобы граница у крайних станций не попадала в кадр */
+  if(glMap){glGoto(r.x,r.y,isDesktopPanel()?15:14.3,true,viewCX(),cy); return}
   view.k=k; panTo(viewCX()-r.x*k, cy-r.y*k);
 }
 /* окно станции проявилось — события вокруг появляются волной от дома, как при входе в район */
@@ -5088,6 +5097,19 @@ function welcomeWave(id){
   db.pins.filter(function(p){return p.status==='active'&&p.x!=null}).sort(function(a,b){
     return Math.hypot(a.x-d.sx,a.y-d.sy)-Math.hypot(b.x-d.sx,b.y-d.sy)}).forEach(function(p,i){waveRank[p.id]=i});
   waveAt=reduceMotion()?0:Date.now()+80;
+}
+/* кадр ставим, когда шторка приветствия встала: при запуске она ещё выезжает снизу, и
+   середина полосы над ней посчиталась бы от самого низа экрана */
+var patriLast=null, patriTries=0;
+function welcomePatri(){
+  var pn=$('#panel'), stg=$('.stage');
+  var bot=(pn&&stg)?pn.getBoundingClientRect().top-stg.getBoundingClientRect().top:null;
+  if(patriTries++<25&&(bot==null||bot>=stg.clientHeight-8||bot!==patriLast)){patriLast=bot; setTimeout(welcomePatri,120); return}
+  /* строки поиска в приветствии нет — полоса от верха экрана до шторки */
+  var top=safeInset('top');
+  if(bot==null||bot<=top)return;
+  var w=latLonToWorld(55.76371,37.59286);
+  glGoto(w[0],w[1],mapZoom(),false,viewCX(),Math.round((top+bot)/2));
 }
 /* дома уже стоят — выбор только перелетает камерой, вместе с заливкой чипа */
 function welcomeSelect(wst){
@@ -5102,6 +5124,8 @@ function syncWelcomeMap(on){
   if(!st0||!st0.layers)return;
   if(!symVis){symVis={}; st0.layers.forEach(function(l){if(l.type==='symbol')symVis[l.id]=(l.layout&&l.layout.visibility)||'visible'})}
   Object.keys(symVis).forEach(function(id){try{glMap.setLayoutProperty(id,'visibility',on?'none':symVis[id])}catch(e){}});
+  /* граница рабочей области нужна только при создании — в приветствии карта лишь фон */
+  ['workarea','veil'].forEach(function(id){try{glMap.setLayoutProperty(id,'visibility',on?'none':'visible')}catch(e){}});
   welcomeMapOff=on;
 }
 function flyToStation(id){
@@ -5240,6 +5264,7 @@ function mapStyle(){
        пропадал до перезапуска. Внутри стиля он пересобирается вместе с темой */
     sources:{ofm:{type:'vector',url:'https://tiles.openfreemap.org/planet'},
       workarea:{type:'geojson',data:workAreaGeoJSON()},
+      workareaLbl:{type:'geojson',data:workAreaSides()},
       veil:{type:'geojson',data:veilGeoJSON()},
       stnblock:{type:'geojson',data:stnBlockFC||{type:'FeatureCollection',features:[]}}},
     layers:[
@@ -5325,6 +5350,13 @@ function mapStyle(){
       {id:'veil',type:'fill',source:'veil',paint:{'fill-color':C.ground,'fill-opacity':0.6}},
       {id:'workarea',type:'line',source:'workarea',layout:{'line-cap':'round'},
         paint:{'line-color':C.workarea,'line-width':1.5,'line-dasharray':[4,4],'line-opacity':0.9}},
+      /* Подпись вдоль пунктира — с внешней стороны: без неё линия посреди города ничего не
+         объясняла. Каждая сторона — своя линия, направленная так, чтобы «снаружи» было
+         известно: сдвиг текста задан у каждой стороны свой */
+      {id:'workarea-label',type:'symbol',source:'workareaLbl',minzoom:12,
+        layout:{'symbol-placement':'line','symbol-spacing':400,'text-field':'Граница прототипа','text-font':T,'text-size':11,
+          'text-offset':['get','off'],'text-keep-upright':true},
+        paint:{'text-color':C.ink3,'text-halo-color':C.ground,'text-halo-width':1.6}},
       /* Невидимая копия наших станций. Станции рисуем мы поверх карты, и карта о них не
          знала — названия районов и улиц ложились прямо на значок и имя. Копия стоит выше всех
          подписей, поэтому ставится первой, и остальные подписи её обходят. Сама не видна */
@@ -5371,6 +5403,16 @@ function veilGeoJSON(){
   var hole=workAreaGeoJSON().geometry.coordinates;
   return {type:'Feature',properties:{},geometry:{type:'Polygon',
     coordinates:[[[-179,-84],[179,-84],[179,84],[-179,84],[-179,-84]],hole.slice().reverse()]}};
+}
+/* стороны рабочей области для подписи: верх и низ — с запада на восток, бока — с юга на
+   север; при такой направленности «снаружи» для верха и левого бока — над текстом, для
+   низа и правого бока — под ним */
+function workAreaSides(){
+  var ll=function(x,y){var a=worldToLatLon(x,y); return [a[1],a[0]]};
+  var W=WORLD_W, Hh=WORLD_H, o=0.95;
+  var f=function(a,b,off){return {type:'Feature',properties:{off:[0,off]},geometry:{type:'LineString',coordinates:[ll(a[0],a[1]),ll(b[0],b[1])]}}};
+  return {type:'FeatureCollection',features:[
+    f([0,0],[W,0],-o), f([0,Hh],[W,Hh],o), f([0,Hh],[0,0],-o), f([W,Hh],[W,0],o)]};
 }
 function workAreaGeoJSON(){
   var pts=[[0,0],[WORLD_W,0],[WORLD_W,WORLD_H],[0,WORLD_H],[0,0]].map(function(p){
@@ -6159,6 +6201,8 @@ function flashStart(){
 }
 function showWithMetro(p){
   var st=landmarkOf(p), mr=metroRef(st);
+  /* у события без места показываем саму станцию: она и есть всё, что о месте известно */
+  if(p.x==null)p={x:mr.x,y:mr.y,st_id:st};
   stnFlash={id:st,at:Date.now()+(glMap?340:0)};
   if(glMap){
     var fdone=false, fgo=function(){if(fdone)return; fdone=true; flashStart()};
@@ -6832,7 +6876,7 @@ function renderMarkers(){
       if(homeN!==HA.n){if(homeN&&HA.n!=null&&!rmH)HA.nAt=tH; HA.n=homeN}
       var nEl=(tH-(HA.nAt||0))/1000;
       var cnt=homeN?'<span class="homecount"'+(HA.nAt&&nEl<.25?' style="animation:badgePop .24s ease both;animation-delay:-'+nEl.toFixed(3)+'s"':'')+'>'+homeN+'</span>':'';
-      homeHTML='<div class="marker marker--home" style="transform:translate('+hs2[0].toFixed(1)+'px,'+hs2[1].toFixed(1)+'px);opacity:'+vis.toFixed(3)+'">'+
+      homeHTML='<div class="marker marker--home" style="transform:translate('+hs2[0].toFixed(1)+'px,'+hs2[1].toFixed(1)+'px);opacity:'+vis.toFixed(3)+(hpOn?';z-index:7':'')+'">'+
         '<span class="homemk"'+(homeN&&hShow?' data-act="home-zoom" role="button" aria-label="Приблизить к дому"':'')+' style="transform:translate(calc('+(-50-50*m).toFixed(1)+'% - '+(10*m).toFixed(1)+'px),'+(-86+8*m).toFixed(1)+'%)">'+
         (hpOn?'<i class="stnring homering" style="--lc:#48A8D0;animation:stnRing .9s ease-out both;animation-delay:-'+hpEl.toFixed(3)+'s"></i>'+
           '<i class="stnring homering" style="--lc:#48A8D0;animation:stnRing .9s ease-out both;animation-delay:'+(0.35-hpEl).toFixed(3)+'s"></i>':'')+
@@ -6857,7 +6901,8 @@ function renderMarkers(){
   /* перерисовка посреди угасания не начинает его заново: задержка от часов */
   out=out.concat(fadeGhosts.map(function(g){return g.html.replace('style="','style="--gd:-'+((Date.now()-g.born)/1000).toFixed(3)+'s;')}),placed.dots,placed.pins);
   /* дом — первым в слое: под событиями */
-  if(homeHTML)out.unshift(homeHTML);
+  /* по кнопке «Дом» дом на время пульса поднимается над метками — его ищут глазами */
+  if(homeHTML){if(hpOn)out.push(homeHTML); else out.unshift(homeHTML)}
   /* пока идёт выбор точки перетаскиванием карты (моб.) точку показывает неподвижный
      прицел по центру экрана (#pickCenter) — здесь маркер для неё не нужен */
   /* маркер черновика живёт ровно столько, сколько открыт экран создания: раньше он оставался
@@ -9738,7 +9783,9 @@ function viewPin(id){
   /* Строка места отвечает не «что значит точка», а «сколько идти» и «покажи». С геопозицией —
      минуты от вас, без неё — метры от метро из тега. Вся строка ведёт к метке на карте */
   if(p.x==null){
-    if(!closed)facts+='<div class="factrow">'+icon('walk')+'<div><b>Место не указано</b><span>Автор не знает, где именно</span></div></div>';
+    /* места нет, но станция есть — «Показать на карте» ведёт к ней, и она пульсирует */
+    if(!closed)facts+='<button class="factrow factrow--btn" data-act="show-on-map" data-id="'+p.id+'">'+icon('walk')+'<div><b>Место не указано</b><span>Автор не знает, где именно</span>'+
+      '<span class="factrow__go">Показать на карте</span></div></button>';
   }else if(closed){
     /* у закрытого расстояния нет: идти некуда, станция названа тегом наверху */
   }else{
@@ -12045,8 +12092,8 @@ function debugDialog(){
 function aboutDialog(){
   pendingOk=null;
   var body='<div class="stack">'+
-    '<p style="margin:0;color:var(--ink-2)">«Район» — карта вашего двора и окрестностей. Соседи видят встречи и вещи друг друга: с кем сходить на пробежку, кому отдать детское кресло, у кого одолжить дрель на вечер</p>'+
-    '<p style="margin:0;color:var(--ink-2)">Пока это прототип. Он работает целиком в браузере, данные хранятся только у вас, соседи и переписка демонстрационные. Новые функции будут появляться постепенно</p>'+
+    '<div class="about__text"><p style="margin:0;color:var(--ink-2)">«Район» — карта вашего двора и окрестностей. Соседи видят встречи и вещи друг друга: с кем сходить на пробежку, кому отдать детское кресло, у кого одолжить дрель на вечер</p>'+
+    '<p style="margin:0;color:var(--ink-2)">Работает целиком в браузере: данные хранятся только у вас, соседи и переписка — демонстрационные. Новые функции будут появляться постепенно</p></div>'+
     '<div class="divider"></div>'+
     '<div class="about__meta">'+
       '<span><b>Автор</b>Савиных Сергей</span>'+
@@ -12059,7 +12106,7 @@ function aboutDialog(){
   '</div>';
   /* «Поделиться» — значком на строке заголовка: действие про всё окно, а не про строку
      данных, под которой оно стояло кнопкой */
-  setOverlay('<div class="scrim" data-act="scrim"><div class="modal" role="dialog" aria-modal="true">'+
+  setOverlay('<div class="scrim" data-act="scrim"><div class="modal modal--about" role="dialog" aria-modal="true">'+
     '<div class="modal__body"><div class="modal__head"><h2>О прототипе</h2>'+
       '<button class="iconbtn iconbtn--20" data-act="share-app" aria-label="Поделиться прототипом" title="Поделиться прототипом">'+icon('share')+'</button></div>'+body+'</div>'+
     '<div class="modal__foot"><button class="btn btn--primary" data-act="modal-no">Понятно</button></div>'+
@@ -12635,7 +12682,7 @@ function placeTagsHTML(d){
    делали одно дело и стояли почти вплотную. Точка у ориентира приблизительная по сути, и об
    этом надо сказать до публикации; у встречи это важнее всех: участникам нужен адрес */
 function placeHintText(d){
-  if(d.outArea)return 'Событие можно создать только внутри рабочей области — она обведена на карте пунктиром';
+  if(d.outArea)return 'Событие можно создать только внутри границы прототипа';
   if(d.placeSt)return d.type==='activity'
     ? 'Точка встанет рядом с ориентиром — точное место встречи напишите в описании'
     : 'Точка встанет рядом с ориентиром, примерно';
@@ -12825,8 +12872,8 @@ function onAction(act,el,e){
     /* Показать на карте: на телефоне карточка сворачивается и метка встаёт над шторкой,
        на десктопе метка подлетает в центр видимой части и коротко вспыхивает */
     case 'show-on-map':
-      var sp=pin(id); if(!sp||sp.x==null)break;
-      flashId=sp.id; flashAt=Date.now()+(isDesktopPanel()?320:420);
+      var sp=pin(id); if(!sp)break;
+      flashId=sp.x!=null?sp.id:null; flashAt=Date.now()+(isDesktopPanel()?320:420);
       if(isDesktopPanel())showWithMetro(sp);
       else{ui.pinShut=true; render(); setTimeout(function(){showWithMetro(sp)},260)}
       break;
@@ -14497,6 +14544,9 @@ function startApp(){
      появляются как новое, а не как фон, который уже был */
   var mw0=me();
   askedMove(); fitOnStation((mw0&&mw0.welcome&&district('d_cvetnoy').id==='d_cvetnoy')?'d_cvetnoy':primaryStation());
+  /* На телефоне в полосу над шторкой у Цветного попадало Садовое кольцо — половина кадра
+     была трассой. Там же Патриаршие: пруд в центре полосы, вокруг переулки и кварталы */
+  if(mw0&&mw0.welcome&&glMap&&!isDesktopPanel())welcomePatri();
   if(window.ResizeObserver){
     new ResizeObserver(function(){
       measure(); clampView(); applyView();

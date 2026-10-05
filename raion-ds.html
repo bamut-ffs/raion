@@ -338,6 +338,9 @@ button{cursor:pointer;background:none;border:none;padding:0;text-align:left}
   display:grid;place-items:center;font-variant-numeric:tabular-nums;
 }
 .rail__spacer{flex:1}
+/* в окне «О прототипе» два абзаца — один текст: между ними 8, до заголовка 16 */
+.about__text{display:flex;flex-direction:column;gap:8px}
+.modal--about .modal__head{margin-bottom:16px}
 .about__meta{display:flex;flex-direction:column;gap:8px;font-size:var(--f-s10);line-height:var(--l-s10);color:var(--ink-2)}
 .about__meta b{display:inline-block;min-width:78px;color:var(--ink-3);font-weight:500}
 
@@ -2052,6 +2055,11 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 /* тип события — его собственным знаком справа, тем же кружком, что бейдж на миниатюре */
 .sysmsg__cat{margin-left:auto;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;flex:none;color:#fff}
 .sysmsg__cat svg{width:12px;height:12px}
+/* наведение на строку слегка увеличивает кружок категории — только там, где есть мышь */
+@media (hover:hover) and (pointer:fine){
+  .listrow__cat,.sysmsg__cat{transition:transform .15s ease}
+  .listrow:hover .listrow__cat,.sysmsg:hover .sysmsg__cat{transform:scale(1.1)}
+}
 .sysmsg__cat--act{background:var(--act)}
 .sysmsg__cat--offer{background:var(--offer)}
 .sysmsg__cat--find{background:var(--find)}
@@ -3281,6 +3289,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.52.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.53.0";</script>
 </body>
 </html>
