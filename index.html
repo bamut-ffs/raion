@@ -582,6 +582,11 @@ html{-webkit-tap-highlight-color:transparent}
   box-shadow:0 0 0 2px #fff,var(--shadow-2);transition:transform .14s cubic-bezier(.2,.7,.3,1.3);
 }
 .pin>svg{width:16px;height:16px}
+/* подпись при наведении проявляется и выезжает на 4 от метки, а не возникает разом */
+.pin__label--hover{animation:hoverLabIn .15s ease both}
+.pin__label--hover.is-out{animation:hoverLabOut .15s ease both}
+@keyframes hoverLabIn{from{opacity:0;margin-left:-4px}}
+@keyframes hoverLabOut{to{opacity:0;margin-left:-4px}}
 .pin.is-morph{transition:none}
 .pin.is-morph>svg{opacity:var(--io,1)}
 .pin.pin--drop{width:34px;height:34px;border-radius:50% 50% 50% 6px;transform:translate(-50%,-100%) rotate(-45deg);
@@ -595,9 +600,10 @@ html{-webkit-tap-highlight-color:transparent}
 .pin,.pindot,.listrow__cat,.sysmsg__cat,.welcome__ic,.typecard__ic{--tsh:color-mix(in srgb,color-mix(in srgb,var(--tint,#888) 55%,#000) 70%,transparent)}
 .typecard.is-on .typecard__ic{--tint:var(--tc-solid)}
 .pin>svg,.listrow__cat svg,.sysmsg__cat svg,.welcome__ic svg,.typecard.is-on .typecard__ic svg{filter:drop-shadow(0 1px 1.5px var(--tsh))}
-.pin--act{background:var(--act);color:var(--act-ink)}
-.pin--offer{background:var(--offer);color:var(--offer-ink)}
-.pin--find{background:var(--find);color:var(--find-ink)}
+/* значок на цветном круге — белый в обеих темах, как в сообщениях и уведомлениях */
+.pin--act{background:var(--act);color:#fff}
+.pin--offer{background:var(--offer);color:#fff}
+.pin--find{background:var(--find);color:#fff}
 .marker:hover .pin,.pin:focus-visible{transform:translate(-50%,-50%) scale(1.12)}
 .marker.is-sel .pin{transform:translate(-50%,-50%) scale(1.25)}
 /* кружок растёт из центра и остаётся на точке, а плашка отъезжает на прирост — зазор тот же */
@@ -1010,7 +1016,14 @@ html{-webkit-tap-highlight-color:transparent}
   font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600}
 .pill:hover{opacity:.85}
 .pill--primary{background:var(--brand);color:#fff}
-.pill--brand{background:var(--brand-soft);color:var(--brand-icon);padding-right:8px}
+.pill--brand{background:var(--brand-soft);color:var(--brand-icon);padding-right:8px;transition:background .15s,transform .15s}
+.pill--brand svg{transition:transform .15s}
+/* «Смотреть все»: подложка заметно темнее и стрелка уходит вправо — «уведёт дальше» */
+@media (hover:hover) and (pointer:fine){
+  .pill--brand:hover{opacity:1;background:color-mix(in srgb,var(--brand-soft),var(--brand) 14%)}
+  .pill--brand:hover svg{transform:translateX(3px)}
+}
+.pill--brand:active{transform:scale(.97)}
 .pill svg{width:14px;height:14px;flex:none}
 .footrow{display:flex;gap:8px}
 .footrow .btn{flex:1;min-width:0}
@@ -1091,9 +1104,10 @@ html{-webkit-tap-highlight-color:transparent}
   pointer-events:none;
   text-shadow:0 0 3px var(--ground),0 0 3px var(--ground),0 0 3px var(--ground),0 0 3px var(--ground);
 }
+.stnmark__n{text-align:center}
 .stnmark__n--up{top:auto;bottom:12px}
-.stnmark__n--r{left:12px;top:0;transform:translate(0,-50%)}
-.stnmark__n--l{left:auto;right:12px;top:0;transform:translate(0,-50%)}
+.stnmark__n--r{left:12px;top:0;transform:translate(0,-50%);text-align:left}
+.stnmark__n--l{left:auto;right:12px;top:0;transform:translate(0,-50%);text-align:right}
 .distchip__ic{width:13px;height:13px;color:var(--ink-3);flex:none}
 .linedot{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none;vertical-align:1px}
 /* ряд точек под названием станции: высота задана, чтобы строка узла с двумя линиями
@@ -1297,8 +1311,11 @@ html{-webkit-tap-highlight-color:transparent}
 .switch i{
   /* дорожка задана серым или брендовым одинаково в обеих темах — значит и кружок жёстко */
   display:block;width:19px;height:19px;border-radius:50%;background:#fff;
-  box-shadow:var(--shadow-2);transition:transform .15s;
+  /* тень цвета дорожки, только темнее — как у значков на кругах */
+  box-shadow:0 1px 3px color-mix(in srgb,color-mix(in srgb,var(--surface-3) 55%,#000) 50%,transparent);
+  transition:transform .15s,box-shadow .15s;
 }
+.switch.is-on i{box-shadow:0 1px 3px color-mix(in srgb,color-mix(in srgb,var(--brand) 55%,#000) 60%,transparent)}
 .switch.is-on{background:var(--brand);border-color:var(--brand)}
 .switch.is-on i{transform:translateX(17px)}
 
@@ -1796,7 +1813,7 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 /* Знак типа говорит заливкой, а не силой цвета: невыбранный — мягкая подложка с цветным
    значком, выбранный — сплошная заливка и светлый значок, ровно как булавка того же типа
    на карте. Цвет значка берётся тем же токеном, поэтому тёмная тема достаётся даром */
-.typecard.is-on .typecard__ic{background:var(--tc-solid);color:var(--tc-ink)}
+.typecard.is-on .typecard__ic{background:var(--tc-solid);color:#fff}
 .typecard--act{--tc-solid:var(--act);--tc-ink:var(--act-ink)}
 .typecard--offer{--tc-solid:var(--offer);--tc-ink:var(--offer-ink)}
 .typecard--find{--tc-solid:var(--find);--tc-ink:var(--find-ink)}
@@ -2314,9 +2331,9 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .welcome__type svg{width:20px;height:20px;flex:none}
 /* на месте значка — та же метка, что на карте: экран заодно становится легендой */
 .welcome__ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;box-shadow:0 0 0 2px #fff}
-.welcome__type--act .welcome__ic{background:var(--act)} .welcome__type--act .welcome__ic svg{color:var(--act-ink)}
-.welcome__type--offer .welcome__ic{background:var(--offer)} .welcome__type--offer .welcome__ic svg{color:var(--offer-ink)}
-.welcome__type--find .welcome__ic{background:var(--find)} .welcome__type--find .welcome__ic svg{color:var(--find-ink)}
+.welcome__type--act .welcome__ic{background:var(--act)} .welcome__type--act .welcome__ic svg{color:#fff}
+.welcome__type--offer .welcome__ic{background:var(--offer)} .welcome__type--offer .welcome__ic svg{color:#fff}
+.welcome__type--find .welcome__ic{background:var(--find)} .welcome__type--find .welcome__ic svg{color:#fff}
 .welcome__type--act{background:var(--act-soft)} .welcome__type--act svg{color:var(--act)}
 .welcome__type--offer{background:var(--offer-soft)} .welcome__type--offer svg{color:var(--offer)}
 .welcome__type--find{background:var(--find-soft)} .welcome__type--find svg{color:var(--find)}
@@ -2349,9 +2366,9 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .welcome__type--act .wcard__ic{background:var(--act)}
 .welcome__type--offer .wcard__ic{background:var(--offer)}
 .welcome__type--find .wcard__ic{background:var(--find)}
-.welcome__type--act .wcard__ic svg{color:var(--act-ink)}
-.welcome__type--offer .wcard__ic svg{color:var(--offer-ink)}
-.welcome__type--find .wcard__ic svg{color:var(--find-ink)}
+.welcome__type--act .wcard__ic svg{color:#fff}
+.welcome__type--offer .wcard__ic svg{color:#fff}
+.welcome__type--find .wcard__ic svg{color:#fff}
 /* пример события на размытой карте приветствия: та же метка с подписью, что после входа */
 .wghostmk{position:fixed;width:0;height:0;z-index:35;pointer-events:none}
 .wghostmk .pin,.wghostmk .pin__label{pointer-events:none;cursor:default}
@@ -2360,9 +2377,9 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .wghost{position:fixed;z-index:35;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;pointer-events:none;
   box-shadow:0 0 0 2px #fff,var(--shadow-2);transform:translate(-50%,-50%)}
 .wghost svg{width:16px;height:16px}
-.wghost--act{background:var(--act);color:var(--act-ink)}
-.wghost--offer{background:var(--offer);color:var(--offer-ink)}
-.wghost--find{background:var(--find);color:var(--find-ink)}
+.wghost--act{background:var(--act);color:#fff}
+.wghost--offer{background:var(--offer);color:#fff}
+.wghost--find{background:var(--find);color:#fff}
 .ptags .ptag.is-on{background:var(--brand-soft);color:var(--brand-icon)}
 /* станции в приветствии: точка линии разливается на весь чип, текст белеет */
 .ptags--st .ptag{position:relative;overflow:hidden;isolation:isolate;gap:7px;padding:0 12px 0 10px;height:32px}
@@ -3829,7 +3846,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.56.0';
+var VERSION='3.57.0';
 /* Дом на карте — изометрическая иллюстрация (рисунок пользователя), обрезана по содержимому,
    PNG без потерь: WebP с потерями портил прозрачность — вокруг дома был серый прямоугольник. Голубая крыша — цвет бренда; читается силуэтом с 44 точек */
 var HOUSE_IMG='media/7395ec63a31d.png';
@@ -3964,6 +3981,9 @@ function roundMeetTime(ts){
   var d=new Date(ts), h=d.getHours();
   var slot=(h<10)?9:(h<15)?12:(h<19)?18:20;
   d.setHours(slot,(hashStr(String(ts))%2)?30:0,0,0);
+  /* поздно вечером «через 3 часа» округлялось к слоту 20:00 того же дня, то есть в прошлое —
+     такая встреча переезжает на утро следующего дня */
+  if(d.getTime()<now()+30*MIN){d.setDate(d.getDate()+1); d.setHours(9,(hashStr(String(ts))%2)?30:0,0,0)}
   return d.getTime();
 }
 function seedMyPins(who){
@@ -5250,7 +5270,6 @@ function mapPalette(){
 var P_CLS=['get','class'], P_SUB=['get','subclass'], P_RANK=['coalesce',['get','rank'],99];
 function pIn(v,list){return ['in',v,['literal',list]]}
 var POI_T1=['any',
-  ['all',['==',P_CLS,'railway'],pIn(P_SUB,['station','halt'])],
   ['all',['==',P_CLS,'bus'],['==',P_SUB,'bus_station']],
   ['all',['==',P_CLS,'shop'],pIn(P_SUB,['mall','department_store'])],
   ['all',['==',P_CLS,'park'],['<=',P_RANK,10]]
@@ -5372,9 +5391,14 @@ function mapStyle(){
         /* свой цвет, как у парков: кромкой водоёма на воде подпись почти не читалась.
            Ореол цвета воды — серый ореол суши оставлял вокруг букв грязь */
         paint:{'text-color':C.waterInk,'text-halo-color':C.water,'text-halo-width':1.2}},
-      {id:'poi-dot',type:'circle',source:SRC,'source-layer':'poi',minzoom:13,filter:POI_STATION,
-        paint:{'circle-radius':z(13,2,17,4),'circle-color':C.ink2,
-               'circle-stroke-color':C.ground,'circle-stroke-width':1.5}},
+      /* Вокзал и платформа — точка и подпись одним знаком: не влезла подпись — нет и точки.
+         Раньше точка была отдельным слоем с 13-го, а подпись с 14-го и уступала нашим
+         станциям, — у Белорусского оставалась одинокая точка без объяснения */
+      {id:'poi-station',type:'symbol',source:SRC,'source-layer':'poi',minzoom:14,
+        filter:['all',POI_STATION,['<=',['length',['coalesce',['get','name:ru'],['get','name'],'']],24]],
+        layout:{'icon-image':'stdot','icon-size':1,'text-field':NAME,'text-font':T,'text-size':z(14,10,18,11),
+          'text-offset':[0,0.7],'text-anchor':'top','text-max-width':8},
+        paint:{'text-color':C.ink3,'text-halo-color':C.ground,'text-halo-width':1.4}},
       poiLabel('poi-label-1',POI_T1,14),
       poiLabel('poi-label-2',POI_T2,15),
       poiLabel('poi-label-3',POI_T3,16),
@@ -5562,6 +5586,14 @@ function initGL(){
     });
   }catch(e){ glMap=null; return false }
   glMap.touchZoomRotate.disableRotation();
+  /* точка вокзала — картинкой, чтобы стоять в одном знаке с подписью; цвета из текущей темы */
+  glMap.on('styleimagemissing',function(ev){
+    if(ev.id!=='stdot')return;
+    var C=mapPalette(), r=2, n=16, cv=document.createElement('canvas'); cv.width=cv.height=n;
+    var x=cv.getContext('2d'); x.beginPath(); x.arc(n/2,n/2,4.5,0,7); x.fillStyle=C.ground; x.fill();
+    x.beginPath(); x.arc(n/2,n/2,3,0,7); x.fillStyle=C.ink2; x.fill();
+    try{glMap.addImage('stdot',x.getImageData(0,0,n,n),{pixelRatio:r})}catch(e){}
+  });
   /* станции подложки приходят с тайлами — как пришли, переставляем значки метро на них */
   glMap.on('idle',function(){if(findAnchors()){clearStations(); renderMarkers()}});
   /* Safari на айфоне местами не дорисовывает полосу карты у кромки шторки после панорамы */
@@ -6576,7 +6608,9 @@ document.addEventListener('mouseout',function(e){
   if(!b)return;
   var mk=b.parentNode; if(!mk||(e.relatedTarget&&mk.contains(e.relatedTarget)))return;
   mk.classList.remove('is-hover');
-  var t=mk.querySelector('.pin__label--hover'); if(t)t.remove();
+  var t=mk.querySelector('.pin__label--hover');
+  /* уходит так же плавно, как пришла */
+  if(t){t.classList.add('is-out'); setTimeout(function(){if(t.parentNode)t.remove()},150)}
   $$('#markers .marker--stn.is-hid').forEach(function(sm){sm.classList.remove('is-hid')});
 });
 /* Станция — одно целое: значок и имя вместе или никак. Раскладывается последней, в место,
@@ -6609,6 +6643,14 @@ function stnAnim(far){
 /* Станция появляется и уходит растворением за 0,25 с: при панораме и зуме значки то уступают
    событиям, то возвращаются, и мгновенная смена мигала. Ушедшая гаснет на месте копией без
    места в раскладке; слой перерисовывается кадрами, поэтому ведём от часов */
+/* Длинное название — в две строки по пробелу ближе к середине: «Библиотека / им. Ленина».
+   Подпись вдвое уже, и тесным узлам проще разойтись */
+function stnLines(n){
+  if(n.length<=14||n.indexOf(' ')<0)return [n];
+  var best=-1, bd=1e9;
+  for(var i=0;i<n.length;i++)if(n[i]===' '){var d=Math.abs(i-n.length/2); if(d<bd){bd=d; best=i}}
+  return [n.slice(0,best),n.slice(best+1)];
+}
 function placeStations(stns,out,boxes){
   var shown=[], seen={}, tn=Date.now(), rm=reduceMotion();
   stns=stns||[];
@@ -6623,11 +6665,13 @@ function placeStations(stns,out,boxes){
     /* Ширина подписи — замером тем же шрифтом, а не прикидкой по буквам: «Библиотека им.
        Ленина» выходила шире расчёта, и подписи соседних станций налезали. Не влезла снизу —
        пробуем сверху, справа, слева; нигде — правило прежнее: значок и имя вместе или никак */
-    var w=txtW(e.d.name,'600 11px')+6, hh=15;
+    var nl=stnLines(e.d.name), w=Math.max.apply(null,nl.map(function(t){return txtW(t,'600 11px')}))+6, hh=nl.length>1?29:15;
     var spots=[{k:'',b:{l:x-w/2,t:y+12,r:x+w/2,b:y+12+hh}},{k:' stnmark__n--up',b:{l:x-w/2,t:y-12-hh,r:x+w/2,b:y-12}},
       {k:' stnmark__n--r',b:{l:x+12,t:y-hh/2,r:x+12+w,b:y+hh/2}},{k:' stnmark__n--l',b:{l:x-12-w,t:y-hh/2,r:x-12,b:y+hh/2}}];
     /* станция, которую подсвечиваем после «Показать на карте», видна даже на чужом месте */
-    var fl=stnFlash&&stnFlash.id===e.d.id?(tn-stnFlash.at):-1, flashing=fl>-400&&fl<1300;
+    /* Раньше без подсветки fl был -1, и условие считало подсвеченной каждую станцию — те
+       стояли без проверки места, и подписи налезали. Подсвечена только та, что названа */
+    var fl=stnFlash&&stnFlash.id===e.d.id?(tn-stnFlash.at):null, flashing=fl!=null&&fl>-400&&fl<1300;
     var nb=spots[0].b, nk='';
     if(named&&!flashing){var sp0=null; for(var si=0;si<spots.length;si++)if(!boxHit(boxes,spots[si].b)){sp0=spots[si];break} if(sp0){nb=sp0.b; nk=sp0.k}else nb=null}
     if(!flashing&&(boxHit(boxes,ib)||(named&&!nb)))return;
@@ -6642,7 +6686,7 @@ function placeStations(stns,out,boxes){
     var fs2=(flashing&&fl>=0&&!rm)?';animation:stnPop 1.2s ease both;animation-delay:-'+(fl/1000).toFixed(3)+'s':'';
     out.push('<div class="marker marker--stn'+(far?' is-far':'')+(flashing?' is-flash':'')+'" style="transform:translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px)'+fa+'">'+fx+
       '<svg class="stnmark'+(far?'':' is-near')+'" aria-hidden="true" style="--lc:'+e.d.lineColor+stnAnim(far)+fs2+'"><use href="#i-metro-c"/></svg>'+
-      (named?'<span class="stnmark__n'+nk+'">'+H(e.d.name)+'</span>':'')+'</div>');
+      (named?'<span class="stnmark__n'+nk+'">'+nl.map(H).join('<br>')+'</span>':'')+'</div>');
   });
   for(var sid in stnLife){
     if(seen[sid])continue;
@@ -6654,7 +6698,7 @@ function placeStations(stns,out,boxes){
     out.push('<div class="marker marker--stn" style="transform:translate('+ss[0].toFixed(1)+'px,'+ss[1].toFixed(1)+'px);pointer-events:none;'+
       'animation:markFadeOut .25s ease forwards;animation-delay:-'+(ge/1000).toFixed(3)+'s">'+
       '<svg class="stnmark'+(far?'':' is-near')+'" aria-hidden="true" style="--lc:'+sd.lineColor+'"><use href="#i-metro-c"/></svg>'+
-      (named?'<span class="stnmark__n">'+H(sd.name)+'</span>':'')+'</div>');
+      (named?'<span class="stnmark__n">'+stnLines(sd.name).map(H).join('<br>')+'</span>':'')+'</div>');
   }
   syncStnBlock(shown);
 }
@@ -8312,7 +8356,7 @@ function searchScenes(inp){
   }).map(function(sc){return sc[0]});
 }
 function typeCan(inp){
-  if(!inp||hintSeen('search')||inp.value||document.activeElement===inp||!inp.getClientRects().length)return false;
+  if(!inp||typeSt.done||inp.value||document.activeElement===inp||!inp.getClientRects().length)return false;
   if(ui.panel&&ui.panel.type==='welcome')return false;
   var hb=$('#hintBubble'); if(hb&&!hb.hidden&&hb._k==='map')return false;
   return true;
@@ -11373,7 +11417,7 @@ function viewSettings(){
   '<div class="divider divider--lg"></div>'+
   '<div class="pad stack">'+
     '<button class="btn btn--danger-solid" data-act="reset">'+icon('reset')+'Сбросить прототип'+'</button>'+
-    '<span class="hint">Сброс удалит ваш профиль, события и переписку из браузера и вернёт демо-данные</span>'+
+    '<span class="hint">Удалит ваш профиль, события и переписку — прототип откроется как в первый раз</span>'+
   '</div>';
   return {title:'Настройки',section:true,back:true,body:body};
 }
@@ -13921,7 +13965,8 @@ document.addEventListener('input',function(e){
   if(e.target.id==='searchInput'){
     ui.searchQuery=e.target.value;
     /* первый поиск сделан — печать сценариев больше не нужна */
-    if(e.target.value.trim().length>=2&&!hintSeen('search')){var hm=me(); if(hm){hm.hints=hm.hints||{}; hm.hints.search=1; save()}}
+    /* поискал — печать молчит до следующего запуска, а не навсегда: прототип открывают снова */
+    if(e.target.value.trim().length>=2)typeSt.done=true;
     searchSheetFollow();
     renderSearchResults();
     syncSearchClear();
