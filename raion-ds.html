@@ -540,19 +540,22 @@ html{-webkit-tap-highlight-color:transparent}
   pointer-events:auto;position:relative;z-index:1;display:grid;place-items:center;
   width:32px;height:32px;border-radius:50%;transform:translate(-50%,-50%);
   /* тень цвета самой метки, только темнее: серая под ярким кругом выглядела грязной */
-  box-shadow:0 0 0 2px #fff,0 2px 6px var(--tsh,rgba(0,0,0,.2));transition:transform .14s cubic-bezier(.2,.7,.3,1.3);
+  box-shadow:0 0 0 2px #fff,var(--shadow-2);transition:transform .14s cubic-bezier(.2,.7,.3,1.3);
 }
 .pin>svg{width:16px;height:16px}
+.pin.is-morph{transition:none}
+.pin.is-morph>svg{opacity:var(--io,1)}
 .pin.pin--drop{width:34px;height:34px;border-radius:50% 50% 50% 6px;transform:translate(-50%,-100%) rotate(-45deg);
   box-shadow:var(--shadow-2);border:1.5px solid rgba(0,0,0,.10)}
 .pin--drop>svg{transform:rotate(45deg)}
-/* Цветная тень: оттенок того, что под ней, затемнённый на треть и полупрозрачный.
-   Тот же приём у всех ярких кругов со значком — меток, точек, кружков категории */
+/* Тень отбрасывает значок на свой круг — цвета круга, только темнее, как у значков Авито.
+   Под самими кругами цветной тени нет: метка на карте держит нейтральную, остальные без тени */
 .pin--act,.pindot--act,.listrow__cat--act,.sysmsg__cat--act,.welcome__type--act .welcome__ic{--tint:var(--act)}
 .pin--offer,.pindot--offer,.listrow__cat--offer,.sysmsg__cat--offer,.welcome__type--offer .welcome__ic{--tint:var(--offer)}
 .pin--find,.pindot--find,.listrow__cat--find,.sysmsg__cat--find,.welcome__type--find .welcome__ic{--tint:var(--find)}
-.pin,.pindot,.listrow__cat,.sysmsg__cat,.welcome__ic,.typecard__ic{--tsh:color-mix(in srgb,color-mix(in srgb,var(--tint,#888) 65%,#000) 45%,transparent)}
-.typecard.is-on .typecard__ic{--tint:var(--tc-solid);box-shadow:0 2px 6px var(--tsh)}
+.pin,.pindot,.listrow__cat,.sysmsg__cat,.welcome__ic,.typecard__ic{--tsh:color-mix(in srgb,color-mix(in srgb,var(--tint,#888) 55%,#000) 70%,transparent)}
+.typecard.is-on .typecard__ic{--tint:var(--tc-solid)}
+.pin>svg,.listrow__cat svg,.sysmsg__cat svg,.welcome__ic svg,.typecard.is-on .typecard__ic svg{filter:drop-shadow(0 1px 1.5px var(--tsh))}
 .pin--act{background:var(--act);color:var(--act-ink)}
 .pin--offer{background:var(--offer);color:var(--offer-ink)}
 .pin--find{background:var(--find);color:var(--find-ink)}
@@ -649,7 +652,7 @@ html{-webkit-tap-highlight-color:transparent}
    цвета, нажатие открывает событие. Зона нажатия шире самой точки */
 .pindot{
   pointer-events:auto;position:absolute;left:0;top:0;display:block;width:12px;height:12px;border-radius:50%;
-  transform:translate(-50%,-50%);box-shadow:0 0 0 2px #fff,0 1px 3px var(--tsh,rgba(0,0,0,.28));transition:opacity .18s ease,transform .14s ease;
+  transform:translate(-50%,-50%);box-shadow:0 0 0 2px #fff,0 1px 3px rgba(0,0,0,.28);transition:opacity .18s ease,transform .14s ease;
 }
 .pindot::after{content:'';position:absolute;inset:-8px;border-radius:50%}
 .pindot--act{background:var(--act)}
@@ -875,6 +878,11 @@ html{-webkit-tap-highlight-color:transparent}
    нужно отдать их собственные нажатия — иначе тап по пройденному шагу уходит в жест */
 .panel__top .stepbar{touch-action:auto}
 .panel__body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+/* Телефон, разделы с прокруткой: нижние 24 растворяются — срезанное краем экрана не торчит
+   полоской. Долистали до конца — край снова резкий. В переписке не нужно: снизу поле ввода */
+@media (max-width:820px){
+  .panel.is-section:not(.is-chat) .panel__body:not(.is-end){-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 24px),transparent)}
+}
 .panel__foot{flex:none;padding:12px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
 .pad{padding:16px}
 /* Лестница отступов: 4 внутри пары, 8 внутри группы, 16 между группами, 24 внешнее поле.
@@ -1044,6 +1052,9 @@ html{-webkit-tap-highlight-color:transparent}
   pointer-events:none;
   text-shadow:0 0 3px var(--ground),0 0 3px var(--ground),0 0 3px var(--ground),0 0 3px var(--ground);
 }
+.stnmark__n--up{top:auto;bottom:12px}
+.stnmark__n--r{left:12px;top:0;transform:translate(0,-50%)}
+.stnmark__n--l{left:auto;right:12px;top:0;transform:translate(0,-50%)}
 .distchip__ic{width:13px;height:13px;color:var(--ink-3);flex:none}
 .linedot{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none;vertical-align:1px}
 /* ряд точек под названием станции: высота задана, чтобы строка узла с двумя линиями
@@ -1698,6 +1709,9 @@ input[type=range].input::-moz-range-thumb{width:22px;height:22px;border-radius:5
 @media (min-width:821px){.sheet-grip{display:none}}
 .searchfield{position:relative}
 .searchfield .input{padding-left:38px;padding-right:40px}
+.typecaret{position:absolute;top:50%;width:1.5px;height:18px;margin-top:-9px;background:var(--ink-3);border-radius:1px;pointer-events:none}
+.typecaret.is-blink{animation:caretBlink 1s steps(1) infinite}
+@keyframes caretBlink{50%{opacity:0}}
 /* лупа остаётся на месте и при фокусе; насквозь кликабельна, чтобы попадание ставило курсор */
 .searchfield__ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--ink-3);pointer-events:none}
 /* кружок линии на месте лупы, пока строка не в работе: она показывает станцию, а не ищет */
@@ -1958,7 +1972,7 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
 /* Бейдж категории у обложки с фото: у фото цвет категории иначе пропадает. Выступает за угол
    на 4 влево и вниз, кольцо цветом строки. В сообщениях крупнее — там и обложка крупнее */
 .listrow__cat{position:absolute;left:-4px;bottom:-4px;z-index:1;width:20px;height:20px;border-radius:50%;
-  display:grid;place-items:center;color:#fff;box-shadow:0 0 0 2px var(--surface),0 2px 5px var(--tsh)}
+  display:grid;place-items:center;color:#fff;box-shadow:0 0 0 2px var(--surface)}
 .listrow__cat svg{width:12px;height:12px}
 .listrow__cat--l{width:24px;height:24px}
 .listrow__cat--l svg{width:14px;height:14px}
@@ -2061,7 +2075,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .sysmsg__f{display:flex;align-items:center;gap:8px;font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;color:var(--ink-2)}
 .sysmsg__f>svg{width:16px;height:16px;flex:none;color:var(--ink-2)}
 /* тип события — его собственным знаком справа, тем же кружком, что бейдж на миниатюре */
-.sysmsg__cat{margin-left:auto;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;flex:none;color:#fff;box-shadow:0 2px 5px var(--tsh)}
+.sysmsg__cat{margin-left:auto;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;flex:none;color:#fff}
 .sysmsg__cat svg{width:12px;height:12px}
 /* наведение на строку слегка увеличивает кружок категории — только там, где есть мышь */
 @media (hover:hover) and (pointer:fine){
@@ -2260,7 +2274,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .welcome__type{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:16px 8px 14px;border-radius:var(--r-m);background:var(--surface-2);min-width:0}
 .welcome__type svg{width:20px;height:20px;flex:none}
 /* на месте значка — та же метка, что на карте: экран заодно становится легендой */
-.welcome__ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;box-shadow:0 0 0 2px #fff,0 2px 6px var(--tsh)}
+.welcome__ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;box-shadow:0 0 0 2px #fff}
 .welcome__type--act .welcome__ic{background:var(--act)} .welcome__type--act .welcome__ic svg{color:var(--act-ink)}
 .welcome__type--offer .welcome__ic{background:var(--offer)} .welcome__type--offer .welcome__ic svg{color:var(--offer-ink)}
 .welcome__type--find .welcome__ic{background:var(--find)} .welcome__type--find .welcome__ic svg{color:var(--find-ink)}
@@ -3302,6 +3316,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.55.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.56.0";</script>
 </body>
 </html>
