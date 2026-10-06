@@ -9,7 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="Район">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <meta name="description" content="Прототип соседского сервиса: встречи, «нужно» и «предлагаю», пропажи и находки на карте вокруг станции метро. Откликнулся — договорились в чате">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
@@ -32,14 +33,22 @@
 @media (max-width:820px){
   #splash{position:fixed;inset:0;z-index:200;display:grid;place-items:center;background:#fff;transition:opacity .3s ease}
   #splash svg{width:112px;height:112px;border-radius:26px;animation:splashIn 1.2s cubic-bezier(.2,.7,.3,1) both}
+  #splash>svg,#splash>i{grid-area:1/1}
+  #splash>i{width:112px;height:112px;border-radius:26px;background:#00AAFF;opacity:0;animation:splashWave 1.6s ease-out infinite}
+  #splash>i+i{animation-delay:.8s}
   #splash.is-out{opacity:0;pointer-events:none}
 }
 @media (max-width:820px) and (prefers-color-scheme:dark){#splash{background:#1c1c1e}}
 @keyframes splashIn{from{transform:scale(1)}to{transform:scale(.88)}}
-@media (prefers-reduced-motion:reduce){#splash svg{animation:none}}
-</style><svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" fill="#00AAFF"/><path d="M82.0001 43.9892C82.0037 46.4811 81.5215 48.9492 80.581 51.2517C79.6405 53.5541 78.2603 55.6455 76.5197 57.4056L65.2585 68.8402L58.9403 75.2433C57.7669 76.4343 56.3733 77.3792 54.8393 78.0239C53.3052 78.6686 51.6608 79.0005 50.0001 79.0005C48.3393 79.0005 46.6949 78.6686 45.1608 78.0239C43.6268 77.3792 42.2332 76.4343 41.0598 75.2433L34.7416 68.8402C31.1099 65.1371 31.1099 59.1043 34.7633 55.4018C36.5223 53.6271 38.9046 52.6325 41.3867 52.6367C43.8688 52.6408 46.2479 53.6432 48.0012 55.4237L49.9141 57.3618C53.568 61.043 59.5208 61.0649 63.1742 57.3618C64.046 56.4824 64.7378 55.4371 65.2098 54.2859C65.6818 53.1348 65.9248 51.9005 65.9248 50.6539C65.9248 49.4073 65.6818 48.173 65.2098 47.0218C64.7378 45.8707 64.046 44.8254 63.1742 43.9459L50.0217 30.5728C57.3295 23.1459 69.1702 23.1459 76.4981 30.5509C80.1736 34.2539 82.0001 39.1106 82.0001 43.9892Z" fill="#000"/><path d="M65.9249 50.6539C65.9258 51.9006 65.6832 53.1351 65.2111 54.2864C64.739 55.4376 64.0467 56.4828 63.1742 57.3616C59.5202 61.0646 53.5675 61.0427 49.9141 57.3616L48.0032 55.4235C46.2499 53.6429 43.8709 52.6405 41.3887 52.6364C38.9066 52.6323 36.5243 53.6268 34.7653 55.4016C31.1114 59.1046 31.1114 65.1369 34.7437 68.8399L23.4804 57.4054C21.7399 55.6452 20.3598 53.5538 19.4193 51.2514C18.4788 48.9489 17.9964 46.4809 18 43.989C18 39.1104 19.827 34.2537 23.502 30.5506C30.8299 23.1446 42.6932 23.1446 50.0005 30.5725H50.0216L63.1742 43.9457C64.0467 44.8246 64.739 45.8698 65.2111 47.0212C65.6832 48.1725 65.9258 49.4071 65.9249 50.6539Z" fill="#fff"/></svg></div><script>/* Заставка встаёт по видимой высоте, как само приложение (--vh = innerHeight): на iPhone
+@keyframes splashWave{0%{opacity:.3;transform:scale(.88)}100%{opacity:0;transform:scale(1.5)}}
+@media (prefers-reduced-motion:reduce){#splash svg{animation:none}#splash>i{display:none}}
+</style><i></i><i></i><svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" fill="#00AAFF"/><path d="M82.0001 43.9892C82.0037 46.4811 81.5215 48.9492 80.581 51.2517C79.6405 53.5541 78.2603 55.6455 76.5197 57.4056L65.2585 68.8402L58.9403 75.2433C57.7669 76.4343 56.3733 77.3792 54.8393 78.0239C53.3052 78.6686 51.6608 79.0005 50.0001 79.0005C48.3393 79.0005 46.6949 78.6686 45.1608 78.0239C43.6268 77.3792 42.2332 76.4343 41.0598 75.2433L34.7416 68.8402C31.1099 65.1371 31.1099 59.1043 34.7633 55.4018C36.5223 53.6271 38.9046 52.6325 41.3867 52.6367C43.8688 52.6408 46.2479 53.6432 48.0012 55.4237L49.9141 57.3618C53.568 61.043 59.5208 61.0649 63.1742 57.3618C64.046 56.4824 64.7378 55.4371 65.2098 54.2859C65.6818 53.1348 65.9248 51.9005 65.9248 50.6539C65.9248 49.4073 65.6818 48.173 65.2098 47.0218C64.7378 45.8707 64.046 44.8254 63.1742 43.9459L50.0217 30.5728C57.3295 23.1459 69.1702 23.1459 76.4981 30.5509C80.1736 34.2539 82.0001 39.1106 82.0001 43.9892Z" fill="#000"/><path d="M65.9249 50.6539C65.9258 51.9006 65.6832 53.1351 65.2111 54.2864C64.739 55.4376 64.0467 56.4828 63.1742 57.3616C59.5202 61.0646 53.5675 61.0427 49.9141 57.3616L48.0032 55.4235C46.2499 53.6429 43.8709 52.6405 41.3887 52.6364C38.9066 52.6323 36.5243 53.6268 34.7653 55.4016C31.1114 59.1046 31.1114 65.1369 34.7437 68.8399L23.4804 57.4054C21.7399 55.6452 20.3598 53.5538 19.4193 51.2514C18.4788 48.9489 17.9964 46.4809 18 43.989C18 39.1104 19.827 34.2537 23.502 30.5506C30.8299 23.1446 42.6932 23.1446 50.0005 30.5725H50.0216L63.1742 43.9457C64.0467 44.8246 64.739 45.8698 65.2111 47.0212C65.6832 48.1725 65.9258 49.4071 65.9249 50.6539Z" fill="#fff"/></svg></div><script>/* Заставка встаёт по видимой высоте, как само приложение (--vh = innerHeight): на iPhone
    окно под fixed заходит под нижнюю панель Safari, и центр логотипа уезжал вниз */
-(function(){var s=document.getElementById('splash');if(s&&window.innerHeight)s.style.cssText='bottom:auto;height:'+window.innerHeight+'px'})();</script>
+(function(){var s=document.getElementById('splash');if(!s||!window.innerHeight)return;
+/* В приложении с домашнего экрана окно начинается под строкой состояния — центр окна ниже
+   центра экрана на половину её высоты. Поле снизу той же высоты поднимает знак ровно в центр */
+var st=(navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches))?Math.max(0,Math.min(80,(screen.height||0)-window.innerHeight)):0;
+s.style.cssText='bottom:auto;height:'+window.innerHeight+'px'+(st?';padding-bottom:'+st+'px;box-sizing:border-box':'')})();</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Golos+Text:wght@400;500;600;700&display=swap">
 <style>
 :root{
@@ -569,12 +578,20 @@ html{-webkit-tap-highlight-color:transparent}
 .pin{
   pointer-events:auto;position:relative;z-index:1;display:grid;place-items:center;
   width:32px;height:32px;border-radius:50%;transform:translate(-50%,-50%);
-  box-shadow:0 0 0 2px #fff,var(--shadow-2);transition:transform .14s cubic-bezier(.2,.7,.3,1.3);
+  /* тень цвета самой метки, только темнее: серая под ярким кругом выглядела грязной */
+  box-shadow:0 0 0 2px #fff,0 2px 6px var(--tsh,rgba(0,0,0,.2));transition:transform .14s cubic-bezier(.2,.7,.3,1.3);
 }
 .pin>svg{width:16px;height:16px}
 .pin.pin--drop{width:34px;height:34px;border-radius:50% 50% 50% 6px;transform:translate(-50%,-100%) rotate(-45deg);
   box-shadow:var(--shadow-2);border:1.5px solid rgba(0,0,0,.10)}
 .pin--drop>svg{transform:rotate(45deg)}
+/* Цветная тень: оттенок того, что под ней, затемнённый на треть и полупрозрачный.
+   Тот же приём у всех ярких кругов со значком — меток, точек, кружков категории */
+.pin--act,.pindot--act,.listrow__cat--act,.sysmsg__cat--act,.welcome__type--act .welcome__ic{--tint:var(--act)}
+.pin--offer,.pindot--offer,.listrow__cat--offer,.sysmsg__cat--offer,.welcome__type--offer .welcome__ic{--tint:var(--offer)}
+.pin--find,.pindot--find,.listrow__cat--find,.sysmsg__cat--find,.welcome__type--find .welcome__ic{--tint:var(--find)}
+.pin,.pindot,.listrow__cat,.sysmsg__cat,.welcome__ic,.typecard__ic{--tsh:color-mix(in srgb,color-mix(in srgb,var(--tint,#888) 65%,#000) 45%,transparent)}
+.typecard.is-on .typecard__ic{--tint:var(--tc-solid);box-shadow:0 2px 6px var(--tsh)}
 .pin--act{background:var(--act);color:var(--act-ink)}
 .pin--offer{background:var(--offer);color:var(--offer-ink)}
 .pin--find{background:var(--find);color:var(--find-ink)}
@@ -671,7 +688,7 @@ html{-webkit-tap-highlight-color:transparent}
    цвета, нажатие открывает событие. Зона нажатия шире самой точки */
 .pindot{
   pointer-events:auto;position:absolute;left:0;top:0;display:block;width:12px;height:12px;border-radius:50%;
-  transform:translate(-50%,-50%);box-shadow:0 0 0 2px #fff,0 1px 3px rgba(0,0,0,.28);transition:opacity .18s ease,transform .14s ease;
+  transform:translate(-50%,-50%);box-shadow:0 0 0 2px #fff,0 1px 3px var(--tsh,rgba(0,0,0,.28));transition:opacity .18s ease,transform .14s ease;
 }
 .pindot::after{content:'';position:absolute;inset:-8px;border-radius:50%}
 .pindot--act{background:var(--act)}
@@ -1980,7 +1997,7 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
 /* Бейдж категории у обложки с фото: у фото цвет категории иначе пропадает. Выступает за угол
    на 4 влево и вниз, кольцо цветом строки. В сообщениях крупнее — там и обложка крупнее */
 .listrow__cat{position:absolute;left:-4px;bottom:-4px;z-index:1;width:20px;height:20px;border-radius:50%;
-  display:grid;place-items:center;color:#fff;box-shadow:0 0 0 2px var(--surface)}
+  display:grid;place-items:center;color:#fff;box-shadow:0 0 0 2px var(--surface),0 2px 5px var(--tsh)}
 .listrow__cat svg{width:12px;height:12px}
 .listrow__cat--l{width:24px;height:24px}
 .listrow__cat--l svg{width:14px;height:14px}
@@ -2083,7 +2100,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .sysmsg__f{display:flex;align-items:center;gap:8px;font-size:var(--f-s10);line-height:var(--l-s10);font-weight:600;color:var(--ink-2)}
 .sysmsg__f>svg{width:16px;height:16px;flex:none;color:var(--ink-2)}
 /* тип события — его собственным знаком справа, тем же кружком, что бейдж на миниатюре */
-.sysmsg__cat{margin-left:auto;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;flex:none;color:#fff}
+.sysmsg__cat{margin-left:auto;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;flex:none;color:#fff;box-shadow:0 2px 5px var(--tsh)}
 .sysmsg__cat svg{width:12px;height:12px}
 /* наведение на строку слегка увеличивает кружок категории — только там, где есть мышь */
 @media (hover:hover) and (pointer:fine){
@@ -2282,7 +2299,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .welcome__type{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:16px 8px 14px;border-radius:var(--r-m);background:var(--surface-2);min-width:0}
 .welcome__type svg{width:20px;height:20px;flex:none}
 /* на месте значка — та же метка, что на карте: экран заодно становится легендой */
-.welcome__ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;box-shadow:0 0 0 2px #fff}
+.welcome__ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none;box-shadow:0 0 0 2px #fff,0 2px 6px var(--tsh)}
 .welcome__type--act .welcome__ic{background:var(--act)} .welcome__type--act .welcome__ic svg{color:var(--act-ink)}
 .welcome__type--offer .welcome__ic{background:var(--offer)} .welcome__type--offer .welcome__ic svg{color:var(--offer-ink)}
 .welcome__type--find .welcome__ic{background:var(--find)} .welcome__type--find .welcome__ic svg{color:var(--find-ink)}
@@ -2527,7 +2544,9 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
   background:var(--ink);color:var(--ground);padding:8px 12px;border-radius:var(--r-m);
   font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;box-shadow:var(--shadow-1);z-index:60;
   transition:opacity .22s ease,transform .22s ease;
-  max-width:min(320px,88vw);text-align:center;
+  /* ширина по тексту: от левой половины экрана плашка не знала, сколько ей можно,
+     и узилась до ~200 — короткие фразы переносились */
+  width:max-content;max-width:min(340px,calc(100vw - 32px));text-align:center;
   display:flex;align-items:center;justify-content:center;gap:12px;
 }
 .toast.is-on{opacity:1;transform:translateX(-50%) translateY(0) scale(1);pointer-events:auto}
@@ -2555,7 +2574,10 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 /* тост с действием: текст одной строкой слева, кнопка справа; не помещаются — кнопка уходит
    под текст, а не сжимает его в столбик */
 .toast.toast--act{flex-wrap:wrap;justify-content:flex-start;text-align:left;row-gap:4px;max-width:min(420px,calc(100vw - 32px))}
-.toast--act>span:first-child{flex:1 1 auto}
+/* текст по своей ширине, а не во всю плашку: иначе кнопка уходила вниз и там, где место есть */
+.toast--act>span:first-child{flex:0 1 auto}
+.toast__a--ic{width:24px;height:24px;justify-content:center;margin:-4px -4px -4px 0}
+.toast__a--ic svg{width:18px;height:18px}
 .toast--act .toast__a{margin-left:auto}
 
 /* ---------- responsive ---------- */
@@ -3486,17 +3508,32 @@ function holdAction(text,commit,cancel){
   },'undo');
   heldAction={commit:commit,cancel:cancel};
 }
+/* Перенесённый текст оставлял плашке ширину, на которую строка не влезла, — по бокам пусто.
+   Сжимаем текст до самой длинной из получившихся строк */
+function toastFit(el){
+  var sp=el.querySelector('span:first-child'); if(!sp)return;
+  sp.style.width='';
+  var tn=sp.firstChild; if(!tn||tn.nodeType!==3)return;
+  var rg=document.createRange(); rg.selectNodeContents(tn);
+  var rs=rg.getClientRects(); if(rs.length<2)return;
+  var w=0; for(var i=0;i<rs.length;i++)w=Math.max(w,rs[i].width);
+  sp.style.width=Math.ceil(w+1)+'px';
+}
 function toast(text,label,fn,ic){
   var el=$('#toast');
   flushHeld();
   toastAct=fn||null;
   var life=label?6000:2800;
   el.innerHTML=(text?'<span>'+H(noHang(text))+'</span>':'')+
-    (label?'<button class="toast__a" data-act="toast-act">'+H(label)+(ic?icon(ic):'')+'</button>':'')+
+    /* «Вернуть» — одним значком: отмена узнаётся по стрелке, слово растягивало плашку */
+    (label?(ic==='undo'
+      ? '<button class="toast__a toast__a--ic" data-act="toast-act" aria-label="'+H(label)+'" title="'+H(label)+'">'+icon(ic)+'</button>'
+      : '<button class="toast__a" data-act="toast-act">'+H(label)+(ic?icon(ic):'')+'</button>'):'')+
     '<span class="toast__time"><i></i></span>';
   el.classList.toggle('toast--bare',!text);
   el.classList.toggle('toast--act',!!(text&&label));
   el.classList.add('is-on');
+  toastFit(el);
   /* полоска отмеряет ровно ту жизнь, что задана ниже: сброс с принудительным пересчётом,
      иначе второй тост подряд продолжил бы заполнять её с середины */
   var bar=el.querySelector('.toast__time i');
@@ -3778,7 +3815,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.54.0';
+var VERSION='3.55.0';
 /* Дом на карте — изометрическая иллюстрация (рисунок пользователя), обрезана по содержимому,
    PNG без потерь: WebP с потерями портил прозрачность — вокруг дома был серый прямоугольник. Голубая крыша — цвет бренда; читается силуэтом с 44 точек */
 var HOUSE_IMG='media/7395ec63a31d.png';
@@ -3790,7 +3827,7 @@ var IS_ANDROID=/Android/i.test(navigator.userAgent||'');
 var IS_IOS=/iPhone|iPad|iPod/i.test(navigator.userAgent||'')||(/Macintosh/.test(navigator.userAgent||'')&&navigator.maxTouchPoints>1);
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
-var UPDATED='5 октября 2026';
+var UPDATED='6 октября 2026';
 var KEY='raion.v1';
 var db=null;
 
@@ -5288,7 +5325,9 @@ function mapStyle(){
       {id:'water',type:'fill',source:SRC,'source-layer':'water',paint:{'fill-color':C.water}},
       /* Реки в трубе — Неглинная, Чечёра, Пресня — в данных лежат с пометкой «туннель».
          На публичных картах их нет, и голубые нитки посреди площадей только путали */
-      {id:'waterway',type:'line',source:SRC,'source-layer':'waterway',filter:['!=',['get','brunnel'],'tunnel'],
+      /* Линии рек — с зума 12: ниже подложка не помечает подземные (Неглинная, коллекторы),
+         и фильтр «в трубе» не срабатывал. Москва-река и пруды на общем плане — площади, они остаются */
+      {id:'waterway',type:'line',source:SRC,'source-layer':'waterway',minzoom:12,filter:['!=',['get','brunnel'],'tunnel'],
         paint:{'line-color':C.water,'line-width':z(9,1,16,4)}},
       {id:'building',type:'fill',source:SRC,'source-layer':'building',minzoom:14.5,
         paint:{'fill-color':C.build,'fill-opacity':z(14.5,0,15.5,1)}},
@@ -8211,6 +8250,48 @@ function homeResultsHTML(){
   }
   /* Подсказки стоят первыми — сразу под полем ввода, выше кнопки охвата и сортировки */
   return placesHTML+head+body+nearHTML+tail;
+}
+/* Пока человек ни разу не искал, подсказка в поле печатает сценарии из того, что есть на
+   карте: «Напарник для тенниса», «Отдам горшки». Набрал и нашёл — после первого поиска
+   печать прекращается навсегда. В показ идут только фразы, которые целиком влезают в поле */
+var SEARCH_PH='Поиск событий и мест';
+var SEARCH_SCN=[['Напарник для тенниса','теннис'],['Отдам горшки','горш'],['Потерялись ключи','ключ'],
+  ['Субботник во дворе','субботник'],['Одолжить дрель','дрел'],['Посидеть с котом','кот'],['Детский самокат','самокат'],
+  ['Настолки во дворе','настол'],['Напольная лампа','ламп'],['Покатаемся на лодках','лодк']];
+var typeSt={i:0,j:0,dir:1,run:false,t:null,list:null,w:0};
+function searchScenes(inp){
+  var cs=getComputedStyle(inp), cv=searchScenes.c||(searchScenes.c=document.createElement('canvas')), cx=cv.getContext('2d');
+  cx.font=cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;
+  var room=inp.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)-14;
+  var act=db.pins.filter(function(p){return p.status==='active'}).map(function(p){return (p.title+' '+(p.description||'')).toLowerCase()});
+  return SEARCH_SCN.filter(function(sc){
+    return cx.measureText(sc[0]).width<=room&&act.some(function(t){return t.indexOf(sc[1])>=0});
+  }).map(function(sc){return sc[0]});
+}
+function typeCan(inp){
+  if(!inp||hintSeen('search')||inp.value||document.activeElement===inp||!inp.getClientRects().length)return false;
+  if(ui.panel&&ui.panel.type==='welcome')return false;
+  var hb=$('#hintBubble'); if(hb&&!hb.hidden&&hb._k==='map')return false;
+  return true;
+}
+function typeTick(){
+  typeSt.t=null;
+  var inp=$('#searchInput');
+  if(!typeCan(inp)){typeSt.run=false; if(inp&&inp.placeholder!==SEARCH_PH)inp.placeholder=SEARCH_PH; typeSt.t=setTimeout(typeTick,1500); return}
+  if(!typeSt.list||typeSt.w!==inp.clientWidth){typeSt.list=searchScenes(inp); typeSt.w=inp.clientWidth; typeSt.i=0; typeSt.j=0; typeSt.dir=1}
+  var L=typeSt.list; if(!L.length){inp.placeholder=SEARCH_PH; typeSt.t=setTimeout(typeTick,3000); return}
+  typeSt.run=true;
+  var s=L[typeSt.i%L.length];
+  if(reduceMotion()){inp.placeholder=s; typeSt.i++; typeSt.t=setTimeout(typeTick,2800); return}
+  if(typeSt.dir===1){
+    typeSt.j++; inp.placeholder=s.slice(0,typeSt.j)+'|';
+    if(typeSt.j>=s.length){inp.placeholder=s; typeSt.dir=0; typeSt.t=setTimeout(function(){typeSt.dir=-1; typeTick()},2500); return}
+    typeSt.t=setTimeout(typeTick,60);
+  }else if(typeSt.dir===-1){
+    typeSt.j--; inp.placeholder=s.slice(0,Math.max(0,typeSt.j))+'|';
+    if(typeSt.j<=0){typeSt.i++; typeSt.dir=1; typeSt.t=setTimeout(typeTick,400); return}
+    typeSt.t=setTimeout(typeTick,25);
+  }
 }
 function searchFieldHTML(){
   return '<div class="searchfield">'+icon('search','searchfield__ic')+
@@ -13779,6 +13860,8 @@ document.addEventListener('input',function(e){
   }
   if(e.target.id==='searchInput'){
     ui.searchQuery=e.target.value;
+    /* первый поиск сделан — печать сценариев больше не нужна */
+    if(e.target.value.trim().length>=2&&!hintSeen('search')){var hm=me(); if(hm){hm.hints=hm.hints||{}; hm.hints.search=1; save()}}
     searchSheetFollow();
     renderSearchResults();
     syncSearchClear();
@@ -14501,6 +14584,7 @@ function dropHover(){
 }
 /* Заставка уходит, когда готово главное: не раньше 1,5 с от начала загрузки и не позже 3 с;
    между ними ждём подложку карты — первый кадр после заставки не пустой */
+setTimeout(typeTick,2500);
 function splashOut(){
   var sp=document.getElementById('splash'); if(!sp)return;
   var t=performance.now();
