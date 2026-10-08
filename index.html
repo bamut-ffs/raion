@@ -3847,7 +3847,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.61.0';
+var VERSION='3.62.0';
 /* Дом на карте — изометрическая иллюстрация (рисунок пользователя), обрезана по содержимому,
    PNG без потерь: WebP с потерями портил прозрачность — вокруг дома был серый прямоугольник. Голубая крыша — цвет бренда; читается силуэтом с 44 точек */
 var HOUSE_IMG='media/7395ec63a31d.png';
@@ -9424,11 +9424,15 @@ function applyTry(){
       return db.pins.filter(function(p){return p.status==='active'&&p.x!=null&&p.author_id!==who&&f(p)})
         .sort(function(a,b){return Math.hypot(a.x-h.x,a.y-h.y)-Math.hypot(b.x-h.x,b.y-h.y)})[0];
     }
+    /* встреча — «Настолки у меня во дворе»: читатель на неё ещё не записан (иначе на карточке
+       «Чат встречи», а не первый шаг «Участвую»), у неё нормальный заголовок, настоящая обложка и
+       автор с лицом. Ближайшая подходила хуже: «вело по бульварам» с маленькой буквы. Нет такой —
+       любая ближайшая */
     /* пропажа — та, где вы ещё не помогаете: иначе на карточке «Открыть переписку»,
        а не первый шаг «Помочь с поиском». Нет такой — любая ближайшая */
     function lost(x){return x.type==='lost_found'&&x.subtype==='lost'}
     var p=k==='lost'?(near(function(x){return lost(x)&&!responseOf(x.id,who)&&!threadOf(x.id,x.author_id)})||near(lost))
-         :k==='meet'?near(function(x){return isAct(x)&&!responseOf(x.id,who)})
+         :k==='meet'?(near(function(x){return isAct(x)&&!responseOf(x.id,who)&&x.title==='Настолки у меня во дворе'})||near(function(x){return isAct(x)&&!responseOf(x.id,who)}))
          :k==='offer'?near(function(x){return x.type==='need_offer'}):null;
     if(p){askedMove(); openPin(p.id); return}
     if(k==='create'){ui.draft=newDraft(); ui.pickPaused=false; openPanel({type:'create'}); return}
