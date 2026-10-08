@@ -3847,7 +3847,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.60.0';
+var VERSION='3.61.0';
 /* Дом на карте — изометрическая иллюстрация (рисунок пользователя), обрезана по содержимому,
    PNG без потерь: WebP с потерями портил прозрачность — вокруг дома был серый прямоугольник. Голубая крыша — цвет бренда; читается силуэтом с 44 точек */
 var HOUSE_IMG='media/7395ec63a31d.png';
@@ -3859,7 +3859,7 @@ var IS_ANDROID=/Android/i.test(navigator.userAgent||'');
 var IS_IOS=/iPhone|iPad|iPod/i.test(navigator.userAgent||'')||(/Macintosh/.test(navigator.userAgent||'')&&navigator.maxTouchPoints>1);
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
-var UPDATED='7 октября 2026';
+var UPDATED='8 октября 2026';
 var KEY='raion.v1';
 var db=null;
 
@@ -7114,9 +7114,9 @@ function renderMarkers(){
         ? alertHTML(ap.p,shareAskTitle(ap.p),'',
             '<button class="pill pill--primary" data-act="share" data-id="'+ap.p.id+'">Поделиться</button>')
         : ap.k==='extend'
-        ? alertHTML(ap.p,'Уйдёт с карты '+dateFull(ap.p.expires_at),'Продлите, если ещё актуально',
+        ? alertHTML(ap.p,'Уйдёт с карты '+dateFull(ap.p.expires_at),'',
             '<button class="pill pill--primary" data-act="extend" data-id="'+ap.p.id+'">Продлить</button>')
-        : alertHTML(ap.p,'Подтвердите участие','Без ответа место уйдёт другому соседу',
+        : alertHTML(ap.p,'Подтвердите участие',confirmDeadline(ap.p),
             '<button class="pill pill--primary" data-act="confirm-go" data-id="'+ap.r.id+'">Иду</button>'+
             '<button class="pill" data-act="confirm-no" data-id="'+ap.r.id+'">Не смогу</button>'))
         .replace('<span class="alert__t">','<span class="alert__t" data-pin="'+ap.p.id+'" style="cursor:pointer">')+
@@ -8129,9 +8129,10 @@ function viewArchive(){
   /* Сводка и список подчиняются одному периоду — расхождения «в сводке 2, в списке 3» нет.
      Считаются удачные исходы, и сводка говорит о них глаголами */
   var cs=chronicleOfScope(arcDays());
-  var bar=typeBar([['act',cs.met,'Встречи'],['offer',cs.given,'Вещи'],['find',cs.returned,'Находки']]);
+  var bar=typeBar([['act',cs.met,'Встречи'],['offer',cs.given+cs.helped,'Вещи и услуги'],['find',cs.returned,'Находки']]);
   var sp=[];
   if(cs.given)sp.push('отдали '+cs.given+' '+plural(cs.given,'вещь','вещи','вещей'));
+  if(cs.helped)sp.push('помогли '+cs.helped+' '+plural(cs.helped,'раз','раза','раз'));
   if(cs.met)sp.push((cs.met===1?'прошла ':'прошли ')+cs.met+' '+plural(cs.met,'встреча','встречи','встреч'));
   if(cs.returned)sp.push((cs.returned===1?'вернулась ':'вернулись ')+cs.returned+' '+plural(cs.returned,'находка','находки','находок'));
   var sum=sp.join(' · '); if(sum)sum=sum.charAt(0).toUpperCase()+sum.slice(1);
@@ -9885,6 +9886,13 @@ function shareAskTitle(p){
   if(p.type==='lost_found')return p.subtype==='lost'?'Рассказать о пропаже?':'Рассказать о находке?';
   return {give_away:'Поделиться объявлением?',need_help:'Поделиться просьбой?',offer_service:'Поделиться предложением?'}[p.subtype]||'Поделиться объявлением?';
 }
+/* Подтвердить нужно до того, как место уйдёт другому: за CONFIRM_H часов до начала. Срок
+   говорит то, чего нет на кнопках «Иду» и «Не смогу»; последствие («место уйдёт другому»)
+   описано в кейсе, на экране оно только нагружало. Если срок заходит за полночь — «завтра» */
+function confirmDeadline(p){
+  var dl=p.starts_at-CONFIRM_H*HOUR, same=new Date(dl).toDateString()===new Date().toDateString();
+  return 'до '+(same?'':'завтра ')+hhmm(dl);
+}
 function inviteAsk(p){return !!p&&p.author_id===db.currentUserId&&ui.inviteFor===p.id&&p.status==='active'}
 function extendAsk(p){return !!p&&p.author_id===db.currentUserId&&p.status==='active'&&p.term==='open'&&(p.expires_at-now())<7*DAY}
 function pinInFrame(p){
@@ -10088,7 +10096,7 @@ function viewPin(id){
     var talking=db.responses.filter(function(r){return r.pin_id===p.id&&!r.settled_at}).length;
     if(done.length||talking)partBtn='<button class="author" data-act="people" data-id="'+p.id+'">'+
       '<div class="author__body"><div class="author__n">'+
-        (done.length?(p.type==='lost_found'?'Вернули · ':'Передано · ')+done.length
+        (done.length?settledWord(p)+' · '+done.length
                     :'Откликнулись · '+talking)+'</div>'+
         (done.length&&talking?'<div class="author__s">ещё пишут: '+talking+'</div>':'')+
       '</div>'+icon('chev-right')+
@@ -10180,7 +10188,7 @@ function viewPin(id){
            Чат остаётся на виду: он полезнее всего на экране, а строкой в теле уезжал под скролл */
         /* личный чат с автором и общий для человека почти неотличимы — ведём в общий */
         if(askFoot&&!isDesktopPanel())foot='<div class="askfoot">'+
-          alertHTML(p,'Подтвердите участие','Без ответа место уйдёт другому',
+          alertHTML(p,'Подтвердите участие',confirmDeadline(p),
             '<button class="pill pill--primary" data-act="confirm-go" data-id="'+mr.id+'">Иду</button>'+
             '<button class="pill" data-act="confirm-no" data-id="'+mr.id+'">Не смогу</button>')+
           (gt?'<button class="btn btn--primary" data-act="open-group" data-id="'+p.id+'">'+icon('chat')+groupName(p)+'</button>'
@@ -10273,7 +10281,7 @@ function viewPeople(id){
     var got=rs2.filter(function(r){return r.settled_at});
     var talk=rs2.filter(function(r){return !r.settled_at});
     return {title:countTitle('Отклики',rs2.length),sub:p.title,back:true,section:!isDesktopPanel(),
-      body:groups([[p.type==='lost_found'?'Вернули':'Передано',got],['Ещё пишут',talk]])};
+      body:groups([[settledWord(p),got],['Ещё пишут',talk]])};
   }
   /* Автору два списка — но только когда подтверждение уже спрашивают. До этого срока
      не ответил никто по определению, и деление показало бы беду там, где ничего не случилось.
@@ -10771,7 +10779,11 @@ function myRole(p,m){
     if(r.status==='released')return 'Место ушло';
     return past?'Вы участвовали':'Вы участвуете';
   }
-  if(r.settled_at)return p.type==='lost_found'?'Вам вернули':'Вы получили';
+  /* Роли разные: у просьбы откликнувшийся помогал, у услуги ему помогли, вещь получают */
+  if(r.settled_at){
+    if(p.type==='lost_found')return 'Вам вернули';
+    return {need_help:'Вы помогли',offer_service:'Вам помогли'}[p.subtype]||'Вы получили';
+  }
   return '';   /* просто написал — это ещё не участие */
 }
 /* Мои события — и свои, и те, где я участник. Список один, роль — свойство строки */
@@ -11080,13 +11092,19 @@ function viewMe(){
    летом и четыре за месяц выглядят одинаково. `last` — когда в последний раз что-то
    состоялось, `crowd` — сколько человек в среднем собирали его встречи */
 function userStats(id){
-  var st={met:0,given:0,returned:0,joined:0,got:0,last:0,crowd:0};
+  var st={met:0,given:0,returned:0,joined:0,got:0,helped:0,last:0,crowd:0};
   var seats=0;
   function mark(ts){if(ts&&ts>st.last)st.last=ts}
   db.pins.forEach(function(p){
     if(p.author_id!==id||p.close_reason!=='done')return;
     if(isAct(p)){st.met++; seats+=joinedOf(p.id).length}
-    else if(p.type==='need_offer')st.given++;
+    /* Кто что делал зависит от подтипа: вещь отдаёт автор, услугу оказывает автор, а в просьбе
+       автор — тот, кому помогли */
+    else if(p.type==='need_offer'){
+      if(p.subtype==='need_help')st.got++;
+      else if(p.subtype==='offer_service')st.helped++;
+      else st.given++;
+    }
     else if(p.type==='lost_found')st.returned++;
     mark(p.closed_at||p.created_at);
   });
@@ -11094,7 +11112,10 @@ function userStats(id){
     var p=pin(r.pin_id); if(!p||r.user_id!==id)return;
     if(isAct(p)){
       if(r.status!=='interested'&&p.close_reason==='done'){st.joined++; mark(p.closed_at||p.starts_at)}
-    }else if(r.settled_at){st.got++; mark(r.settled_at)}
+    }else if(r.settled_at){
+      if(p.subtype==='need_help')st.helped++; else st.got++;
+      mark(r.settled_at);
+    }
   });
   if(st.met)st.crowd=Math.round(seats/st.met);
   return st;
@@ -11107,6 +11128,7 @@ function statLine(st){
   if(st.joined)out.push('участие во встречах: '+st.joined);
   if(st.given)out.push('отдано вещей: '+st.given);
   if(st.returned)out.push('возвращено находок: '+st.returned);
+  if(st.helped)out.push('помощь соседям: '+st.helped);
   if(st.got)out.push('получено от соседей: '+st.got);
   return out;
 }
@@ -11143,7 +11165,7 @@ function typeBar(parts){
     }).join('')+'</div>';
 }
 function statBar(st){
-  return typeBar([['act',st.met+st.joined,'Встречи'],['offer',st.given+st.got,'Вещи'],['find',st.returned,'Находки']]);
+  return typeBar([['act',st.met+st.joined,'Встречи'],['offer',st.given+st.got+st.helped,'Вещи и услуги'],['find',st.returned,'Находки']]);
 }
 /* Блок фактов общий для обоих профилей: человеку полезно видеть себя тем же взглядом,
    каким его видят соседи, а нам — не держать два разных профиля вместо одного.
@@ -11892,12 +11914,17 @@ function viewThread(id){
        открыто, и сам предлагает закрыть его — раньше это делал тост, и через шесть секунд
        предложение пропадало, а кнопка «Закрыть» после «Отмечено» читалась повтором */
     var sw=settleWords(p), sdone=sw.done;
+    /* Короткая плашка: закрыто — одна строка благодарности, открыто — ещё «Ещё на карте» и
+       «Завершить». Предмет назван строкой выше, поэтому на кнопке голый глагол: у объявления,
+       просьбы и предложения «Закрыть …» не влезало в строку. У пропажи — «Завершить поиск»:
+       рядом стоит «Поиск ещё идёт». Лёгкость интерфейса важнее одинаковых слов, когда есть
+       нормальный синоним. Полные названия остаются в карточке и в окне «Чем закончилось?» */
     settle=(sr&&sr.settled_at)
       ? (p.status!=='active'
-          ? alertHTML(p,sdone+' · '+(p.subtype==='found'?'закрыта':closedState(p)),'','')
-          : alertHTML(p,sdone,p.subtype==='lost'?'Поиск ещё идёт':cap1(pinNoun(p))+(p.x!=null?' ещё на карте':' ещё открыта'),
-              '<button class="pill" data-act="close-pin" data-id="'+H(p.id)+'">'+H(closeName(p))+'</button>'))
-      : alertHTML(p,sw.ask,'У соседа '+pinNoun(p)+' уйдёт в архив',
+          ? alertHTML(p,sdone,'','')
+          : alertHTML(p,sdone,p.subtype==='lost'?'Поиск ещё идёт':(p.x!=null?'Ещё на карте':'Находка ещё открыта'),
+              '<button class="pill" data-act="close-pin" data-id="'+H(p.id)+'">'+(p.subtype==='lost'?'Завершить поиск':'Завершить')+'</button>'))
+      : alertHTML(p,sw.ask,'',
           '<button class="pill" data-act="settle" data-id="'+H(u.id)+'" data-pin="'+H(p.id)+'">Да</button>');
     /* стоит в начале ленты и прилипает к верху только при прокрутке: без прокрутки под ним
        ничего не спрятано, уезжающие вверх сообщения проходят под ним */
@@ -12332,12 +12359,12 @@ function aboutDialog(){
    В строке станции она стояла третьим этажом мелкого текста и пересказывала содержимое
    района раньше, чем в него зашли */
 function chronicleOfScope(days){
-  var from=now()-(days||30)*DAY, st={met:0,given:0,returned:0};
+  var from=now()-(days||30)*DAY, st={met:0,given:0,helped:0,returned:0};
   db.pins.forEach(function(p){
     if(!inScope(p))return;
     if(p.close_reason!=='done'||!p.closed_at||p.closed_at<from)return;
     if(isAct(p))st.met++;
-    else if(p.type==='need_offer')st.given++;
+    else if(p.type==='need_offer'){if(p.subtype==='give_away')st.given++; else st.helped++}
     else if(p.type==='lost_found')st.returned++;
   });
   return st;
@@ -12346,6 +12373,7 @@ function chronicleText(){
   var st=chronicleOfScope(30), out=[];
   if(st.met)out.push(st.met+' '+plural(st.met,'встреча','встречи','встреч'));
   if(st.given)out.push(st.given+' '+plural(st.given,'вещь','вещи','вещей'));
+  if(st.helped)out.push('помогли '+st.helped+' '+plural(st.helped,'раз','раза','раз'));
   if(st.returned)out.push(st.returned+' '+plural(st.returned,'находка','находки','находок'));
   return out.length?(scopeName()+' за месяц: '+out.join(' · ')):'';
 }
@@ -12389,18 +12417,19 @@ function pinNoun(p){
   if(p.type==='lost_found')return p.subtype==='lost'?'пропажа':'находка';
   return {give_away:'объявление',need_help:'просьба',offer_service:'предложение'}[p.subtype]||'объявление';
 }
-function closedState(p){
-  if(!p||isAct(p))return 'встреча завершена';
-  if(p.type==='lost_found')return p.subtype==='lost'?'поиск завершён':'находка закрыта';
-  return {give_away:'объявление закрыто',need_help:'просьба закрыта',offer_service:'предложение закрыто'}[p.subtype]||'объявление закрыто';
-}
 /* Отметка в личной переписке: автор подтверждает, что с этим соседом всё состоялось. Слова —
    по подтипу: «Уже передали? — Вещь передана» у просьбы о помощи и у услуги было неправдой,
    ничего не передают, а помогают */
 function settleWords(p){
-  if(p.type==='lost_found')return {ask:'Уже вернулось?',done:'Находка вернулась'};
-  return {give_away:{ask:'Уже передали?',done:'Вещь передана'},need_help:{ask:'Уже помогли?',done:'Помощь получена'},
-    offer_service:{ask:'Уже помогли соседу?',done:'Услуга оказана'}}[p.subtype]||{ask:'Уже передали?',done:'Вещь передана'};
+  if(p.type==='lost_found')return {ask:'Уже вернулось?',done:'Спасибо, находка вернулась'};
+  return {give_away:{ask:'Уже передали?',done:'Спасибо, вещь передана'},need_help:{ask:'Уже помогли?',done:'Спасибо, помощь оказана'},
+    offer_service:{ask:'Уже помогли соседу?',done:'Спасибо, услуга оказана'}}[p.subtype]||{ask:'Уже передали?',done:'Спасибо, вещь передана'};
+}
+/* Что значит отметка «состоялось» для этого подтипа: вещь передают, находку возвращают, а в
+   просьбе и услуге помогают. Слово группы в сводке автора и в списке откликов */
+function settledWord(p){
+  if(p.type==='lost_found')return 'Вернули';
+  return p.subtype==='need_help'||p.subtype==='offer_service'?'Помогли':'Передано';
 }
 function cap1(v){return v?v.charAt(0).toUpperCase()+v.slice(1):v}
 function reasonLabel(p){
