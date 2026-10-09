@@ -810,6 +810,7 @@ html{-webkit-tap-highlight-color:transparent}
 @keyframes draftToDrop{from{width:32px;height:32px;border-radius:50%;transform:translate(-50%,-50%) scale(1.25);box-shadow:0 0 0 2px #fff,var(--shadow-2)}}
 @keyframes draftColor{from{background:var(--from)}}
 @keyframes glyphIn{from{opacity:0;scale:.4}}
+@keyframes labelIn{from{opacity:0}}
 @keyframes glyphOut{to{opacity:0;scale:.4}}
 /* во время постановки точки существующие пины приглушаем: контекст рядом остаётся видно,
    но прицел среди них не теряется */
@@ -3286,8 +3287,13 @@ function pinDistText(p,u){
                Вернуть вместе с sortNear
    lostRadius  ползунок радиуса оповещений о пропажах (STEPS_ALERT, alertRadius, f-alert).
                Тумблер остаётся, радиус фиксирован — 1 км. Вернуть, если оповещения окажутся
-               слишком частыми или редкими */
-var FEATURES={register:false, repeat:false, sortNear:false, distFilter:false, lostRadius:false};
+               слишком частыми или редкими
+   noPlace     развилка «Место не знаю» в форме находки и пропажи (блок «Место» в экране
+               создания, d.noPlace, ветка x==null в publish и вокруг неё). Скрыта: точка уже
+               выбрана на первом шаге, у места находки нет приватности, а «не знаю, где потерял»
+               закрывает радиус зоны поиска. Старые записи без места показываются как раньше.
+               Вернуть, если люди начнут публиковать находки, не помня места */
+var FEATURES={register:false, repeat:false, sortNear:false, distFilter:false, lostRadius:false, noPlace:false};
 
 /* повторяемость активностей. Отклики относятся к ближайшей дате: при переходе на следующую
    они обнуляются, иначе у еженедельной пробежки за месяц накопится сорок «участников»,
@@ -3847,7 +3853,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.62.0';
+var VERSION='3.63.0';
 /* Дом на карте — изометрическая иллюстрация (рисунок пользователя), обрезана по содержимому,
    PNG без потерь: WebP с потерями портил прозрачность — вокруг дома был серый прямоугольник. Голубая крыша — цвет бренда; читается силуэтом с 44 точек */
 var HOUSE_IMG='media/7395ec63a31d.png';
@@ -3859,7 +3865,7 @@ var IS_ANDROID=/Android/i.test(navigator.userAgent||'');
 var IS_IOS=/iPhone|iPad|iPod/i.test(navigator.userAgent||'')||(/Macintosh/.test(navigator.userAgent||'')&&navigator.maxTouchPoints>1);
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
-var UPDATED='8 октября 2026';
+var UPDATED='9 октября 2026';
 var KEY='raion.v1';
 var db=null;
 
@@ -6810,7 +6816,18 @@ function setBadge(b,n){
    категории с белой обводкой, описание — значок типа. Переходы ведём от часов: слой
    перерисовывается каждым кадром, и узел каждый раз новый */
 var homeAnim={}, lastWelHtml={}, welA={}, homePulseAt=0, homeHoldUntil=0;
-var draftSt={s:null,c:null,at:0,ps:null,pc:null}, flashId=null, flashAt=0, dHalo={on:false,at:0,rad:0}, homeKey=null, homeAt=0, waveAt=0, waveRank={};
+var draftLbl={d:null,t:'',at:0}, draftSt={s:null,c:null,at:0,ps:null,pc:null}, flashId=null, flashAt=0, dHalo={on:false,at:0,rad:0}, homeKey=null, homeAt=0, waveAt=0, waveRank={};
+/* Название на метке черновика появляется, когда человек вышел из поля «Заголовок»: на телефоне
+   в этот момент закрывается клавиатура и карта видна. Живой ввод на карту не пускаем — подпись
+   дёргалась бы с каждой буквой и сдвигала соседей. Текст меняется растворением, как остальное */
+function draftLabelAn(d){
+  var t=d.titleShown||'';
+  if(draftLbl.d!==d){draftLbl.d=d; draftLbl.t=t; draftLbl.at=0; return ''}
+  if(draftLbl.t!==t){draftLbl.t=t; draftLbl.at=Date.now()}
+  var el=Date.now()-draftLbl.at;
+  if(reduceMotion()||!draftLbl.at||el>=220)return '';
+  return ' style="animation:labelIn .2s ease both;animation-delay:-'+(el/1000).toFixed(3)+'s"';
+}
 function draftPinHTML(d){
   var st=(d.step||1)<=1?'drop':((d.step===2)?'circle':'glyph');
   var col=d.type?ptype(d).cls:'pick';
@@ -7072,7 +7089,7 @@ function renderMarkers(){
       /* пока тип не выбран, маркер выглядит как прицел: брендовый со знаком вопроса,
          иначе он казался бы готовым зелёным пином услуги */
       draftPinHTML(ui.draft)+
-      '<span class="pin__label '+(draftSt.s==='drop'?'pin__label--drop':'pin__label--draft')+'"><span class="pin__row"><b>Ваша точка</b></span></span></div>');
+      '<span class="pin__label '+(draftSt.s==='drop'?'pin__label--drop':'pin__label--draft')+'"><span class="pin__row"><b'+draftLabelAn(ui.draft)+'>'+H(ui.draft.titleShown||'Ваша точка')+'</b></span></span></div>');
   }
   /* Станции идут после событий и до раскладки подписей: в очереди на подпись они стоят
      за событиями — событие то, ради чего человек открыл приложение, станция ему фон */
@@ -10597,13 +10614,14 @@ function viewCreate(){
       '</div>'+
       (!d.type?'':'<div class="typeparams stack">'+(d.type==='lost_found'
         ? fldLF(d)+
-          '<div class="field"><label>Место</label>'+
+          /* скрыто флагом noPlace: см. оглавление скрытого над FEATURES */
+          (FEATURES.noPlace?'<div class="field"><label>Место</label>'+
             '<button class="radio'+(d.noPlace?'':' is-on')+'" data-draft="noPlace" data-val="">'+
               '<span class="radio__dot"></span><span>'+H(d.lfsub==='lost'?'Указано на карте':'Найдено здесь')+
               '<small>'+H(draftPlaceText()||'точка выбрана на первом шаге')+'</small></span></button>'+
             '<button class="radio'+(d.noPlace?' is-on':'')+'" data-draft="noPlace" data-val="1">'+
               '<span class="radio__dot"></span><span>Место не знаю<small>Событие не появится на карте, но будет в списках и оповещении</small></span></button>'+
-          '</div>'+
+          '</div>':'')+
           /* Осталась одна строка о том, что произойдёт прямо сейчас. Объяснение «почему так»
              отсюда убрано — ему место в онбординге, а согласие на рассылку соседям человек
              даёт в этот момент, и оно должно быть перед глазами */
@@ -12737,36 +12755,49 @@ function pickPhoto(opts){
   inp.click();
 }
 /* Праздник публикации: три залпа конфетти из метки нового события с шагом двойного щелчка.
-   Цвет категории, бренд и белый. При «уменьшении движения» не запускается */
+   Цвет категории, бренд и белый. При «уменьшении движения» не запускается.
+   На десктопе то же самое крупнее: на большом экране кусочки в 6–10 пикселей тонули в карте.
+   Кусочки, скорость и разлёт растут от ширины окна, залп гуще, прозрачность держится две трети
+   жизни, у белых тёмная обводка, плюс кольцо вокруг метки как точка, откуда всё летит.
+   Телефон остаётся прежним */
 function confettiAt(p){
   if(reduceMotion())return;
   var b=markersEl&&markersEl.querySelector('[data-pin="'+p.id+'"]'); if(!b)return;
   var br=b.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  var big=isDesktopPanel(), K=big?Math.min(2,Math.max(1.4,window.innerWidth/800)):1;
   var cv=document.createElement('canvas');
   cv.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:25';
   cv.width=window.innerWidth*dpr; cv.height=window.innerHeight*dpr;
   document.body.appendChild(cv);
   var ctx=cv.getContext('2d'), parts=[], col=getComputedStyle(document.documentElement).getPropertyValue('--'+ptype(p).cls).trim()||'#008BFF';
   var brand=getComputedStyle(document.documentElement).getPropertyValue('--brand').trim()||'#008BFF';
-  var cols=[col,col,brand,'#ffffff'], x=(br.left+br.width/2)*dpr, y=(br.top+br.height/2)*dpr;
+  var cols=[col,col,brand,'#ffffff'], x=(br.left+br.width/2)*dpr, y=(br.top+br.height/2)*dpr, born=Date.now();
+  var N=big?70:45;
   function burst(tilt){
-    for(var i=0;i<45;i++){
-      var a=(-90+tilt+(Math.random()-.5)*60)*Math.PI/180, v=(8+Math.random()*7)*dpr;
+    for(var i=0;i<N;i++){
+      var a=(-90+tilt+(Math.random()-.5)*60)*Math.PI/180, v=(8+Math.random()*7)*dpr*K;
       parts.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,rot:Math.random()*6.28,vr:(Math.random()-.5)*.4,
-        w:(6+Math.random()*4)*dpr,h:(3+Math.random()*3)*dpr,c:cols[i%cols.length],life:0,max:70+Math.random()*30});
+        w:(6+Math.random()*4)*dpr*K,h:(3+Math.random()*3)*dpr*K,c:cols[i%cols.length],life:0,max:70+Math.random()*30});
     }
   }
   function tick(){
     ctx.clearRect(0,0,cv.width,cv.height);
+    /* кольцо вокруг метки: на десктопе глаз находит, откуда летит */
+    var rt=(Date.now()-born)/450;
+    if(big&&rt<1){
+      ctx.save(); ctx.globalAlpha=(1-rt)*.7; ctx.strokeStyle=col; ctx.lineWidth=3*dpr;
+      ctx.beginPath(); ctx.arc(x,y,(16+34*rt)*dpr,0,6.2832); ctx.stroke(); ctx.restore();
+    }
     parts=parts.filter(function(q){return q.life<q.max});
     parts.forEach(function(q){
-      q.life++; q.vx*=.96; q.vy=q.vy*.96+.35*dpr; q.x+=q.vx; q.y+=q.vy; q.rot+=q.vr;
-      ctx.save(); ctx.globalAlpha=Math.max(0,1-q.life/q.max); ctx.translate(q.x,q.y); ctx.rotate(q.rot);
+      q.life++; q.vx*=.96; q.vy=q.vy*.96+.35*dpr*K; q.x+=q.vx; q.y+=q.vy; q.rot+=q.vr;
+      var f=q.life/q.max, al=big?(f<.66?1:Math.max(0,1-(f-.66)/.34)):Math.max(0,1-f);
+      ctx.save(); ctx.globalAlpha=al; ctx.translate(q.x,q.y); ctx.rotate(q.rot);
       ctx.fillStyle=q.c; ctx.fillRect(-q.w/2,-q.h/2,q.w,q.h);
-      if(q.c==='#ffffff'){ctx.strokeStyle='rgba(0,0,0,.12)'; ctx.lineWidth=dpr; ctx.strokeRect(-q.w/2,-q.h/2,q.w,q.h)}
+      if(q.c==='#ffffff'){ctx.strokeStyle=big?'rgba(0,0,0,.3)':'rgba(0,0,0,.12)'; ctx.lineWidth=dpr; ctx.strokeRect(-q.w/2,-q.h/2,q.w,q.h)}
       ctx.restore();
     });
-    if(parts.length||pending)requestAnimationFrame(tick); else if(cv.parentNode)cv.parentNode.removeChild(cv);
+    if(parts.length||pending||(big&&rt<1))requestAnimationFrame(tick); else if(cv.parentNode)cv.parentNode.removeChild(cv);
   }
   var pending=2;
   burst(0); setTimeout(function(){burst(-18); pending--},200); setTimeout(function(){burst(18); pending--},400);
@@ -14301,6 +14332,12 @@ document.addEventListener('focusin',function(e){
   if(e.target&&e.target.id==='placeStInput')placeFieldOpen();
 });
 document.addEventListener('focusout',function(e){
+  if(e.target&&e.target.id==='f-title'&&ui.draft){
+    ui.draft.titleShown=(e.target.value||'').trim();
+    if(typeof renderMarkers==='function')renderMarkers();
+  }
+});
+document.addEventListener('focusout',function(e){
   if(e.target&&e.target.id==='placeStInput')setTimeout(function(){
     var a=document.activeElement;
     if(a&&a.id==='placeStInput')return;
@@ -14742,7 +14779,8 @@ function selfCheck(){
     repeat:[typeof REPEATS],
     sortNear:[typeof sortDistUnits,typeof distKey],
     distFilter:[typeof STEPS_FAR,typeof radiusText,typeof radiusSuggest,typeof stepRange],
-    lostRadius:[typeof STEPS_ALERT,typeof alertRadius]};
+    lostRadius:[typeof STEPS_ALERT,typeof alertRadius],
+    noPlace:[typeof landmarkOf,typeof draftMissing]};
   Object.keys(hidden).forEach(function(k){
     if(!(k in FEATURES))bad.push('скрытое: нет флага '+k);
     if(hidden[k].indexOf('undefined')>=0)bad.push('скрытое: удалён код под флагом '+k);
