@@ -3853,7 +3853,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.65.0';
+var VERSION='3.66.0';
 /* Дом на карте — изометрическая иллюстрация (рисунок пользователя), обрезана по содержимому,
    PNG без потерь: WebP с потерями портил прозрачность — вокруг дома был серый прямоугольник. Голубая крыша — цвет бренда; читается силуэтом с 44 точек */
 var HOUSE_IMG='media/7395ec63a31d.png';
@@ -8838,38 +8838,45 @@ function revealOpen(el){
   el.style.height=h+'px';
   setTimeout(function(){el.style.height='';el.style.overflow='';el.style.transition=''},240);
 }
-/* Ответ на просьбу: нажатая кнопка на своём месте сжимается в плашку статуса и бледнеет,
-   соседняя гаснет, блок подстраивает высоту. Видно, что «Подтверждено» — это то, что нажали.
-   После записи ответа плашка доезжает до настоящего статуса, если он остался на экране */
-function answerMorph(btn,fold,label,then,findReal){
-  if(!btn||!fold||reduceMotion()){then();return}
-  var r=btn.getBoundingClientRect(), cs=getComputedStyle(btn);
-  var g=document.createElement('span'); g.className='ansghost'; g.textContent=label;
-  g.style.cssText='position:fixed;z-index:80;left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;height:'+r.height+'px;'+
-    'background:'+cs.backgroundColor+';color:'+cs.color+';border-radius:999px;display:flex;align-items:center;justify-content:center;'+
-    'font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;pointer-events:none';
-  document.body.appendChild(g);
-  btn.style.visibility='hidden';
-  fold.querySelectorAll('button').forEach(function(b){if(b!==btn){b.style.transition='opacity .15s'; b.style.opacity='0'}});
-  var w=Math.ceil(txtW(label,'600 12px'))+22, fh=fold.getBoundingClientRect().height;
-  fold.style.overflow='hidden'; fold.style.height=fh+'px';
-  requestAnimationFrame(function(){requestAnimationFrame(function(){
-    g.style.transition='all .28s cubic-bezier(.2,.7,.3,1)';
-    g.style.width=w+'px'; g.style.height='24px'; g.style.top=(r.top+(r.height-24)/2)+'px'; g.style.fontSize='12px';
-    g.style.background='var(--brand-soft)'; g.style.color='var(--brand-icon)';
-    fold.style.transition='height .28s cubic-bezier(.2,.7,.3,1)'; fold.style.height=Math.max(24,Math.min(fh,32))+'px';
-  })});
-  setTimeout(function(){
-    then();
-    var real=findReal&&findReal();
-    if(real){
-      var rr=real.getBoundingClientRect(), rcs=getComputedStyle(real); real.style.visibility='hidden';
-      /* по дороге плашка перекрашивается в цвет настоящего статуса — без скачка в конце */
-      g.style.background=rcs.backgroundColor; g.style.color=rcs.color; g.style.fontSize=rcs.fontSize; g.style.borderRadius=rcs.borderRadius;
-      g.style.left=rr.left+'px'; g.style.top=rr.top+'px'; g.style.width=rr.width+'px'; g.style.height=rr.height+'px';
-      setTimeout(function(){real.style.visibility=''; g.remove()},280);
-    }else{g.style.transition='opacity .18s'; g.style.opacity='0'; setTimeout(function(){g.remove()},200)}
-  },290);
+/* Ответ на просьбу — одно движение, без перелётов: кнопки гаснут, их блок сжимается, а статус
+   в строке времени сменяется на месте («Ждёт ответа» → «Подтверждено»), всё за 0,25 с.
+   Ответ записывается сразу; уходящие кнопки и прежний статус доигрывают копиями поверх новой
+   разметки. В алерте карточки и над меткой статуса нет — алерт гаснет и сжимается целиком */
+function answerSwap(fold,then){
+  if(!fold||reduceMotion()){then();return}
+  var msg=fold.closest('.sysmsg');
+  if(!msg){
+    var ah=fold.offsetHeight; fold.style.overflow='hidden'; fold.style.height=ah+'px'; void fold.offsetHeight;
+    fold.style.transition='height .25s cubic-bezier(.2,.7,.3,1),opacity .2s'; fold.style.height='0px'; fold.style.opacity='0';
+    setTimeout(then,250); return;
+  }
+  var mid=msg.getAttribute('data-mid'), h=fold.offsetHeight, foldHTML=fold.outerHTML;
+  var oc=msg.querySelector('.sysmsg__foot .chip'), ocHTML=oc?oc.outerHTML:'';
+  then();
+  var nm=$('.sysmsg[data-mid="'+mid+'"]'); if(!nm)return;
+  if(!nm.querySelector('.sysacts')){
+    var w=document.createElement('div'); w.innerHTML=foldHTML; var gf=w.firstChild;
+    gf.removeAttribute('data-mid'); gf.style.cssText+=';overflow:hidden;height:'+h+'px;pointer-events:none';
+    nm.appendChild(gf); void gf.offsetHeight;
+    gf.style.transition='height .25s cubic-bezier(.2,.7,.3,1),opacity .2s'; gf.style.height='0px'; gf.style.opacity='0';
+    setTimeout(function(){if(gf.parentNode)gf.remove()},280);
+  }
+  var nc=nm.querySelector('.sysmsg__foot .chip');
+  if(nc){
+    nc.style.transition='none'; nc.style.opacity='0'; nc.style.transform='scale(.85)';
+    var oe=null;
+    if(ocHTML&&nc.parentNode){
+      var w2=document.createElement('div'); w2.innerHTML=ocHTML; oe=w2.firstChild; oe.classList.remove('is-pop');
+      nc.parentNode.style.position='relative';
+      oe.style.cssText+=';position:absolute;margin:0;left:'+nc.offsetLeft+'px;top:'+nc.offsetTop+'px;pointer-events:none';
+      nc.parentNode.appendChild(oe);
+    }
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      nc.style.transition='opacity .25s,transform .25s cubic-bezier(.2,.7,.3,1.2)'; nc.style.opacity=''; nc.style.transform='';
+      if(oe){oe.style.transition='opacity .25s,transform .25s'; oe.style.opacity='0'; oe.style.transform='scale(.85)'}
+    })});
+    setTimeout(function(){if(oe&&oe.parentNode)oe.remove()},290);
+  }
 }
 function revealClose(el,then){
   if(!el||reduceMotion()){then();return}
@@ -13603,9 +13610,9 @@ function onAction(act,el,e){
       var xp=pin(id);
       if(xp){
         /* алерт сворачивается по высоте, карточка не прыгает; срок называет подсказка */
-        var xal=el.closest&&el.closest('.alert');
+        var xal=el.closest&&(el.closest('.sysacts')||el.closest('.alert'));
         var doExt=function(){xp.expires_at=now()+30*DAY; delete xp.ext_reminded_at; save(); render(); toast('Продлили до '+dateFull(xp.expires_at))};
-        if(xal)answerMorph(el,xal,'Продлено',doExt); else doExt();
+        if(xal)answerSwap(xal,doExt); else doExt();
       }
       break;
     case 'toggle-approval':
@@ -13636,8 +13643,7 @@ function onAction(act,el,e){
       if(cfold&&!el._folded&&!reduceMotion()){
         el._folded=1;
         var cmid=cfold.getAttribute('data-mid');
-        answerMorph(el,cfold,act==='confirm-go'?'Подтверждено':'Участие отменено',function(){onAction(act,el,e)},
-          function(){return cmid&&$('.sysmsg[data-mid="'+cmid+'"] .sysmsg__foot .chip')});
+        answerSwap(cfold,function(){onAction(act,el,e)});
         break;
       }
       if(act==='confirm-no'){onAction('confirm-no-x',el,e); break}
