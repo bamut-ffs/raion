@@ -926,17 +926,6 @@ html{-webkit-tap-highlight-color:transparent}
    нужно отдать их собственные нажатия — иначе тап по пройденному шагу уходит в жест */
 .panel__top .stepbar{touch-action:auto}
 .panel__body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
-/* Карточки у краёв списка бледнеют вслед за прокруткой, в обе стороны, как у Авито: фото
-   с 30%, текст с 60% на первых ~80 px от края. Ведёт сам браузер по положению, без скриптов;
-   где анимации по прокрутке нет, список обычный */
-@supports (animation-timeline:view()){
-  @media (prefers-reduced-motion:no-preference){
-    .panel__body .fcard,.panel__body .listrow,.panel__body .sysmsg{animation:edgeFade linear both;animation-timeline:view();animation-range:cover}
-    .panel__body .listrow__pic,.panel__body .listrow__cover,.panel__body .fcard img{animation:edgeFadePic linear both;animation-timeline:view();animation-range:cover}
-  }
-}
-@keyframes edgeFade{0%{opacity:.6}10%{opacity:1}90%{opacity:1}100%{opacity:.6}}
-@keyframes edgeFadePic{0%{opacity:.5}10%{opacity:1}90%{opacity:1}100%{opacity:.5}}
 /* Телефон, разделы с прокруткой: нижние 24 растворяются — срезанное краем экрана не торчит
    полоской. Долистали до конца — край снова резкий. В переписке не нужно: снизу поле ввода */
 @media (max-width:820px){
@@ -3864,7 +3853,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.64.0';
+var VERSION='3.65.0';
 /* Дом на карте — изометрическая иллюстрация (рисунок пользователя), обрезана по содержимому,
    PNG без потерь: WebP с потерями портил прозрачность — вокруг дома был серый прямоугольник. Голубая крыша — цвет бренда; читается силуэтом с 44 точек */
 var HOUSE_IMG='media/7395ec63a31d.png';
