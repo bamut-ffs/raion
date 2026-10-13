@@ -1935,6 +1935,9 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
    и не ловит нажатия — он уже не интерактивен, он уезжает */
 .panel__ghost{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;
   background:var(--surface);overflow:hidden;pointer-events:none}
+/* Снимок — застывший кадр: копия разметки заново запускала анимации появления, и только что
+   отправленное сообщение пропадало из уезжающего чата, проявляясь с нуля */
+.panel__ghost *,.is-secslide *{animation:none!important}
 /* обёртка вокруг переключаемого списка: в ней живёт снимок уходящей вкладки */
 .swrap{position:relative;overflow:hidden}
 .swghost{position:absolute;left:0;right:0;top:0;background:var(--surface);pointer-events:none}
@@ -3335,6 +3338,6 @@ body.ds-narrow .dsmain{max-width:400px}
   });
 })();
 </script>
-<script>document.getElementById("dsver").textContent="версия прототипа 3.67.0";</script>
+<script>document.getElementById("dsver").textContent="версия прототипа 3.68.0";</script>
 </body>
 </html>

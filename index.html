@@ -1974,6 +1974,9 @@ body.is-grabbing,body.is-grabbing *{cursor:grabbing!important;user-select:none}
    и не ловит нажатия — он уже не интерактивен, он уезжает */
 .panel__ghost{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;
   background:var(--surface);overflow:hidden;pointer-events:none}
+/* Снимок — застывший кадр: копия разметки заново запускала анимации появления, и только что
+   отправленное сообщение пропадало из уезжающего чата, проявляясь с нуля */
+.panel__ghost *,.is-secslide *{animation:none!important}
 /* обёртка вокруг переключаемого списка: в ней живёт снимок уходящей вкладки */
 .swrap{position:relative;overflow:hidden}
 .swghost{position:absolute;left:0;right:0;top:0;background:var(--surface);pointer-events:none}
@@ -3853,7 +3856,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.67.0';
+var VERSION='3.68.0';
 /* Дом на карте — изометрическая иллюстрация (рисунок пользователя), обрезана по содержимому,
    PNG без потерь: WebP с потерями портил прозрачность — вокруг дома был серый прямоугольник. Голубая крыша — цвет бренда; читается силуэтом с 44 точек */
 var HOUSE_IMG='media/7395ec63a31d.png';
@@ -9695,6 +9698,11 @@ function renderPanel(){
   var secLayer=(!isDesktopPanel()&&!sameScreen&&!!lastPanelKey&&!prevHid&&!reduceMotion()&&!sheetClosing&&!slideDir&&
     !!el.innerHTML&&!(main&&main.type==='welcome')&&prevSec!==!!v.section)?(v.section?1:-1):0;
   var rising=!isDesktopPanel()&&!!main&&main.type==='pin'&&!sameScreen&&secLayer!==-1;
+  /* Прокрутку уходящего экрана запоминаем до смены классов шторки: после них переписка
+     уже сжата до короткой карточки, прокрутка сбрасывается в 0, и уезжающая копия чата
+     показывала начало переписки вместо того места, где человек был */
+  var oldBody=$('#panelBody');
+  var keepScroll=oldBody?oldBody.scrollTop:0;
   if(!sameScreen&&!rising)el.style.transition='none';
   el.hidden=false;
   el.classList.toggle('is-section',!!v.section);
@@ -9778,12 +9786,10 @@ function renderPanel(){
   /* прокрутку тела сохраняем, пока показывается тот же экран: без этого любой выбор внутри
      шага перерисовывал содержимое и список прыгал к началу, как по якорной ссылке */
   if(!sameScreen){void el.offsetWidth; el.style.transition=''}
-  var oldBody=$('#panelBody');
-  var keepScroll=oldBody?oldBody.scrollTop:0;
   /* Прокрутку помнит не только текущий экран: ушли в переписку, вернулись — список
      начинался сверху, потому что положение возвращалось лишь при совпадении ключа.
      Теперь уходящий ключ своё положение оставляет, приходящий забирает своё */
-  if(oldBody&&lastPanelKey)panelScroll[lastPanelKey]=oldBody.scrollTop;
+  if(oldBody&&lastPanelKey)panelScroll[lastPanelKey]=keepScroll;
   /* снимок делаем до подмены разметки, иначе снимать будет уже нечего */
   /* на десктопе панель — боковая колонка, а не экран: уезжающее вбок содержимое
      читается так, будто уехала часть интерфейса. Вкладки внутри колонки едут по-прежнему */
