@@ -3856,7 +3856,7 @@ var SEED_LF=[
 
 /* ============ 2. хранилище ============ */
 /* версия прототипа: поднимается при каждой публикации, показывается в попапе «О прототипе» */
-var VERSION='3.68.0';
+var VERSION='3.69.0';
 /* Дом на карте — изометрическая иллюстрация (рисунок пользователя), обрезана по содержимому,
    PNG без потерь: WebP с потерями портил прозрачность — вокруг дома был серый прямоугольник. Голубая крыша — цвет бренда; читается силуэтом с 44 точек */
 var HOUSE_IMG='media/7395ec63a31d.png';
@@ -3868,7 +3868,7 @@ var IS_ANDROID=/Android/i.test(navigator.userAgent||'');
 var IS_IOS=/iPhone|iPad|iPod/i.test(navigator.userAgent||'')||(/Macintosh/.test(navigator.userAgent||'')&&navigator.maxTouchPoints>1);
 /* Дату ставит сборка (собрать.js) перед каждым выпуском: руками такие даты не обновляют
    никогда — через месяц они врут, но выглядят достоверно */
-var UPDATED='13 октября 2026';
+var UPDATED='14 октября 2026';
 var KEY='raion.v1';
 var db=null;
 
@@ -9369,6 +9369,10 @@ function welcomeGo(){
   ui.wLeaving=true;
   var wn=$('#welcomeName'); if(wn)wn.blur();
   wp.classList.add('is-leave');
+  /* Таббар держим невидимым до перерисовки: снятый is-welcome показывал его сразу, ещё со
+     старым аватаром («С» — «Сосед», имя сохраняется позже), а через 260 мс он гас и
+     проявлялся заново. Теперь он проявляется один раз, уже с именем */
+  var rlw=$('.rail'); if(rlw&&!reduceMotion())rlw.style.opacity='0';
   if(ap)ap.classList.remove('is-welcome');
   setTimeout(function(){ui.wLeaving=false; wp.classList.remove('is-leave'); welcomeGoNow()},260);
 }
@@ -13311,7 +13315,11 @@ function onAction(act,el,e){
       break;
     case 'publish': publish(); break;
     case 'welcome-go': welcomeGo(); break;
-    case 'welcome-next': stepAnim=1; ui.welcomeStep=2; ui.wStepAt=Date.now(); wGhostClear(); wShuffleAbort(); render();
+    /* таймер тасования останавливаем: иначе тасование, попавшее в переход, подхватывало стопку
+       в уезжающей копии первого экрана, и карточки вылетали над вторым. «Назад» запустит заново */
+    case 'welcome-next': stepAnim=1; ui.welcomeStep=2; ui.wStepAt=Date.now(); wGhostClear(); wShuffleAbort();
+      if(wTimer){clearInterval(wTimer); wTimer=null}
+      render();
       /* шторка второго шага другой высоты — станцию ставим, когда она встала */
       ui.welcomeSt=ui.welcomeSt||WELCOME_ST[0];
       setTimeout(function(){if(ui.panel&&ui.panel.type==='welcome'&&ui.welcomeStep===2)welcomeSelect(ui.welcomeSt)},360);
@@ -15063,7 +15071,8 @@ renderPanel=function(){
      выходил с подписями без значков. Перечитываем ссылки на значки и проявляем таббар */
   if(apw&&!wOn&&apw._wasWelcome){
     $$('.rail use').forEach(function(u){var h=u.getAttribute('href'); u.setAttribute('href',''); u.setAttribute('href',h)});
-    var rl0=$('.rail'); if(rl0&&!reduceMotion()){rl0.classList.remove('is-railin'); void rl0.offsetWidth; rl0.classList.add('is-railin')}
+    var rl0=$('.rail'); if(rl0)rl0.style.opacity='';
+    if(rl0&&!reduceMotion()){rl0.classList.remove('is-railin'); void rl0.offsetWidth; rl0.classList.add('is-railin')}
   }
   if(apw)apw._wasWelcome=wOn;
   /* на втором шаге метки на карте видны — их скрывает размытие, видно только то, что в окне */
