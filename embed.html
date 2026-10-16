@@ -27,7 +27,7 @@
 <title>Район — прототип в кейсе</title>
 </head>
 <body>
-<script>var __mem=(function(){var m={};return{getItem:function(k){return Object.prototype.hasOwnProperty.call(m,k)?m[k]:null},setItem:function(k,v){m[k]=String(v)},removeItem:function(k){delete m[k]},clear:function(){m={}}}})();(function(){var A={markFadeIn:1,labelIn:1,hintPlainIn:1,hintSwing:1,hintSwingCcw:1,hintArcCw:1,hintArcCcw:1};document.addEventListener('animationend',function(e){if(!A[e.animationName]||!e.target.getAnimations)return;e.target.getAnimations().forEach(function(a){if(a.animationName===e.animationName)a.cancel()})},true)})();</script>
+<script>function __thm(){try{var a=document.documentElement.getAttribute("data-theme");var d=a?a==="dark":matchMedia("(prefers-color-scheme: dark)").matches;parent.postMessage("raion-theme:"+(d?"dark":"light"),"*")}catch(e){}}var __mem=(function(){var m={};return{getItem:function(k){return Object.prototype.hasOwnProperty.call(m,k)?m[k]:null},setItem:function(k,v){m[k]=String(v)},removeItem:function(k){delete m[k]},clear:function(){m={}}}})();(function(){var A={markFadeIn:1,labelIn:1,hintPlainIn:1,hintSwing:1,hintSwingCcw:1,hintArcCw:1,hintArcCcw:1};document.addEventListener('animationend',function(e){if(!A[e.animationName]||!e.target.getAnimations)return;e.target.getAnimations().forEach(function(a){if(a.animationName===e.animationName)a.cancel()})},true)})();</script>
 <style>.feedhead{will-change:auto!important}.card-float,.mapask__in{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:color-mix(in srgb,var(--surface) 96%,transparent)!important}.sheetfab.card-float{background:var(--surface)!important}.pickinfo{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:color-mix(in srgb,var(--ink) 95%,transparent)!important}.panelhead--over .iconbtn{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}body .panelhead--over .iconbtn{background:rgba(255,255,255,.92)}</style>
 <div id="splash" aria-hidden="true"><style>
 #splash{display:none}
@@ -826,7 +826,7 @@ html{-webkit-tap-highlight-color:transparent}
 
 /* ---------- toolbar ---------- */
 .toolbar{
-  position:absolute;left:16px;right:16px;top:calc(14px + 53px);display:flex;gap:12px;align-items:flex-start;
+  position:absolute;left:16px;right:16px;top:calc(14px + 49px);display:flex;gap:12px;align-items:flex-start;
   justify-content:flex-end;
   pointer-events:none;flex-wrap:wrap;z-index:6;
 }
@@ -2292,7 +2292,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
    и расстояние уже стоят в поле внутри неё, и плашка становится дублем */
 .pickinfo.is-away{opacity:0;transform:translateX(-50%) translateY(-160%) scale(.92)}
 .pickinfo{
-  position:absolute;left:50%;top:calc(16px + 53px);transform:translateX(-50%);z-index:7;
+  position:absolute;left:50%;top:calc(16px + 49px);transform:translateX(-50%);z-index:7;
   transition:transform .22s ease,opacity .22s ease;
   background:var(--ink);color:var(--ground);padding:8px 16px;border-radius:var(--r-m);
   font-size:var(--f-s10);line-height:var(--l-s10);font-weight:500;white-space:nowrap;box-shadow:var(--shadow-2);pointer-events:none;
@@ -2522,7 +2522,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 .app.is-welcome .wveil{opacity:1}
 .wlogo{display:none}
 @media (max-width:820px){
-  .wlogo{display:grid;place-items:center;position:fixed;left:50%;top:calc(16px + 53px);z-index:31;width:44px;height:44px;margin-left:-22px;
+  .wlogo{display:grid;place-items:center;position:fixed;left:50%;top:calc(16px + 49px);z-index:31;width:44px;height:44px;margin-left:-22px;
     border-radius:12px;background:var(--brand);opacity:0;pointer-events:none;transition:opacity .3s ease}
   .wlogo svg{width:30px;height:30px}
   .app.is-welcome .wlogo{opacity:1}
@@ -2571,7 +2571,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
 /* Тот же слот и то же движение, что у плашки расстояния и кнопки охвата. Снизу тост
    наезжал на плавающую кнопку в фильтрах, сверху ему никто не мешает */
 .toast{
-  position:fixed;left:50%;top:calc(16px + 53px);transform:translateX(-50%) translateY(-160%) scale(.92);
+  position:fixed;left:50%;top:calc(16px + 49px);transform:translateX(-50%) translateY(-160%) scale(.92);
   overflow:hidden;
   opacity:0;pointer-events:none;
   /* Тост — служебное сообщение, а не содержание: кегль служебной подписи, поля и ширина
@@ -2595,7 +2595,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
    охвата, и уходят они одним движением. На десктопе верх занят шапками панелей, и тост
    падал на них — поэтому он живёт внизу и уходит к нижней границе тем же движением */
 @media (min-width:821px){
-  .toast{top:auto;bottom:calc(16px + 27px);transform:translateX(-50%) translateY(160%) scale(.92)}
+  .toast{top:auto;bottom:calc(16px + 25px);transform:translateX(-50%) translateY(160%) scale(.92)}
   .toast.is-on{transform:translateX(-50%) translateY(0) scale(1)}
 }
 .toast__a{color:var(--ground);font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
@@ -2628,9 +2628,9 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
      оставалась белая полоса. Он непрозрачный, поэтому в обычном виде ничего не изменилось */
   .rail{
     /* единственное место, где высота таббара задаётся формулой: всё остальное меряет его */
-    position:absolute;left:0;right:0;bottom:0;width:auto;height:calc(var(--rail-h) + 27px);
+    position:absolute;left:0;right:0;bottom:0;width:auto;height:calc(var(--rail-h) + 25px);
     flex:none;flex-direction:row;justify-content:space-around;align-items:center;
-    border-right:none;border-top:1px solid var(--line);padding:3px 8px calc(3px + 27px);
+    border-right:none;border-top:1px solid var(--line);padding:3px 8px calc(3px + 25px);
   }
   /* Активный пункт на телефоне отмечен только цветом значка и подписи: плашка в таббаре была
      лишней — раздел и так понятен по экрану. Пару раздвинули: неактивные светлее, активный
@@ -2662,7 +2662,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
      поэтому таббар остаётся виден и затемнения под ними нет */
   .panel.is-section{top:0;bottom:var(--chrome-b);height:auto;max-height:none;border-radius:0;border-top:none;
     /* подложка доходит до физического верха экрана, а содержимое начинается под островом */
-    padding-top:53px}
+    padding-top:49px}
   /* Переписка не раздел, а экран внутри него: выход даёт стрелка в шапке, а не таббар.
      И нижний край там принадлежит содержимому — внизу поле ввода, а с открытой клавиатурой
      полос становится три */
@@ -2672,7 +2672,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
      и правило сильнее общего, чтобы оно его больше не перебивало */
   /* переписка на телефоне — полноэкранный раздел, поэтому правило без оговорки про разделы:
      в 3.28 оно на неё не действовало, и поле вставало вплотную к полоске «домой» */
-  .panel.panel.is-chat .panel__foot{padding-bottom:calc(12px + 27px)}
+  .panel.panel.is-chat .panel__foot{padding-bottom:calc(12px + 25px)}
   .panel.is-chat .composer{padding-bottom:0}
   /* С открытой клавиатурой переписка кончается у её верхнего края, а поле ввода стоит вплотную
      над ней с обычным отступом 12: запас под полоску «домой» спрятан под клавиатурой. Раньше
@@ -2685,7 +2685,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
   .sheet-scrim.is-on{display:block}
   /* после подтверждения места высота жёсткая, а не потолок: иначе второй и третий шаг
      были бы разной высоты и прыгали друг относительно друга */
-  .panel.is-tall{height:calc(var(--vh) - 64px - 53px);max-height:none}
+  .panel.is-tall{height:calc(var(--vh) - 64px - 49px);max-height:none}
   .panel.is-tall .panel__body{flex:1 1 auto}
   /* палец на карте при выборе места — шторка уезжает вниз почти целиком и открывает карту */
   .panel{transition:transform .22s ease}
@@ -2695,7 +2695,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
      сделать, а шторка и так возвращается сама, как только отпускаешь палец */
   .panel.is-peek{transform:translateY(100%)}
   /* подпись карты опускается вслед: панели под ней больше нет, и она висела в воздухе */
-  .app.is-peek .mapmeta{bottom:calc(27px + 8px)}
+  .app.is-peek .mapmeta{bottom:calc(25px + 8px)}
   /* Между полем поиска (низ на 62) и домашней шторкой (верх на 80) полоса ручки стояла
      в 5 от поля и в 9 от шторки. Сдвигаем только нарисованную полоску — зона захвата
      остаётся прежней, 22 над шторкой */
@@ -2712,7 +2712,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
      не может его накрыть. Свёрнутая показывает ровно строку поиска, остальное обрезается.
      Развёрнутая встаёт по тому же правилу, что шторка создания — сто пикселей карты сверху */
   .panel.is-home,.panel.is-screen{
-    top:calc(64px + 53px);bottom:var(--chrome-b);height:auto;max-height:none;
+    top:calc(64px + 49px);bottom:var(--chrome-b);height:auto;max-height:none;
     border-radius:var(--r-l) var(--r-l) 0 0;border-top:1px solid var(--line);
     transition:top .24s ease;
   }
@@ -2724,7 +2724,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
   .panel.is-screen{bottom:0}
   /* Раскрытый домашний список — на 80, а не на общих 64: над ним поле поиска (16–62 под
      вырезом), и ручка шторки легла бы прямо на него */
-  .panel.is-home{top:calc(80px + 53px)}
+  .panel.is-home{top:calc(80px + 49px)}
   /* при жёсткой высоте тело обязано растянуться, иначе короткий список схлопнется
      и под ним останется пустая плита: общее правило ниже держит обратное для шторок,
      высота которых считается по содержимому */
@@ -2769,7 +2769,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
      Короткая стоит на том же нижнем крае, а верхний у неё — по измеренной высоте содержимого
      (--pin-short-h, ставит pinShortFit). Оба положения числовые, поэтому переход между ними
      — движение одного верхнего края, как у домашней шторки */
-  .panel.is-pin{top:calc(64px + 53px);bottom:0;height:auto;max-height:none;min-height:0;
+  .panel.is-pin{top:calc(64px + 49px);bottom:0;height:auto;max-height:none;min-height:0;
     transition:top .24s ease,transform .22s ease}
   .panel.is-pin.is-shut{top:calc(100% - var(--pin-short-h,240px))}
   /* Край раскрытой карточки задаёт обложка: рамка сверху ложилась второй линией над ней,
@@ -2796,7 +2796,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
     padding-top:12px;
     /* внизу поле блока по лестнице плюс безопасная зона телефона: на растворяющемся
        подвале двенадцати пикселей не хватало, кнопки стояли у самого края */
-    padding-bottom:calc(12px + 27px);
+    padding-bottom:calc(12px + 25px);
   }
   /* верхнее поле подвала прозрачное: содержимое проходит под ним и растворяется, а полоса
      растворения доходит до верха кнопки */
@@ -2851,7 +2851,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
   .panel.is-pin:not(.is-section):not(.is-tall) .panel__body{flex:1 1 auto;min-height:0}
   /* Безопасную зону здесь однажды потеряли: правило стоит позже основного, специфичность
      та же, и «top:16px» молча съедал env() целиком — кнопка охвата лезла под часы */
-  .toolbar{left:16px;right:16px;top:calc(16px + 53px);gap:8px}
+  .toolbar{left:16px;right:16px;top:calc(16px + 49px);gap:8px}
   /* уезжает вверх с уменьшением, а не выключается: display не анимируется, поэтому
      кнопка остаётся в потоке и просто перестаёт ловить нажатия. Длительность та же,
      что у самой шторки, — они двигаются одним движением */
@@ -2897,7 +2897,7 @@ img.listrow__cover{outline:1px solid color-mix(in srgb,var(--ink) 8%,transparent
      глазами. Поэтому отмеряем от верха экрана и больше не пересчитываем: под плашкой
      охвата, примерно на трети высоты. Накрыла шторка — значит человек сам её поднял
      и свернёт, когда захочет карту */
-  .zoomctl{top:calc(34% + 53px);transform:none}
+  .zoomctl{top:calc(34% + 49px);transform:none}
   .scalebar{display:none}
   /* над таббаром и свёрнутой домашней шторкой: 66 + 70 + отступ */
   /* высота таббара — переменная, а не число: безопасную зону он тоже занимает */
@@ -11432,7 +11432,7 @@ function setTheme(m){
 /* Стиль карты собирается из переменных темы, поэтому после смены темы его надо собрать
    заново: прежде карта оставалась в старой теме до перезагрузки страницы. То же, когда
    телефон сам переключается вечером, а в приложении выбрана «Системная» */
-function restyleMap(){if(glMap)try{glMap.setStyle(mapStyle())}catch(e){}}
+function restyleMap(){__thm();if(glMap)try{glMap.setStyle(mapStyle())}catch(e){}}
 try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(!themeCur)restyleMap()})}catch(e){}
 /* Когда и откуда заблокировали — чтобы через месяц узнать «Лену Ш.» не только по имени.
    У блокировок, сделанных до 3.34, записан один факт, без даты и места */
@@ -12304,7 +12304,7 @@ function viewScope(){
    Поэтому меряем пробником: пустой блок высотой ровно в эту зону */
 function safeInset(side){
   var p=document.createElement('i');
-  p.style.cssText='position:fixed;left:-9999px;width:1px;height:'+({top:'53px',bottom:'27px'}[side]||'0px')+'';
+  p.style.cssText='position:fixed;left:-9999px;width:1px;height:'+({top:'49px',bottom:'25px'}[side]||'0px')+'';
   document.body.appendChild(p);
   var h=Math.round(p.getBoundingClientRect().height);
   document.body.removeChild(p);
@@ -14705,7 +14705,7 @@ function syncHint(){
          не на что, а кнопка отклика в карточке и так главная */
       var tw=fitHint(hb,Math.min(320,W-32));
       hb.style.left=Math.round((W-tw)/2)+'px';
-      hb.style.top='calc(16px + 53px)';
+      hb.style.top='calc(16px + 49px)';
       tailAt=null;
     }else{
       /* раскрытая карточка: над главной кнопкой, ножкой к ней. Снимает подсказку само
@@ -14757,7 +14757,7 @@ function shareText(p){
 /* Ссылка — на сам прототип, без хвостов адреса. Системное «Поделиться» есть не везде,
    и там, где его нет, копируем текст со ссылкой в буфер */
 function shareOut(text){
-  var url=location.origin+location.pathname;
+  var url='https://raion-prototype.website.yandexcloud.net/';
   if(navigator.share){
     navigator.share({title:'Район',text:text,url:url}).then(null,function(){});
   }else if(navigator.clipboard&&navigator.clipboard.writeText){
@@ -14879,7 +14879,7 @@ function splashOut(){
   var t=performance.now();
   if(t<1500){setTimeout(splashOut,1500-t+10); return}
   if(t<3000&&glMap&&glMap.loaded&&!glMap.loaded()){setTimeout(splashOut,150); return}
-  sp.classList.add('is-out'); try{parent.postMessage('raion-ready','*')}catch(e){} setTimeout(function(){if(sp.parentNode)sp.parentNode.removeChild(sp)},330);
+  sp.classList.add('is-out'); try{parent.postMessage('raion-ready','*')}catch(e){} __thm(); setTimeout(function(){if(sp.parentNode)sp.parentNode.removeChild(sp)},330);
 }
 /* Фото событий лежат отдельными файлами. Пока идут заставка и приветствие, подтягиваем их
    в фоне: сначала у дома, потом остальные, по четыре разом */
